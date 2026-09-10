@@ -1,0 +1,23 @@
+[
+  {
+    "document_id": "TTHC_001",
+    "title": "Đăng ký khai sinh",
+    "content": "Thủ tục đăng ký khai sinh được thực hiện tại cơ quan đăng ký hộ tịch có thẩm quyền. Hồ sơ gồm tờ khai đăng ký khai sinh và giấy chứng sinh theo quy định.",
+    "agency": "UBND cấp xã",
+    "page_number": 1
+  },
+  {
+    "document_id": "TTHC_002",
+    "title": "Đăng ký kết hôn",
+    "content": "Hai bên nam nữ thực hiện đăng ký kết hôn tại cơ quan đăng ký hộ tịch có thẩm quyền. Hai bên phải cùng có mặt khi thực hiện đăng ký kết hôn.",
+    "agency": "UBND cấp xã",
+    "page_number": 1
+  },
+  {
+    "document_id": "TTHC_003",
+    "title": "Cấp căn cước",
+    "content": "Công dân thực hiện thủ tục cấp căn cước tại cơ quan quản lý căn cước có thẩm quyền theo quy định.",
+    "agency": "Cơ quan Công an",
+    "page_number": 1
+  }
+]
