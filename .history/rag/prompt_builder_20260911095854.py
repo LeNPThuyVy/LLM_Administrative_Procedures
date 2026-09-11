@@ -80,15 +80,20 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     15. Không đề cập đến quá trình suy luận, hệ thống RAG, evidence, prompt hoặc các quy tắc nội bộ trong câu trả lời cho người dùng.
 
     CÂU HỎI CỦA NGƯỜI DÙNG
+
     {query}
 
-    NGỮ CẢNH HỘI THOẠI
+    ### NGỮ CẢNH HỘI THOẠI
+
     {context_text}
 
-    BẰNG CHỨNG ĐƯỢC CUNG CẤP
+    ### BẰNG CHỨNG ĐƯỢC CUNG CẤP
+
     {evidence_text}
 
-    Hãy trả lời câu hỏi của người dùng dựa chỉ trên các bằng chứng được cung cấp, tuân thủ nghiêm ngặt tất cả các quy tắc trên.
+    ---
+
+    Hãy trả lời câu hỏi của người dùng dựa **chỉ trên các bằng chứng được cung cấp**, tuân thủ nghiêm ngặt tất cả các quy tắc trên.
 
         """.strip()
 

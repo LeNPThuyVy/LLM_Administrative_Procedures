@@ -26,9 +26,11 @@ def _load_model() -> tuple[Any, Any]:
     if _tokenizer is None or _model is None:
         _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
+        dtype = torch.float16 if DEVICE == "cuda" else torch.float32
+
         _model = AutoModelForCausalLM.from_pretrained(
             MODEL_NAME,
-            torch_dtype=torch.float32,
+            torch_dtype=dtype,
         )
 
         _model.to(DEVICE)

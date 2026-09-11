@@ -88,7 +88,9 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     BẰNG CHỨNG ĐƯỢC CUNG CẤP
     {evidence_text}
 
-    Hãy trả lời câu hỏi của người dùng dựa chỉ trên các bằng chứng được cung cấp, tuân thủ nghiêm ngặt tất cả các quy tắc trên.
+    ---
+
+    Hãy trả lời câu hỏi của người dùng dựa **chỉ trên các bằng chứng được cung cấp**, tuân thủ nghiêm ngặt tất cả các quy tắc trên.
 
         """.strip()
 
