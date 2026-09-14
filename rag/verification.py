@@ -125,12 +125,11 @@ def verify_answer(
             evidence_ids = [best_evidence_id] if best_evidence_id else []
 
         else:
-            status = "supported" if evidence_candidates else "unsupported"
+            status = "unsupported"
             reason = (
-                "General statement supported by retrieved context."
-                if evidence_candidates else "No sufficient evidence was found."
+                "The claim has insufficient word overlap with any provided evidence."
             )
-            evidence_ids = [evidence_candidates[0].candidate_id] if evidence_candidates else []
+            evidence_ids = []
 
         results.append(
             VerificationResult(

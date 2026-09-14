@@ -70,10 +70,8 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
 
     9. Luôn trả lời bằng tiếng Việt và ngắn gọn, rõ ràng.
 
-    10. Khi sử dụng thông tin từ một evidence candidate, phải trích dẫn candidate ID tương ứng theo định dạng:
-    [EC_XXX]. Title của evidence candidate
-    Ví dụ: [EC_001]. Quy trình đăng ký hộ khẩu
-    Chỉ dùng đúng candidate ID đã được liệt kê trong phần BẰNG CHỨNG ĐƯỢC CUNG CẤP.
+    10. Khi sử dụng thông tin từ một evidence candidate, phải trích dẫn candidate ID tương ứng** theo định dạng:
+    [số thứ tự trích dẫn]. 
 
     11. Nếu người dùng hỏi về các giấy tờ cần thiết, chỉ liệt kê những giấy tờ được nêu rõ trong bằng chứng.
     12. Nếu có nhiều evidence candidate chứa cùng một thông tin, không lặp lại thông tin đó và chỉ cần trích dẫn evidence phù hợp.
