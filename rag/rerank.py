@@ -1,24 +1,18 @@
-from context.schemas import EvidenceCandidate
 
+from rag.retrieval import RetrievedChunk
 
-def rerank(chunks):
-    results = []
+def rerank(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
+    """
+    Placeholder reranking.
 
-    for chunk in chunks:
-        item = EvidenceCandidate(
-            chunk_id=chunk.chunk_id,
-            document_id=chunk.document_id,
-            content=chunk.content,
-            retrieval_score=chunk.retrieval_score,
-            rerank_score=chunk.retrieval_score,
-            metadata=chunk.metadata
-        )
+    Currently, reranking only sorts RetrievedChunk objects
+    by retrieval_score in descending order.
 
-        results.append(item)
-
-    results.sort(
-        key=lambda x: x.rerank_score,
-        reverse=True
+    The chunks themselves are not modified.
+    """
+    return sorted(
+        chunks,
+        key=lambda chunk: chunk.retrieval_score,
+        reverse=True,
     )
 
-    return results

@@ -1,134 +1,176 @@
-import os
+"""
+This file:
+    - Query processing
+    - Embedding
+    - Vector search
+Return Retrieved Chunks
+"""
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import chromadb
 from sentence_transformers import SentenceTransformer
+import my_config as cfg
 
-from context.schemas import RetrievedChunk
+
+#RetrievedChunk
+@dataclass
+class RetrievedChunk:
+    chunk_id: str
+    document_id: str
+    content: str
+    retrieval_score: float
+    metadata: dict
 
 
-ROOT_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.abspath(__file__)
+# Model/Vector Store
+
+def load_embedding_model() -> SentenceTransformer:
+    """
+    Load the same embedding model used when building ChromaDB.
+    """
+    return SentenceTransformer(cfg.EMBEDDING_MODEL)
+
+
+def load_vector_store():
+    """
+    Load the existing persistent ChromaDB collection.
+
+    This function does NOT rebuild the index.
+    """
+    client = chromadb.PersistentClient(
+        path=str(cfg.CHROMA_PATH)
     )
-)
 
-DB_PATH = os.path.join(
-    ROOT_DIR,
-    "data",
-    "chroma_db"
-)
+    collection = client.get_collection(
+        name=cfg.COLLECTION_NAME
+    )
 
-MODEL_NAME = (
-    "sentence-transformers/"
-    "paraphrase-multilingual-MiniLM-L12-v2"
-)
+    return collection
 
 
-_model = None
-_collection = None
+# Query Processing
+def build_search_query(query: str, context: dict | None = None) -> str:
+    """
+    Build a simple search query from the original query
+    and useful structured context.
 
+    Priority:
+    1. structured_context
+    2. original query
 
-def get_model():
-    global _model
+    The function does not infer new information.
+    """
 
-    if _model is None:
-        _model = SentenceTransformer(
-            MODEL_NAME
-        )
-
-    return _model
-
-
-def get_collection():
-    global _collection
-
-    if _collection is None:
-
-        client = chromadb.PersistentClient(
-            path=DB_PATH
-        )
-
-        _collection = client.get_collection(
-            name="procedures"
-        )
-
-    return _collection
-
-
-def build_search_query(query, context):
-    result = query
+    if not context:
+        return query.strip()
 
     structured_context = context.get(
         "structured_context",
         {}
     )
 
-    location = structured_context.get(
-        "location"
-    )
+    if not structured_context:
+        return query.strip()
 
-    if location:
-        result += f"\nĐịa điểm: {location}"
+    context_parts = []
 
-    return result
+    for key, value in structured_context.items():
+        if value is None:
+            continue
+
+        if isinstance(value, str) and not value.strip():
+            continue
+
+        context_parts.append(
+            f"{key}: {value}"
+        )
+
+    if not context_parts:
+        return query.strip()
+
+    context_text = " ".join(context_parts)
+
+    return f"{query.strip()} {context_text}"
 
 
-def retrieve(query, context, top_k=3):
+# Retrieval
+def retrieve(
+    query: str,
+    context: dict | None = None,
+    top_k: int = cfg.DEFAULT_TOP_K
+) -> list[RetrievedChunk]:
+    """
+    Retrieve top-k relevant chunks from ChromaDB.
+    """
 
+    if not query or not query.strip():
+        return []
+
+    if top_k <= 0:
+        return []
+
+    #Build search query
     search_query = build_search_query(
-        query,
-        context
+        query=query,
+        context=context
     )
 
-    model = get_model()
+    #Load embedding model
+    model = load_embedding_model()
 
-    collection = get_collection()
-
+    #Embed query
+    # E5 models expect "query: " prefix for queries.
     query_embedding = model.encode(
-        [search_query],
+        f"query: {search_query}",
         normalize_embeddings=True
     ).tolist()
 
+    #Load persistent ChromaDB
+    collection = load_vector_store()
+
+    #Vector search
     results = collection.query(
-        query_embeddings=query_embedding,
+        query_embeddings=[query_embedding],
         n_results=top_k
     )
 
-    chunks = []
+    #Convert Chroma result -> RetrievedChunk
+    retrieved_chunks = []
 
-    if not results["ids"]:
-        return chunks
+    documents = results.get("documents", [[]])[0]
+    metadatas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
 
-    ids = results["ids"][0]
-    documents = results["documents"][0]
-    metadatas = results["metadatas"][0]
-    distances = results["distances"][0]
-
-    for (
-        chunk_id,
-        content,
-        metadata,
-        distance
-    ) in zip(
-        ids,
+    for content, metadata, distance in zip(
         documents,
         metadatas,
         distances
     ):
+        metadata = metadata or {}
 
-        retrieval_score = max(
-            0.0,
-            1.0 - float(distance)
+        chunk_id = str(
+            metadata.get("chunk_id", "")
         )
 
-        chunk = RetrievedChunk(
-            chunk_id=chunk_id,
-            document_id=metadata["document_id"],
-            content=content,
-            retrieval_score=retrieval_score,
-            metadata=metadata
+        document_id = str(
+            metadata.get("document_id", "")
         )
 
-        chunks.append(chunk)
+        # Chroma distance: lower = more similar
+        # Retrieval score: higher = more relevant.
+        retrieval_score = 1.0 / (1.0 + float(distance))
 
-    return chunks
+        retrieved_chunks.append(
+            RetrievedChunk(
+                chunk_id=chunk_id,
+                document_id=document_id,
+                content=content,
+                retrieval_score=retrieval_score,
+                metadata=metadata
+            )
+        )
+
+    return retrieved_chunks

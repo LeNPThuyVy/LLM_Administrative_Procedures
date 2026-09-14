@@ -8,21 +8,15 @@ from ui.evidence_panel import build_evidence_accordion, update_evidence
 def respond(message: str, history: list[dict]):
     """
     Handle user query, execute RAG pipeline, and return updated chat & evidence components.
-    Compatible with Gradio 6.x default messages format (dict with role/content keys).
     """
     if not message.strip():
         return "", history, gr.update(visible=False), "", gr.update(visible=False), ""
 
-    # history is already in dict format; use directly as recent_messages for RAG pipeline
-    history = history or []
-
     # Call AI Core RAG pipeline
-    response = answer_query(
-        query=message,
-        context={"recent_messages": history}
-    )
+    response = answer_query(query=message, context={"recent_messages": history})
 
-    # Append new user-bot turn to history
+    # Prepare chat history
+    history = history or []
     history.append({"role": "user", "content": message})
     history.append({"role": "assistant", "content": response.answer})
 
@@ -68,15 +62,14 @@ def respond(message: str, history: list[dict]):
 def create_app():
     """
     Build Gradio UI application with Chat Interface, Clarification Box, and Evidence Panel.
-    Compatible across Gradio versions.
     """
     with gr.Blocks(title="Trợ lý Thủ tục Hành chính AI") as demo:
-        gr.Markdown("#Trợ lý Thủ tục Hành chính AI")
+        gr.Markdown("# ⚖️ Trợ lý Thủ tục Hành chính AI")
         gr.Markdown(
             "Hệ thống hỏi đáp thủ tục hành chính dựa trên mô hình RAG và dữ liệu pháp lý xác thực."
         )
 
-        chatbot = gr.Chatbot(height=450)
+        chatbot = gr.Chatbot(type="messages", height=450)
 
         # Clarification box component
         clar_box, clar_md = build_clarification_box()

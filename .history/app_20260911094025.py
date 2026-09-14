@@ -5,26 +5,29 @@ from ui.clarification_box import build_clarification_box, update_clarification
 from ui.evidence_panel import build_evidence_accordion, update_evidence
 
 
-def respond(message: str, history: list[dict]):
+def respond(message: str, history: list[tuple[str, str]]):
     """
     Handle user query, execute RAG pipeline, and return updated chat & evidence components.
-    Compatible with Gradio 6.x default messages format (dict with role/content keys).
+    Compatible with tuple-based history in standard Gradio Chatbot.
     """
     if not message.strip():
         return "", history, gr.update(visible=False), "", gr.update(visible=False), ""
 
-    # history is already in dict format; use directly as recent_messages for RAG pipeline
+    # Convert tuple history to recent_messages format for RAG pipeline
     history = history or []
+    recent_messages = []
+    for user_msg, bot_msg in history:
+        recent_messages.append({"role": "user", "content": user_msg})
+        recent_messages.append({"role": "assistant", "content": bot_msg})
 
     # Call AI Core RAG pipeline
     response = answer_query(
         query=message,
-        context={"recent_messages": history}
+        context={"recent_messages": recent_messages}
     )
 
     # Append new user-bot turn to history
-    history.append({"role": "user", "content": message})
-    history.append({"role": "assistant", "content": response.answer})
+    history.append((message, response.answer))
 
     # Prepare evidence list for UI Evidence Panel
     evidence_list = []
