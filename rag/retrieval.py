@@ -25,6 +25,11 @@ class RetrievedChunk:
     metadata: dict
 
 
+# Module-level singletons — loaded once, reused across all queries
+_embedding_model: SentenceTransformer | None = None
+_chroma_collection = None
+
+
 # Model/Vector Store
 
 def load_embedding_model() -> SentenceTransformer:
@@ -49,6 +54,28 @@ def load_vector_store():
     )
 
     return collection
+
+
+def _get_embedding_model() -> SentenceTransformer:
+    """
+    Return the cached embedding model, loading it on first call.
+    Subsequent calls reuse the same instance (singleton pattern).
+    """
+    global _embedding_model
+    if _embedding_model is None:
+        _embedding_model = load_embedding_model()
+    return _embedding_model
+
+
+def _get_chroma_collection():
+    """
+    Return the cached Chroma collection, loading it on first call.
+    Subsequent calls reuse the same instance (singleton pattern).
+    """
+    global _chroma_collection
+    if _chroma_collection is None:
+        _chroma_collection = load_vector_store()
+    return _chroma_collection
 
 
 # Query Processing
@@ -119,7 +146,7 @@ def retrieve(
     )
 
     #Load embedding model
-    model = load_embedding_model()
+    model = _get_embedding_model()
 
     #Embed query
     # E5 models expect "query: " prefix for queries.
@@ -129,7 +156,7 @@ def retrieve(
     ).tolist()
 
     #Load persistent ChromaDB
-    collection = load_vector_store()
+    collection = _get_chroma_collection()
 
     #Vector search
     results = collection.query(
