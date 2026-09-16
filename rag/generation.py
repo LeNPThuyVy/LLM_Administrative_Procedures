@@ -33,13 +33,10 @@ def build_prompt(
         evidence_candidates,
         start=1
     ):
-        title = evidence.metadata.get(
-            "title",
-            "Không có tiêu đề"
-        )
+        title = evidence.title or "Không có tiêu đề"
 
         block = f"""
-[{index}]
+[{evidence.candidate_id}]
 Tiêu đề: {title}
 Nội dung:
 {evidence.content}
@@ -74,7 +71,7 @@ Bạn là trợ lý hỏi đáp thủ tục hành chính.
 QUY TẮC BẮT BUỘC:
 1. Chỉ trả lời dựa trên EVIDENCE.
 2. Không tự bịa thông tin.
-3. Khi dùng nguồn nào phải ghi citation [1], [2], [3].
+3. Khi dùng nguồn nào phải ghi citation [EC_001], [EC_002], [EC_003].
 4. Không tạo citation không tồn tại.
 5. Nếu dữ liệu không đủ thì nói rõ dữ liệu hiện có chưa đủ.
 6. Trả lời bằng tiếng Việt.

@@ -71,30 +71,28 @@ def main():
     metadatas = []
 
     for item in procedures:
-
         chunk_id = (
             item["document_id"]
             + "_chunk_1"
         )
 
-        ids.append(chunk_id)
+        ids.append(
+            chunk_id
+        )
 
         documents.append(
             item["content"]
         )
 
         metadatas.append({
-            "document_id":
-                item["document_id"],
-
-            "title":
-                item["title"],
-
-            "agency":
-                item.get("agency", ""),
-
-            "page_number":
-                item.get("page_number", 1)
+            "chunk_id": chunk_id,
+            "document_id": item["document_id"],
+            "title": item["title"],
+            "agency": item.get("agency", ""),
+            "page": item.get(
+                "page_number",
+                item.get("page", 1)
+            )
         })
 
     print("5. Dang tao embedding...")
