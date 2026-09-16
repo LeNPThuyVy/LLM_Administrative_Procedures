@@ -22,6 +22,7 @@ class VerifiedClaim:
 
 
 @dataclass
+@dataclass
 class AnswerResponse:
     answer: str | None
     claims: list[VerifiedClaim]

@@ -23,10 +23,8 @@ class VerifiedClaim:
 
 @dataclass
 class AnswerResponse:
-    answer: str | None
+    answer: str
     claims: list[VerifiedClaim]
-    needs_clarification: bool = False
-    clarification_question: str | None = None
 
 
 def map_verification_results(
