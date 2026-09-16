@@ -1,3 +1,4 @@
+import re
 from collections.abc import Callable
 
 from rag.evidence_builder import build_evidence_candidates
@@ -12,17 +13,79 @@ from rag.synthesizer import synthesizer
 from rag.verification import verify_answer
 
 
+FALLBACK_TEXT = (
+    "Thông tin trong tài liệu được cung cấp "
+    "chưa đủ để trả lời câu hỏi này."
+)
+
+
+def _answer_from_evidence(evidence_candidates):
+    """
+    Nếu LLM không tạo được câu trả lời hữu ích,
+    dùng trực tiếp evidence tốt nhất.
+    """
+
+    if not evidence_candidates:
+        return FALLBACK_TEXT
+
+    best = evidence_candidates[0]
+
+    content = (best.content or "").strip()
+
+    if not content:
+        return FALLBACK_TEXT
+
+    return f"{content} [{best.candidate_id}]"
+
+
+def _is_useless_answer(answer: str) -> bool:
+    """
+    Kiểm tra câu trả lời rỗng, chỉ có citation,
+    hoặc chỉ trả fallback.
+    """
+
+    if not answer or not answer.strip():
+        return True
+
+    text = answer.strip()
+
+    if FALLBACK_TEXT.lower() in text.lower():
+        return True
+
+    # Ví dụ: [EC_001]
+    citation_only = re.fullmatch(
+        r"\s*\[?EC_\d{3}\]?\s*[.!]?\s*",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    if citation_only:
+        return True
+
+    # Quá ngắn thì cũng coi là không hữu ích
+    cleaned = re.sub(
+        r"\[?EC_\d{3}\]?",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    ).strip()
+
+    if len(cleaned) < 15:
+        return True
+
+    return False
+
+
 def answer_query(
     query: str,
-    session_id: str,
+    session_id: str | None = None,
     context: dict | None = None,
     generator: Callable[[str], str] = generate_answer,
 ) -> AnswerResponse:
     """
-    Run the complete AI Core pipeline.
+    Run the complete AI Core / RAG pipeline.
 
-    Day 1 flow:
-
+    Flow:
         query
             ↓
         history_reader
@@ -48,26 +111,10 @@ def answer_query(
         mapper
             ↓
         AnswerResponse
-
-    Args:
-        query: Current user query.
-        session_id: Conversation/session identifier.
-        context: Conversation context.
-        generator: Injected LLM generator for testing and generation.
-
-    Returns:
-        AnswerResponse.
     """
 
-    # session_id is part of the AI Core contract.
-    # Day 1 does not require it for retrieval logic yet.
     _ = session_id
 
-    # ---------------------------------------------------------
-    # Empty query
-    # ---------------------------------------------------------
-    # Preserve the existing behavior: do not call LLM/retrieval
-    # for an empty query.
     if not query or not query.strip():
         return AnswerResponse(
             answer="",
@@ -75,6 +122,9 @@ def answer_query(
             needs_clarification=False,
             clarification_question=None,
         )
+
+    if context is None:
+        context = {}
 
     # ---------------------------------------------------------
     # Multi-agent preprocessing
@@ -84,9 +134,6 @@ def answer_query(
     history = history_reader(context)
 
     # 2. Retrieve lightweight procedure/topic hints.
-    #
-    # This is intentionally a separate retrieval call from the
-    # official retrieval below.
     procedure_hint = procedure_reader(
         query=query,
         context=context,
@@ -94,9 +141,6 @@ def answer_query(
     )
 
     # 3. Synthesize the query using history + procedure hints.
-    #
-    # The same injected generator is used for the synthesizer
-    # and the final answer generation.
     consolidated = synthesizer(
         query=query,
         history=history,
@@ -122,43 +166,64 @@ def answer_query(
     # Official RAG pipeline
     # ---------------------------------------------------------
 
-    # Use the resolved query for the official retrieval.
+    # 1. Retrieval using resolved query
     retrieved_chunks = retrieve(
         query=consolidated.resolved_query,
         context=context,
     )
 
-    # Reranking
+    if not retrieved_chunks:
+        return AnswerResponse(
+            answer=FALLBACK_TEXT,
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
+    # 2. Rerank
     ranked_chunks = rerank(retrieved_chunks)
 
-    # Evidence Builder
-    evidence_candidates = build_evidence_candidates(
-        ranked_chunks
-    )
+    # 3. Build evidence
+    evidence_candidates = build_evidence_candidates(ranked_chunks)
 
-    # Prompt Builder
+    if not evidence_candidates:
+        return AnswerResponse(
+            answer=FALLBACK_TEXT,
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
+    # 4. Prompt Builder
     prompt = build_prompt(
         query=consolidated.resolved_query,
         evidence_candidates=evidence_candidates,
         context=context,
     )
 
-    # Final Answer Generation
-    generated_answer = generator(prompt)
+    # 5. Final Answer Generation
+    try:
+        generated_answer = generator(prompt)
+    except Exception as exc:
+        print("GENERATOR ERROR:", repr(exc))
+        generated_answer = ""
 
-    # Verification
+    # 6. Fallback if useless answer
+    if _is_useless_answer(generated_answer):
+        generated_answer = _answer_from_evidence(evidence_candidates)
+
+    # 7. Verification
     verification_results = verify_answer(
         generated_answer=generated_answer,
         evidence_candidates=evidence_candidates,
     )
 
-    # Mapper
+    # 8. Mapper
     verified_claims = map_verification_results(
         verification_results=verification_results,
         evidence_candidates=evidence_candidates,
     )
 
-    # Final response
     return AnswerResponse(
         answer=generated_answer,
         claims=verified_claims,
