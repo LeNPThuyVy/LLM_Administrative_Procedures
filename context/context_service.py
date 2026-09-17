@@ -130,3 +130,157 @@ async def get_context(
                 else {}
             )
         }
+
+async def update_memory(
+    session_id,
+    query: str,
+    final_result: dict
+):
+    async with AsyncSessionLocal() as db:
+
+        session_result = await db.execute(
+            select(ChatSession)
+            .where(
+                ChatSession.id == session_id
+            )
+        )
+
+        session = session_result.scalar_one_or_none()
+
+        if session is None:
+            raise ValueError(
+                f"Session not found: {session_id}"
+            )
+
+        user_message = Message(
+            session_id=session_id,
+            role="user",
+            content=query
+        )
+
+        answer = final_result.get(
+            "answer",
+            ""
+        )
+
+        evidence_list = final_result.get(
+            "evidence_list",
+            []
+        )
+
+        assistant_message = Message(
+            session_id=session_id,
+            role="assistant",
+            content=answer,
+            evidence=evidence_list
+        )
+
+        db.add(user_message)
+        db.add(assistant_message)
+
+        new_structured_context = final_result.get(
+            "structured_context",
+            {}
+        )
+
+        if new_structured_context:
+            structured_result = await db.execute(
+                select(StructuredContext)
+                .where(
+                    StructuredContext.session_id
+                    == session_id
+                )
+            )
+
+            structured = (
+                structured_result.scalar_one_or_none()
+            )
+
+            if structured is None:
+                structured = StructuredContext(
+                    session_id=session_id,
+                    data=new_structured_context
+                )
+
+                db.add(structured)
+
+            else:
+                current_data = dict(
+                    structured.data or {}
+                )
+
+                current_data.update(
+                    new_structured_context
+                )
+
+                structured.data = current_data
+
+        await db.commit()
+
+        await _update_conversation_summary(
+            session_id=session_id
+        )
+
+SUMMARY_TRIGGER = 20
+RECENT_KEEP = 10
+
+
+async def _update_conversation_summary(
+    session_id
+):
+    async with AsyncSessionLocal() as db:
+
+        result = await db.execute(
+            select(Message)
+            .where(
+                Message.session_id == session_id
+            )
+            .order_by(
+                Message.created_at.asc()
+            )
+        )
+
+        messages = list(
+            result.scalars().all()
+        )
+
+        if len(messages) < SUMMARY_TRIGGER:
+            return
+
+        old_messages = messages[:-RECENT_KEEP]
+
+        if not old_messages:
+            return
+
+        summary_text = " | ".join(
+            f"{message.role}: {message.content}"
+            for message in old_messages
+        )
+
+        if len(summary_text) > 3000:
+            summary_text = summary_text[-3000:]
+
+        summary_result = await db.execute(
+            select(ConversationSummary)
+            .where(
+                ConversationSummary.session_id
+                == session_id
+            )
+        )
+
+        summary = (
+            summary_result.scalar_one_or_none()
+        )
+
+        if summary is None:
+            summary = ConversationSummary(
+                session_id=session_id,
+                summary=summary_text
+            )
+
+            db.add(summary)
+
+        else:
+            summary.summary = summary_text
+
+        await db.commit()
