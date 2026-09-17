@@ -1,22 +1,34 @@
 import asyncio
 
+from fastapi.encoders import jsonable_encoder
+from rag.pipeline import answer_query
 
-async def generate_answer(query: str, context: dict):
-    await asyncio.sleep(0.3)
 
-    evidence_list = [
-        {
-            "source_id": "1",
-            "title": "Tài liệu demo",
-            "snippet": "Đây là evidence mock phục vụ test."
-        }
-    ]
+async def generate_answer(
+    query: str,
+    session_id: str,
+    context: dict
+):
+    response = await asyncio.to_thread(
+        answer_query,
+        query,
+        session_id,
+        context
+    )
 
-    answer = f"Câu trả lời demo cho câu hỏi: {query}"
+    # Chuyển các object Pydantic / Citation / nested objects
+    # thành dữ liệu JSON serializable.
+    evidence_list = jsonable_encoder(
+        response.claims
+    )
 
     return {
-        "answer": answer,
+        "answer": response.answer or "",
         "evidence_list": evidence_list,
-        "needs_clarification": False,
-        "clarification_question": None
+        "needs_clarification": (
+            response.needs_clarification
+        ),
+        "clarification_question": (
+            response.clarification_question
+        ),
     }

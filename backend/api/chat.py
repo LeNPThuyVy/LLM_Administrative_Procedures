@@ -4,11 +4,10 @@ import json
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from schemas.chat import ChatRequest
-from services.context_service import get_context
-from services.ai_service import generate_answer
-from services.queue_service import queue_manager
-
+from backend.schemas.chat import ChatRequest
+from backend.services.context_service import get_context, update_memory
+from backend.services.ai_service import generate_answer
+from backend.services.queue_service import queue_manager
 
 router = APIRouter()
 
@@ -40,12 +39,14 @@ async def chat(request: ChatRequest):
                 )
 
                 result = await generate_answer(
-                    request.query,
-                    context
+                    query=request.query,
+                    session_id=request.session_id,
+                    context=context
                 )
 
-                # Nếu cần hỏi lại
+                # Trường hợp cần clarification
                 if result["needs_clarification"]:
+
                     data = {
                         "question":
                             result["clarification_question"]
@@ -58,11 +59,24 @@ async def chat(request: ChatRequest):
 
                     yield (
                         "event: done\n"
-                        'data: {"needs_clarification": true}\n\n'
+                        f"data: {json.dumps({'needs_clarification': True}, ensure_ascii=False)}\n\n"
                     )
 
                     print(
                         f"[QUEUE] session={request.session_id} DONE"
+                    )
+
+                    asyncio.create_task(
+                        update_memory(
+                            session_id=request.session_id,
+                            query=request.query,
+                            final_result=result
+                        )
+                    )
+
+                    print(
+                        f"[MEMORY] session={request.session_id} "
+                        f"update scheduled"
                     )
 
                     return
@@ -80,12 +94,13 @@ async def chat(request: ChatRequest):
 
                 # Stream answer
                 for word in result["answer"].split():
+
                     yield (
                         "event: chunk\n"
                         f"data: {json.dumps({'text': word + ' '}, ensure_ascii=False)}\n\n"
                     )
 
-                    await asyncio.sleep(0.3)
+                    await asyncio.sleep(0.05)
 
                 # Done
                 done_data = {
@@ -102,6 +117,20 @@ async def chat(request: ChatRequest):
 
                 print(
                     f"[QUEUE] session={request.session_id} DONE"
+                )
+
+                # Update memory chạy nền, không block client
+                asyncio.create_task(
+                    update_memory(
+                        session_id=request.session_id,
+                        query=request.query,
+                        final_result=result
+                    )
+                )
+
+                print(
+                    f"[MEMORY] session={request.session_id} "
+                    f"update scheduled"
                 )
 
     return StreamingResponse(
