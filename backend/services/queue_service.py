@@ -5,7 +5,7 @@ from collections import defaultdict
 class QueueManager:
     def __init__(self, max_concurrency: int = 3):
         self.session_locks = defaultdict(asyncio.Lock)
-        self.semaphore = asyncio.Semaphore(max_concurrency)
+        self.semaphore = asyncio.Semaphore(1)
 
     def get_session_lock(self, session_id: str):
         return self.session_locks[session_id]
