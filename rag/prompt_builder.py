@@ -2,6 +2,9 @@ from rag.evidence_builder import EvidenceCandidate
 
 
 def _format_context(context: dict | None) -> str:
+    """
+    Format conversation context dictionary into readable text.
+    """
     if not isinstance(context, dict) or not context:
         return "No conversation context was provided."
 

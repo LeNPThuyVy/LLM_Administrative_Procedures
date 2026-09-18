@@ -227,3 +227,4 @@ __pycache__/
 *.pyc
 .env
 
+data/chroma_db/

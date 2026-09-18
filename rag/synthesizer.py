@@ -248,12 +248,24 @@ def _validate_consolidated_query(
     )
 
 
-def synthesizer(query, history, procedure_hint, generator=generate_answer):
-    prompt = _build_synthesizer_prompt(query, history, procedure_hint)
+def synthesizer(
+    query: str,
+    history: dict[str, Any],
+    procedure_hint: list[RetrievedChunk],
+    generator: Callable[[str], str] = generate_answer,
+) -> ConsolidatedQuery:
+    """
+    Synthesize the current query into an independent ConsolidatedQuery.
+    """
+    prompt = _build_synthesizer_prompt(
+        query=query,
+        history=history,
+        procedure_hint=procedure_hint,
+    )
+
     raw_output = generator(prompt)
 
     try:
-        print("Parsing json output")
         parsed_output = _parse_json_output(raw_output)
         return _validate_consolidated_query(parsed_output)
     except ValueError as exc:
