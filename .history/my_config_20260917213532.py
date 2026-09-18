@@ -23,4 +23,4 @@ TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-VAST_URL = "https://disks-barn-suddenly-trend.trycloudflare.com"
+VAST_URL = "https://passengers-indiana-discussions-zus.trycloudflare.com"

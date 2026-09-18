@@ -253,7 +253,6 @@ def synthesizer(query, history, procedure_hint, generator=generate_answer):
     raw_output = generator(prompt)
 
     try:
-        print("Parsing json output")
         parsed_output = _parse_json_output(raw_output)
         return _validate_consolidated_query(parsed_output)
     except ValueError as exc:

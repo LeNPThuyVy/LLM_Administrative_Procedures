@@ -2,21 +2,23 @@ from rag.evidence_builder import EvidenceCandidate
 
 
 def _format_context(context: dict | None) -> str:
-    if not isinstance(context, dict) or not context:
+    """
+    Format conversation context dictionary into readable text.
+    """
+    if not context:
         return "No conversation context was provided."
 
-    parts = []
+    if isinstance(context, dict):
+        recent_messages = context.get("recent_messages")
+        if recent_messages and isinstance(recent_messages, list):
+            lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in recent_messages]
+            return "\n".join(lines)
+        
+        structured_context = context.get("structured_context")
+        if structured_context:
+            return str(structured_context)
 
-    recent_messages = context.get("recent_messages")
-    if recent_messages and isinstance(recent_messages, list):
-        lines = [f"{m.get('role', 'user')}: {m.get('content', '')}" for m in recent_messages]
-        parts.append("\n".join(lines))
-
-    structured_context = context.get("structured_context")
-    if structured_context:
-        parts.append(f"Thông tin đã biết: {structured_context}")
-
-    return "\n".join(parts) if parts else "No conversation context was provided."
+    return str(context)
 
 
 def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], context: dict | None = None) -> str:

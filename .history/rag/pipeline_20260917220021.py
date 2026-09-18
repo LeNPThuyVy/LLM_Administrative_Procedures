@@ -84,6 +84,33 @@ def answer_query(
 ) -> AnswerResponse:
     """
     Run the complete AI Core / RAG pipeline.
+
+    Flow:
+        query
+            ↓
+        history_reader
+            ↓
+        procedure_reader
+            ↓
+        synthesizer
+            ↓
+        clarification OR resolved_query
+            ↓
+        official retrieval
+            ↓
+        rerank
+            ↓
+        evidence builder
+            ↓
+        prompt builder
+            ↓
+        answer generation
+            ↓
+        verification
+            ↓
+        mapper
+            ↓
+        AnswerResponse
     """
 
     _ = session_id

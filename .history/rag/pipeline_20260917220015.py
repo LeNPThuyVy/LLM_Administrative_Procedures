@@ -80,10 +80,37 @@ def answer_query(
     query: str,
     session_id: str | None = None,
     context: dict | None = None,
-    generator: Callable[[str], str] = generate_hybrid,
+    generator: Callable[[str], str] = generate_answer,
 ) -> AnswerResponse:
     """
     Run the complete AI Core / RAG pipeline.
+
+    Flow:
+        query
+            ↓
+        history_reader
+            ↓
+        procedure_reader
+            ↓
+        synthesizer
+            ↓
+        clarification OR resolved_query
+            ↓
+        official retrieval
+            ↓
+        rerank
+            ↓
+        evidence builder
+            ↓
+        prompt builder
+            ↓
+        answer generation
+            ↓
+        verification
+            ↓
+        mapper
+            ↓
+        AnswerResponse
     """
 
     _ = session_id

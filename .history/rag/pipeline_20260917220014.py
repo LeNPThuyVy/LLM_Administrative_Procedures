@@ -2,8 +2,7 @@ import re
 from collections.abc import Callable
 
 from rag.evidence_builder import build_evidence_candidates
-from rag.hybrid_generator import generate_hybrid
-from rag.history_reader import history_reader
+from rag.hybrid_generator import generate_hybridfrom rag.history_reader import history_reader
 from rag.mapper import AnswerResponse, map_verification_results
 from rag.procedure_reader import procedure_reader
 from rag.prompt_builder import build_prompt
@@ -80,10 +79,37 @@ def answer_query(
     query: str,
     session_id: str | None = None,
     context: dict | None = None,
-    generator: Callable[[str], str] = generate_hybrid,
+    generator: Callable[[str], str] = generate_answer,
 ) -> AnswerResponse:
     """
     Run the complete AI Core / RAG pipeline.
+
+    Flow:
+        query
+            ↓
+        history_reader
+            ↓
+        procedure_reader
+            ↓
+        synthesizer
+            ↓
+        clarification OR resolved_query
+            ↓
+        official retrieval
+            ↓
+        rerank
+            ↓
+        evidence builder
+            ↓
+        prompt builder
+            ↓
+        answer generation
+            ↓
+        verification
+            ↓
+        mapper
+            ↓
+        AnswerResponse
     """
 
     _ = session_id
