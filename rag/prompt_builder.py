@@ -5,20 +5,21 @@ def _format_context(context: dict | None) -> str:
     """
     Format conversation context dictionary into readable text.
     """
-    if not context:
+    if not isinstance(context, dict) or not context:
         return "No conversation context was provided."
 
-    if isinstance(context, dict):
-        recent_messages = context.get("recent_messages")
-        if recent_messages and isinstance(recent_messages, list):
-            lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in recent_messages]
-            return "\n".join(lines)
-        
-        structured_context = context.get("structured_context")
-        if structured_context:
-            return str(structured_context)
+    parts = []
 
-    return str(context)
+    recent_messages = context.get("recent_messages")
+    if recent_messages and isinstance(recent_messages, list):
+        lines = [f"{m.get('role', 'user')}: {m.get('content', '')}" for m in recent_messages]
+        parts.append("\n".join(lines))
+
+    structured_context = context.get("structured_context")
+    if structured_context:
+        parts.append(f"Thông tin đã biết: {structured_context}")
+
+    return "\n".join(parts) if parts else "No conversation context was provided."
 
 
 def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], context: dict | None = None) -> str:
@@ -44,7 +45,6 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
 
     evidence_text = "\n\n".join(evidence_sections)
 
-
     if not evidence_text:
         evidence_text = "No evidence was provided."
 
@@ -63,8 +63,13 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     4. Không đưa ra giải thích hoặc kết luận nếu nội dung đó không được nêu rõ trong bằng chứng.
     5. Không thêm bất kỳ giấy tờ nào ngoài những giấy tờ được liệt kê rõ ràng trong bằng chứng.
     6. Không lặp lại giấy tờ hoặc thông tin.
-    7. Nếu bằng chứng không đủ để trả lời câu hỏi, hãy trả lời chính xác:
+    7. Nếu bằng chứng có chứa ít nhất một thông tin trực tiếp trả lời câu hỏi,
+    hãy trả lời bằng những thông tin đó. Không yêu cầu bằng chứng phải mô tả
+    toàn bộ thủ tục mới được trả lời.
+
+    Chỉ trả lời:
     "Thông tin trong tài liệu được cung cấp chưa đủ để trả lời câu hỏi này."
+    khi bằng chứng hoàn toàn không chứa thông tin liên quan trực tiếp đến câu hỏi.
 
     8. Ngữ cảnh hội thoại chỉ được sử dụng để hiểu ý định của người dùng, không được xem là bằng chứng pháp lý.
 
@@ -75,7 +80,8 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     Ví dụ: [EC_001]. Quy trình đăng ký hộ khẩu
     Chỉ dùng đúng candidate ID đã được liệt kê trong phần BẰNG CHỨNG ĐƯỢC CUNG CẤP.
 
-    11. Nếu người dùng hỏi về các giấy tờ cần thiết, chỉ liệt kê những giấy tờ được nêu rõ trong bằng chứng.
+    11. Nếu người dùng hỏi về giấy tờ cần thiết và bằng chứng có nêu tên một hoặc nhiều giấy tờ, hãy liệt kê chính xác các giấy tờ đó.
+    Không được từ chối trả lời chỉ vì bằng chứng có thể chưa liệt kê toàn bộ hồ sơ.
     12. Nếu có nhiều evidence candidate chứa cùng một thông tin, không lặp lại thông tin đó và chỉ cần trích dẫn evidence phù hợp.
     13. Không được tạo hoặc thay đổi candidate ID. Chỉ sử dụng candidate ID đã được cung cấp.
     14. Nếu câu hỏi chứa nhiều ý, chỉ trả lời những ý có đủ bằng chứng. Với những ý không có đủ bằng chứng, sử dụng câu trả lời mặc định ở Quy tắc 7.
@@ -91,7 +97,6 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     {evidence_text}
 
     Hãy trả lời câu hỏi của người dùng dựa chỉ trên các bằng chứng được cung cấp, tuân thủ nghiêm ngặt tất cả các quy tắc trên.
-
-        """.strip()
+    """.strip()
 
     return prompt

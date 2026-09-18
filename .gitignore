@@ -1,3 +1,4 @@
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -216,3 +217,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#Ignore file test
+test.py
+
+.idea/
+.venv/
+__pycache__/
+*.pyc
+.env
+
+data/chroma_db/

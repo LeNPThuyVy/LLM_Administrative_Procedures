@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from rag.evidence_builder import EvidenceCandidate
 
+
 @dataclass
 class VerificationResult:
     claim: str

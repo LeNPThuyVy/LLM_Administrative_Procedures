@@ -1,4 +1,3 @@
-
 from pathlib import Path 
 import torch
 
@@ -9,7 +8,7 @@ CHROMA_PATH = BASE_DIR / "data" / "chroma_db"
 
 COLLECTION_NAME = "procedures"
 
-EMBEDDING_MODEL = "intfloat/multilingual-e5-small"
+EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 CHUNK_SIZE = 1400
 CHUNK_OVERLAP = 200
@@ -23,3 +22,5 @@ TEMPERATURE = 0.0
 TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+VAST_URL = "https://disks-barn-suddenly-trend.trycloudflare.com"

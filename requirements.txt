@@ -6,3 +6,6 @@ python-dotenv
 numpy
 torch
 transformers
+sqlalchemy
+asyncpg
+psycopg2-binary
