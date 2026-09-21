@@ -67,14 +67,14 @@ def respond(message: str, history: list[dict]):
 def login_user(email, password):
     if not email or not email.strip():
         return (
-            "Vui lòng nhập email.",
+            "❌ Vui lòng nhập email.",
             gr.update(visible=True),
             gr.update(visible=False),
         )
 
     if not password or not password.strip():
         return (
-            "Vui lòng nhập mật khẩu.",
+            "❌ Vui lòng nhập mật khẩu.",
             gr.update(visible=True),
             gr.update(visible=False),
         )
