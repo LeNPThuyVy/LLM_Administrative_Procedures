@@ -67,7 +67,7 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     toàn bộ thủ tục mới được trả lời.
 
     Chỉ trả lời:
-    "Thông tin trong chưa đủ để trả lời câu hỏi này."
+    "Thông tin trong tài liệu được cung cấp chưa đủ để trả lời câu hỏi này."
     khi bằng chứng hoàn toàn không chứa thông tin liên quan trực tiếp đến câu hỏi.
 
     8. Ngữ cảnh hội thoại chỉ được sử dụng để hiểu ý định của người dùng, không được xem là bằng chứng pháp lý.

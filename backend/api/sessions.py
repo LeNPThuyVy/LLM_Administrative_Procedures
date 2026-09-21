@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from context.database import AsyncSessionLocal
@@ -13,23 +14,30 @@ router = APIRouter(
 )
 
 
+class CreateSessionRequest(BaseModel):
+    user_id: uuid.UUID
+
+
 @router.post("")
-async def create_session():
+async def create_session(request: CreateSessionRequest):
     async with AsyncSessionLocal() as db:
 
-        # Demo/PoC: lấy user đầu tiên trong DB
+        # Kiểm tra user có tồn tại không
         user_result = await db.execute(
-            select(User).limit(1)
+            select(User).where(
+                User.id == request.user_id
+            )
         )
 
         user = user_result.scalar_one_or_none()
 
         if user is None:
             raise HTTPException(
-                status_code=400,
-                detail="No user found in database"
+                status_code=404,
+                detail="User not found"
             )
 
+        # Tạo session đúng cho user đang đăng nhập
         session = ChatSession(
             id=uuid.uuid4(),
             user_id=user.id
@@ -41,6 +49,7 @@ async def create_session():
 
         return {
             "session_id": str(session.id),
+            "user_id": str(session.user_id),
             "created_at": (
                 session.created_at.isoformat()
                 if session.created_at
@@ -50,13 +59,17 @@ async def create_session():
 
 
 @router.get("/{session_id}/messages")
-async def get_session_messages(session_id: uuid.UUID):
+async def get_session_messages(
+    session_id: uuid.UUID,
+    user_id: uuid.UUID
+):
     async with AsyncSessionLocal() as db:
 
         session_result = await db.execute(
             select(ChatSession)
             .where(
-                ChatSession.id == session_id
+                ChatSession.id == session_id,
+                ChatSession.user_id == user_id
             )
         )
 
@@ -65,7 +78,7 @@ async def get_session_messages(session_id: uuid.UUID):
         if session is None:
             raise HTTPException(
                 status_code=404,
-                detail="Session not found"
+                detail="Session not found or does not belong to user"
             )
 
         messages_result = await db.execute(
@@ -81,6 +94,8 @@ async def get_session_messages(session_id: uuid.UUID):
         messages = messages_result.scalars().all()
 
         return {
+            "session_id": str(session.id),
+            "user_id": str(session.user_id),
             "messages": [
                 {
                     "role": message.role,

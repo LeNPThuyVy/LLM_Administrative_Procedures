@@ -63,11 +63,11 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     4. Không đưa ra giải thích hoặc kết luận nếu nội dung đó không được nêu rõ trong bằng chứng.
     5. Không thêm bất kỳ giấy tờ nào ngoài những giấy tờ được liệt kê rõ ràng trong bằng chứng.
     6. Không lặp lại giấy tờ hoặc thông tin.
-    7. Nếu bằng chứng có chứa ít nhất 2 thông tin trực tiếp trả lời câu hỏi, hãy trả lời bằng những thông tin đó. Không yêu cầu bằng chứng phải mô tả
+    7. Nếu bằng chứng có chứa ít nhất  thông tin trực tiếp trả lời câu hỏi, hãy trả lời bằng những thông tin đó. Không yêu cầu bằng chứng phải mô tả
     toàn bộ thủ tục mới được trả lời.
 
     Chỉ trả lời:
-    "Thông tin trong chưa đủ để trả lời câu hỏi này."
+    "Thông tin trong tài liệu được cung cấp chưa đủ để trả lời câu hỏi này."
     khi bằng chứng hoàn toàn không chứa thông tin liên quan trực tiếp đến câu hỏi.
 
     8. Ngữ cảnh hội thoại chỉ được sử dụng để hiểu ý định của người dùng, không được xem là bằng chứng pháp lý.

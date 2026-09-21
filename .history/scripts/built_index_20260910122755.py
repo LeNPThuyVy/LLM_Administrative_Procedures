@@ -134,7 +134,10 @@ def build_index(chunks):
     """
     print("Loading embedding model")
     model = SentenceTransformer(cfg.EMBEDDING_MODEL)
-    texts = [f"passage: {chunk['content']}" for chunk in chunks]
+    texts = [
+        f"passage: {chunk['content']}"
+        for chunk in chunks
+    ]
 
     embeddings = model.encode(
         texts,
