@@ -1,3 +1,21 @@
+"""
+Build (or rebuild) the ChromaDB vector index for procedures.
+
+Issue #4 fix: instead of indexing one chunk per procedure (all fields merged),
+split each procedure into per-field chunks:
+
+    PROC_XXX_docs    → title + required_documents
+    PROC_XXX_fee     → title + fee
+    PROC_XXX_time    → title + processing_time
+    PROC_XXX_method  → title + submission_method
+    PROC_XXX_general → full original content (overview / catch-all)
+
+Advantages:
+- Retrieval targets only the specific field the user asks about.
+- Reduces false-positive evidence from unrelated fields in the same chunk.
+- Works together with prompt_builder.py field-restriction rules (Issue #5).
+"""
+
 import json
 import os
 
@@ -29,8 +47,85 @@ MODEL_NAME = (
 )
 
 
+def _build_field_chunks(item: dict) -> list[dict]:
+    """
+    Build per-field chunks for a single procedure item.
+
+    Returns a list of dicts with keys:
+        chunk_id, document_id, title, field, text, metadata
+    """
+    doc_id = item["document_id"]
+    title = item.get("title", "")
+
+    # Reusable base metadata shared across all chunks of this procedure.
+    base_meta = {
+        "document_id": doc_id,
+        "title": title,
+        "agency": item.get("agency", ""),
+        "page": item.get("page_number", item.get("page", 1)),
+    }
+
+    chunks = []
+
+    # 1. Required documents chunk
+    docs_text = item.get("required_documents", "").strip()
+    if docs_text:
+        chunks.append({
+            "chunk_id": f"{doc_id}_docs",
+            "field": "required_documents",
+            "text": f"Tên thủ tục: {title}\nThành phần hồ sơ:\n{docs_text}",
+            "metadata": {**base_meta, "chunk_id": f"{doc_id}_docs", "field": "required_documents"},
+        })
+
+    # 2. Fee chunk
+    fee_text = item.get("fee", "").strip()
+    if fee_text:
+        chunks.append({
+            "chunk_id": f"{doc_id}_fee",
+            "field": "fee",
+            "text": f"Tên thủ tục: {title}\nLệ phí: {fee_text}",
+            "metadata": {**base_meta, "chunk_id": f"{doc_id}_fee", "field": "fee"},
+        })
+
+    # 3. Processing time chunk
+    time_text = item.get("processing_time", "").strip()
+    if time_text:
+        chunks.append({
+            "chunk_id": f"{doc_id}_time",
+            "field": "processing_time",
+            "text": f"Tên thủ tục: {title}\nThời gian giải quyết: {time_text}",
+            "metadata": {**base_meta, "chunk_id": f"{doc_id}_time", "field": "processing_time"},
+        })
+
+    # 4. Submission method chunk
+    method_text = item.get("submission_method", "").strip()
+    if method_text:
+        chunks.append({
+            "chunk_id": f"{doc_id}_method",
+            "field": "submission_method",
+            "text": f"Tên thủ tục: {title}\nHình thức nộp: {method_text}",
+            "metadata": {**base_meta, "chunk_id": f"{doc_id}_method", "field": "submission_method"},
+        })
+
+    # 5. General (full content) chunk — always present as a fallback
+    full_content = item.get("content", "").strip()
+    if full_content:
+        chunks.append({
+            "chunk_id": f"{doc_id}_general",
+            "field": "general",
+            "text": full_content,
+            "metadata": {**base_meta, "chunk_id": f"{doc_id}_general", "field": "general"},
+        })
+
+    return chunks
+
+
 def main():
-    print("1. Dang doc procedures.json...")
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+    print("1. Đang đọc procedures.json...")
 
     with open(
         DATA_PATH,
@@ -40,16 +135,24 @@ def main():
         procedures = json.load(f)
 
     print(
-        f"2. Tim thay {len(procedures)} thu tuc."
+        f"2. Tìm thấy {len(procedures)} thủ tục."
     )
 
-    print("3. Dang tai embedding model...")
+    # Build per-field chunks for all procedures.
+    all_chunks = []
+    for item in procedures:
+        all_chunks.extend(_build_field_chunks(item))
 
-    model = SentenceTransformer(
-        MODEL_NAME
+    print(
+        f"   → Tổng số chunks sau khi split: {len(all_chunks)} "
+        f"(trung bình {len(all_chunks) / len(procedures):.1f} chunk/thủ tục)"
     )
 
-    print("4. Dang mo ChromaDB...")
+    print("3. Đang tải embedding model...")
+
+    model = SentenceTransformer(MODEL_NAME)
+
+    print("4. Đang mở ChromaDB...")
 
     client = chromadb.PersistentClient(
         path=DB_PATH
@@ -59,6 +162,7 @@ def main():
         client.delete_collection(
             name="procedures"
         )
+        print("   → Đã xóa collection cũ.")
     except Exception:
         pass
 
@@ -66,43 +170,19 @@ def main():
         name="procedures"
     )
 
-    ids = []
-    documents = []
-    metadatas = []
+    ids = [c["chunk_id"] for c in all_chunks]
+    documents = [c["text"] for c in all_chunks]
+    metadatas = [c["metadata"] for c in all_chunks]
 
-    for item in procedures:
-        chunk_id = (
-            item["document_id"]
-            + "_chunk_1"
-        )
-
-        ids.append(
-            chunk_id
-        )
-
-        documents.append(
-            item["content"]
-        )
-
-        metadatas.append({
-            "chunk_id": chunk_id,
-            "document_id": item["document_id"],
-            "title": item["title"],
-            "agency": item.get("agency", ""),
-            "page": item.get(
-                "page_number",
-                item.get("page", 1)
-            )
-        })
-
-    print("5. Dang tao embedding...")
+    print("5. Đang tạo embeddings...")
 
     embeddings = model.encode(
         documents,
-        normalize_embeddings=True
+        normalize_embeddings=True,
+        show_progress_bar=True,
     ).tolist()
 
-    print("6. Dang luu vao ChromaDB...")
+    print("6. Đang lưu vào ChromaDB...")
 
     collection.add(
         ids=ids,
@@ -111,7 +191,7 @@ def main():
         embeddings=embeddings
     )
 
-    print("\nHOAN THANH")
+    print(f"\nHOÀN THÀNH — {len(all_chunks)} chunks được lập chỉ mục.")
     print("Database:", DB_PATH)
 
 

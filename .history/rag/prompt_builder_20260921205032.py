@@ -57,7 +57,7 @@ _FIELD_PATTERNS = {
 
 def _detect_field_types(query: str) -> list[str]:
     """
-    Detect ALL procedure fields the user is asking about.
+    Detect ALL procedure fields the user is asking about
     """
     q = query.lower()
     return [

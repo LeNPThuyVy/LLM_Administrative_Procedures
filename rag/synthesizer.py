@@ -7,12 +7,58 @@ from rag.generator import generate_answer
 from rag.retrieval import RetrievedChunk
 
 
+# ---------------------------------------------------------------------------
+# Issue #3 — Rule-based clarification override
+# ---------------------------------------------------------------------------
+# Specific keywords extracted from procedure titles in procedures.json.
+# If the user's query contains at least one of these, the query is considered
+# specific enough to proceed (no forced clarification).
+# Add more keywords here whenever new procedures are added to the dataset.
+_PROCEDURE_KEYWORDS: frozenset[str] = frozenset({
+    # Hộ tịch
+    "kết hôn", "khai sinh", "khai tử", "nhận cha", "nhận mẹ", "nhận con",
+    "hôn nhân", "tình trạng hôn nhân", "xác nhận tình trạng",
+    # Lao động - tiền lương
+    "nội quy lao động", "việc làm", "vay vốn",
+    # Người có công / xã hội
+    "khuyết tật", "hưu trí", "trợ cấp", "liệt sĩ", "bằng tổ quốc",
+    "thân nhân", "người có công", "hỏa táng", "mai táng", "hỗ trợ",
+    # Xây dựng / đất đai
+    "giấy phép xây dựng", "xây dựng", "quy hoạch", "khởi công",
+    "đất đai", "số nhà", "vị trí nhà", "tình trạng nhà",
+    # Hộ kinh doanh
+    "hộ kinh doanh", "đăng ký kinh doanh", "kinh doanh",
+    "tạm ngừng kinh doanh", "chấm dứt hoạt động",
+    # Giáo dục
+    "học bổng", "chuyển trường",
+    # Công chứng / chứng thực
+    "chứng thực", "chữ ký", "hợp đồng", "di chúc",
+    # Nhập cảnh / xuất cảnh (không có trong dataset → nên trigger clarification)
+    # (Không thêm vào đây)
+})
+
+
 @dataclass
 class ConsolidatedQuery:
     resolved_query: str
     original_query: str
     needs_clarification: bool
     clarification_question: str | None = None
+
+
+def _extract_text(val: object) -> str:
+    """Safely extract string text from string, list, or dict message content."""
+    if isinstance(val, str):
+        return val
+    if isinstance(val, list):
+        return " ".join(_extract_text(item) for item in val if item)
+    if isinstance(val, dict):
+        if "text" in val and isinstance(val["text"], str):
+            return val["text"]
+        if "content" in val:
+            return _extract_text(val["content"])
+        return " ".join(_extract_text(v) for v in val.values() if v)
+    return str(val) if val is not None else ""
 
 
 def _format_history(history: dict[str, Any]) -> str:
@@ -34,15 +80,12 @@ def _format_history(history: dict[str, Any]) -> str:
         message_lines: list[str] = []
 
         for message in recent_messages:
-            if not isinstance(message, dict):
-                continue
-
-            role = message.get("role", "")
-            content = message.get("content", "")
-
-            message_lines.append(
-                f"{role}: {content}"
-            )
+            if isinstance(message, dict):
+                role = message.get("role", "")
+                content = _extract_text(message.get("content", ""))
+                message_lines.append(f"{role}: {content}")
+            elif isinstance(message, (list, tuple)) and len(message) == 2:
+                message_lines.append(f"user: {_extract_text(message[0])}\nassistant: {_extract_text(message[1])}")
 
         if message_lines:
             parts.append(
@@ -248,6 +291,20 @@ def _validate_consolidated_query(
     )
 
 
+def _has_specific_procedure_keyword(query: str, extra_text: str = "") -> bool:
+    """
+    Return True if the query contains at least one keyword that maps to a
+    known procedure in the dataset (procedures.json titles).
+
+    This is a deterministic guard — the LLM is NOT consulted here.
+
+    `extra_text` is appended (lowercased) before the keyword search so that
+    recent conversation messages can also contribute procedure context.
+    """
+    combined = (query + " " + (extra_text or "")).lower()
+    return any(kw in combined for kw in _PROCEDURE_KEYWORDS)
+
+
 def synthesizer(
     query: str,
     history: dict[str, Any],
@@ -256,7 +313,53 @@ def synthesizer(
 ) -> ConsolidatedQuery:
     """
     Synthesize the current query into an independent ConsolidatedQuery.
+
+    Issue #3 fix: apply rule-based override BEFORE calling LLM.
+    Check both the query and the recent conversation history for procedure
+    keywords.  If neither contains a keyword → force needs_clarification=True.
+    This prevents vague queries like "Tôi muốn làm thủ tục" from reaching
+    generation even when procedure_hint is non-empty (e.g. spurious matches).
     """
+
+    # Build the combined text from query + recent_messages for keyword check.
+    recent_messages = (
+        history.get("recent_messages", [])
+        if isinstance(history, dict)
+        else []
+    )
+    history_kw_texts = []
+    for m in recent_messages:
+        if isinstance(m, dict):
+            history_kw_texts.append(_extract_text(m.get("content", "")))
+        elif isinstance(m, (list, tuple)):
+            history_kw_texts.append(" ".join(_extract_text(item) for item in m))
+        elif isinstance(m, str):
+            history_kw_texts.append(m)
+
+    history_text_for_kw = " ".join(history_kw_texts)
+
+    # -----------------------------------------------------------------
+    # Rule-based clarification override (Issue #3)
+    # -----------------------------------------------------------------
+    if not _has_specific_procedure_keyword(query, history_text_for_kw):
+        clarification_q = (
+            "Bạn muốn hỏi về thủ tục hành chính nào? "
+            "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
+        )
+        print(
+            "[synthesizer] Rule-based override: no procedure keyword in "
+            "query+history → needs_clarification=True"
+        )
+        return ConsolidatedQuery(
+            resolved_query=query,
+            original_query=query,
+            needs_clarification=True,
+            clarification_question=clarification_q,
+        )
+
+    # -----------------------------------------------------------------
+    # Normal path: call LLM synthesizer
+    # -----------------------------------------------------------------
     prompt = _build_synthesizer_prompt(
         query=query,
         history=history,

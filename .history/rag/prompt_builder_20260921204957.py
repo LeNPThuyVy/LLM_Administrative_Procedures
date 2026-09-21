@@ -57,7 +57,17 @@ _FIELD_PATTERNS = {
 
 def _detect_field_types(query: str) -> list[str]:
     """
-    Detect ALL procedure fields the user is asking about.
+    Detect ALL procedure fields the user is asking about (not just one).
+
+    Bug fix: the previous version returned only a single field, checked
+    in a fixed priority order (fee > time > method > docs). For a
+    compound question that asks about multiple fields at once (e.g.
+    "giấy tờ cần gì, lệ phí bao nhiêu, nộp ở đâu"), that meant only the
+    first-matched field (usually fee/method) was kept, and the
+    resulting restriction rule explicitly told the model NOT to mention
+    the other fields — including documents — even though they were
+    asked about. This version returns every field that was actually
+    asked about, in a stable order.
     """
     q = query.lower()
     return [

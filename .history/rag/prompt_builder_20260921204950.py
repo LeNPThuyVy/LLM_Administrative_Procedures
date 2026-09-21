@@ -33,65 +33,52 @@ _METHOD_PATTERNS = (
 )
 
 
-_FIELD_LABELS = {
-    "docs": "GIẤY TỜ / HỒ SƠ cần thiết",
-    "fee": "LỆ PHÍ",
-    "time": "THỜI GIAN GIẢI QUYẾT",
-    "method": "HÌNH THỨC NỘP HỒ SƠ",
-}
-
-_FIELD_SECTION_NAMES = {
-    "docs": "'Thành phần hồ sơ'",
-    "fee": "'Lệ phí'",
-    "time": "'Thời gian giải quyết'",
-    "method": "'Hình thức nộp'",
-}
-
-_FIELD_PATTERNS = {
-    "docs": _DOCS_PATTERNS,
-    "fee": _FEE_PATTERNS,
-    "time": _TIME_PATTERNS,
-    "method": _METHOD_PATTERNS,
-}
-
-
-def _detect_field_types(query: str) -> list[str]:
+def _detect_field_type(query: str) -> str | None:
     """
-    Detect ALL procedure fields the user is asking about.
+    Detect which procedure field the user is primarily asking about.
+
+    Returns one of: 'docs', 'fee', 'time', 'method', or None.
+    None means the query is general — no field restriction applied.
     """
     q = query.lower()
-    return [
-        key
-        for key in ("docs", "fee", "time", "method")
-        if any(p in q for p in _FIELD_PATTERNS[key])
-    ]
+
+    if any(p in q for p in _FEE_PATTERNS):
+        return "fee"
+
+    if any(p in q for p in _TIME_PATTERNS):
+        return "time"
+
+    if any(p in q for p in _METHOD_PATTERNS):
+        return "method"
+
+    if any(p in q for p in _DOCS_PATTERNS):
+        return "docs"
+
+    return None
 
 
-def _build_field_restriction_rule(field_types: list[str]) -> str:
-    """
-    Build the field-restriction rule text for however many fields were
-    detected. Restricts the answer to exactly the fields asked about,
-    and only excludes the fields that were NOT asked about.
-    """
-    if not field_types:
-        return ""
-
-    asked_labels = "; ".join(_FIELD_LABELS[k] for k in field_types)
-    asked_sections = ", ".join(_FIELD_SECTION_NAMES[k] for k in field_types)
-    excluded = [k for k in _FIELD_LABELS if k not in field_types]
-
-    exclusion_text = ""
-    if excluded:
-        excluded_labels = ", ".join(_FIELD_LABELS[k] for k in excluded)
-        exclusion_text = (
-            f" Không đề cập các nội dung khác không được hỏi ({excluded_labels})."
-        )
-
-    return (
-        f"16. Câu hỏi này hỏi về: {asked_labels}. "
-        f"Chỉ trả lời đúng (các) phần {asked_sections} từ bằng chứng."
-        f"{exclusion_text}"
-    )
+_FIELD_RESTRICTION_RULES = {
+    "docs": (
+        "16. Câu hỏi này hỏi về GIẤY TỜ / HỒ SƠ cần thiết. "
+        "Chỉ liệt kê phần 'Thành phần hồ sơ' từ bằng chứng. "
+        "Không đề cập lệ phí, thời gian giải quyết, hay hình thức nộp."
+    ),
+    "fee": (
+        "16. Câu hỏi này hỏi về LỆ PHÍ. "
+        "Chỉ trả lời phần 'Lệ phí' từ bằng chứng. "
+        "Không đề cập giấy tờ, thời gian giải quyết, hay hình thức nộp."
+    ),
+    "time": (
+        "16. Câu hỏi này hỏi về THỜI GIAN GIẢI QUYẾT. "
+        "Chỉ trả lời phần 'Thời gian giải quyết' từ bằng chứng. "
+        "Không đề cập giấy tờ, lệ phí, hay hình thức nộp."
+    ),
+    "method": (
+        "16. Câu hỏi này hỏi về HÌNH THỨC NỘP HỒ SƠ. "
+        "Chỉ trả lời phần 'Hình thức nộp' từ bằng chứng. "
+        "Không đề cập giấy tờ, lệ phí, hay thời gian giải quyết."
+    ),
+}
 
 
 def _extract_text(val: object) -> str:
@@ -168,11 +155,12 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     context_text = _format_context(context)
 
     # Issue #5 — build optional field-restriction rule
-    # (now handles multiple fields asked in one query — see bug-fix note
-    # on _detect_field_types above)
-    field_types = _detect_field_types(query)
-    restriction_text = _build_field_restriction_rule(field_types)
-    field_restriction_rule = ("\n    " + restriction_text) if restriction_text else ""
+    field_type = _detect_field_type(query)
+    field_restriction_rule = (
+        "\n    " + _FIELD_RESTRICTION_RULES[field_type]
+        if field_type
+        else ""
+    )
 
     prompt = f"""
     Bạn là Trợ lý AI hỗ trợ các thủ tục hành chính.

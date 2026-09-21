@@ -15,6 +15,10 @@ CHUNK_OVERLAP = 200
 
 DEFAULT_TOP_K = 3
 
+# Minimum retrieval score threshold.
+# Chunks with final_score below this value are treated as irrelevant.
+# Used in pipeline.py (Issue #1) and procedure_reader.py (Issue #2).
+# Tune this value based on real query benchmarks.
 MIN_RETRIEVAL_SCORE = 0.50
 
 SUPPORTED_LOCATIONS = {
@@ -30,4 +34,4 @@ TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-VAST_URL = "https://foundations-sub-pollution-oecd.trycloudflare.com"
+VAST_URL = "https://modeling-wesley-display-likelihood.trycloudflare.com"
