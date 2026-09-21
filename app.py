@@ -3,7 +3,7 @@ import gradio as gr
 from rag.pipeline import answer_query
 from ui.clarification_box import build_clarification_box, update_clarification
 from ui.evidence_panel import build_evidence_accordion, update_evidence
-
+from ui.auth_panel import build_auth_panel
 
 def respond(message: str, history: list[dict]):
     """
@@ -64,43 +64,181 @@ def respond(message: str, history: list[dict]):
         clar_md_update,
     )
 
+def login_user(email, password):
+    if not email or not email.strip():
+        return (
+            "❌ Vui lòng nhập email.",
+            gr.update(visible=True),
+            gr.update(visible=False),
+        )
+
+    if not password or not password.strip():
+        return (
+            "❌ Vui lòng nhập mật khẩu.",
+            gr.update(visible=True),
+            gr.update(visible=False),
+        )
+
+    # Tài khoản demo tạm thời
+    DEMO_EMAIL = "minh@gmail.com"
+    DEMO_PASSWORD = "123456"
+
+    if email.strip() != DEMO_EMAIL or password != DEMO_PASSWORD:
+        return (
+            "❌ Email hoặc mật khẩu không đúng.",
+            gr.update(visible=True),
+            gr.update(visible=False),
+        )
+
+    return (
+        "✅ Đăng nhập thành công.",
+        gr.update(visible=False),
+        gr.update(visible=True),
+    )
+
+
+def register_user(name, email, password, confirm_password):
+    """
+    Validate giao diện đăng ký.
+    Sau này sẽ gọi API backend.
+    """
+
+    if not name or not name.strip():
+        return "❌ Vui lòng nhập họ và tên."
+
+    if not email or not email.strip():
+        return "❌ Vui lòng nhập email."
+
+    if not password:
+        return "❌ Vui lòng nhập mật khẩu."
+
+    if len(password) < 6:
+        return "❌ Mật khẩu phải có ít nhất 6 ký tự."
+
+    if password != confirm_password:
+        return "❌ Hai mật khẩu không khớp."
+
+    return "✅ Thông tin hợp lệ. Backend đăng ký tài khoản đang được tích hợp."
+
+def logout_user():
+    return (
+        gr.update(visible=True),
+        gr.update(visible=False),
+        "",
+        "",
+    )
 
 def create_app():
     """
-    Build Gradio UI application with Chat Interface, Clarification Box, and Evidence Panel.
-    Compatible across Gradio versions.
+    Build Gradio UI application.
+    Gồm:
+    - Login / Register
+    - Chat Interface
+    - Clarification Box
+    - Evidence Panel
     """
+
     with gr.Blocks(title="Trợ lý Thủ tục Hành chính AI") as demo:
-        gr.Markdown("#Trợ lý Thủ tục Hành chính AI")
-        gr.Markdown(
-            "Hệ thống hỏi đáp thủ tục hành chính dựa trên mô hình RAG và dữ liệu pháp lý xác thực."
-        )
 
-        chatbot = gr.Chatbot(height=450)
+        # ============================================
+        # AUTH UI
+        # ============================================
+        auth = build_auth_panel()
 
-        # Clarification box component
-        clar_box, clar_md = build_clarification_box()
+        # ============================================
+        # MAIN APPLICATION
+        # Ban đầu ẩn, login thành công mới hiện
+        # ============================================
+        with gr.Column(visible=False) as main_app:
 
-        # Evidence panel accordion component
-        acc, acc_md = build_evidence_accordion()
+            gr.Markdown("# Trợ lý Thủ tục Hành chính AI")
+            logout_btn = gr.Button("Đăng xuất")
 
-        with gr.Row():
-            msg_input = gr.Textbox(
-                placeholder="Nhập câu hỏi thủ tục hành chính của bạn tại đây...",
-                show_label=False,
-                scale=8,
+            gr.Markdown(
+                "Hệ thống hỏi đáp thủ tục hành chính "
+                "dựa trên mô hình RAG và dữ liệu pháp lý xác thực."
             )
-            send_btn = gr.Button("Gửi", variant="primary", scale=1)
 
-        # Event triggers
-        submit_args = {
-            "fn": respond,
-            "inputs": [msg_input, chatbot],
-            "outputs": [msg_input, chatbot, acc, acc_md, clar_box, clar_md],
-        }
+            chatbot = gr.Chatbot(height=450)
 
-        msg_input.submit(**submit_args)
-        send_btn.click(**submit_args)
+            # Clarification box
+            clar_box, clar_md = build_clarification_box()
+
+            # Evidence panel
+            acc, acc_md = build_evidence_accordion()
+
+            with gr.Row():
+                msg_input = gr.Textbox(
+                    placeholder=(
+                        "Nhập câu hỏi thủ tục hành chính "
+                        "của bạn tại đây..."
+                    ),
+                    show_label=False,
+                    scale=8,
+                )
+
+                send_btn = gr.Button(
+                    "Gửi",
+                    variant="primary",
+                    scale=1
+                )
+
+            submit_args = {
+                "fn": respond,
+                "inputs": [msg_input, chatbot],
+                "outputs": [
+                    msg_input,
+                    chatbot,
+                    acc,
+                    acc_md,
+                    clar_box,
+                    clar_md,
+                ],
+            }
+
+            msg_input.submit(**submit_args)
+            send_btn.click(**submit_args)
+
+        # ============================================
+        # LOGIN EVENT
+        # ============================================
+        auth["login_btn"].click(
+            fn=login_user,
+            inputs=[
+                auth["login_email"],
+                auth["login_password"],
+            ],
+            outputs=[
+                auth["login_message"],
+                auth["container"],
+                main_app,
+            ],
+        )
+        logout_btn.click(
+        fn=logout_user,
+        outputs=[
+            auth["container"],
+            main_app,
+            auth["login_email"],
+            auth["login_password"],
+        ],
+    )
+
+        # ============================================
+        # REGISTER EVENT
+        # ============================================
+        auth["register_btn"].click(
+            fn=register_user,
+            inputs=[
+                auth["register_name"],
+                auth["register_email"],
+                auth["register_password"],
+                auth["register_confirm"],
+            ],
+            outputs=[
+                auth["register_message"],
+            ],
+        )
 
     return demo
 
