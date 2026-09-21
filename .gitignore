@@ -217,7 +217,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-=======
+
+#Ignore file test
+test.py
+
 .idea/
 .venv/
 __pycache__/

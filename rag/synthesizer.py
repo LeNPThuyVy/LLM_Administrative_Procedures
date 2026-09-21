@@ -256,8 +256,6 @@ def synthesizer(
 ) -> ConsolidatedQuery:
     """
     Synthesize the current query into an independent ConsolidatedQuery.
-
-    The generator is called exactly once per invocation.
     """
     prompt = _build_synthesizer_prompt(
         query=query,
@@ -267,6 +265,14 @@ def synthesizer(
 
     raw_output = generator(prompt)
 
-    parsed_output = _parse_json_output(raw_output)
-
-    return _validate_consolidated_query(parsed_output)
+    try:
+        parsed_output = _parse_json_output(raw_output)
+        return _validate_consolidated_query(parsed_output)
+    except ValueError as exc:
+        print(f"[synthesizer] Fallback do lỗi parse: {exc}")
+        return ConsolidatedQuery(
+            resolved_query=query,
+            original_query=query,
+            needs_clarification=False,
+            clarification_question=None,
+        )
