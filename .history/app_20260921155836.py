@@ -1,12 +1,3 @@
-"""
-Gradio UI application.
-
-This module exposes `create_app()` which returns a `gr.Blocks` instance.
-It can be:
-  - Mounted into FastAPI via `backend/main.py` (unified server), or
-  - Launched standalone: `py -3.12 -m app`
-"""
-
 import gradio as gr
 
 from rag.pipeline import answer_query
@@ -14,77 +5,26 @@ from ui.clarification_box import build_clarification_box, update_clarification
 from ui.evidence_panel import build_evidence_accordion, update_evidence
 from ui.auth_panel import build_auth_panel
 
-
-def _extract_text(val: object) -> str:
-    """Safely extract string text from string, list, or dict message content."""
-    if isinstance(val, str):
-        return val
-    if isinstance(val, list):
-        return " ".join(_extract_text(item) for item in val if item)
-    if isinstance(val, dict):
-        if "text" in val and isinstance(val["text"], str):
-            return val["text"]
-        if "content" in val:
-            return _extract_text(val["content"])
-        return " ".join(_extract_text(v) for v in val.values() if v)
-    return str(val) if val is not None else ""
-
-
-def user_submit(message: str, history: list[dict]):
+def respond(message: str, history: list[dict]):
     """
-    Step 1: Immediately append user prompt to chatbot history and clear input box.
-    Renders instantly on UI when user hits Enter or clicks Send.
+    Handle user query, execute RAG pipeline, and return updated chat & evidence components.
+    Compatible with Gradio 6.x default messages format (dict with role/content keys).
     """
-    if not message or not message.strip():
-        return "", history or []
+    if not message.strip():
+        return "", history, gr.update(visible=False), "", gr.update(visible=False), ""
 
+    # history is already in dict format; use directly as recent_messages for RAG pipeline
     history = history or []
-    history.append({"role": "user", "content": message.strip()})
-    return "", history
-
-
-def bot_respond(history: list[dict]):
-    """
-    Step 2: Execute RAG pipeline in background and append assistant answer + evidence.
-    """
-    if not history:
-        return history, gr.update(visible=False), "", gr.update(visible=False), ""
-
-    # Find the latest user query
-    last_user_msg = ""
-    for msg in reversed(history):
-        if isinstance(msg, dict) and msg.get("role") == "user":
-            last_user_msg = _extract_text(msg.get("content", ""))
-            break
-        elif isinstance(msg, (list, tuple)) and len(msg) >= 1:
-            last_user_msg = _extract_text(msg[0])
-            break
-
-    if not last_user_msg or not last_user_msg.strip():
-        return history, gr.update(visible=False), "", gr.update(visible=False), ""
-
-    # Recent history (excluding current user prompt)
-    recent_history = history[:-1]
 
     # Call AI Core RAG pipeline
     response = answer_query(
-        query=last_user_msg,
-        context={"recent_messages": recent_history}
+        query=message,
+        context={"recent_messages": history}
     )
 
-    # Determine displayed text and clarification state
-    if response.needs_clarification:
-        display_text = response.clarification_question or (
-            "Bạn muốn hỏi về thủ tục hành chính nào? "
-            "Vui lòng cung cấp thêm thông tin để tôi có thể hỗ trợ."
-        )
-        needs_clarification_flag = True
-    else:
-        display_text = response.answer or ""
-        needs_clarification_flag = False
-
-    # Append assistant response turn to history
-    history.append({"role": "assistant", "content": display_text})
+    # Append new user-bot turn to history
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": response.answer})
 
     # Prepare evidence list for UI Evidence Panel
     evidence_list = []
@@ -104,13 +44,19 @@ def bot_respond(history: list[dict]):
                     }
                 )
 
+    # Check clarification needs
+    needs_clarification = (
+        "Thông tin trong tài liệu được cung cấp chưa đủ" in response.answer
+    )
+
     acc_update, md_update = update_evidence(evidence_list)
     clar_box_update, clar_md_update = update_clarification(
-        needs_clarification=needs_clarification_flag,
-        question=display_text if needs_clarification_flag else "",
+        needs_clarification=needs_clarification,
+        question=response.answer if needs_clarification else "",
     )
 
     return (
+        "",
         history,
         acc_update,
         md_update,
@@ -118,11 +64,10 @@ def bot_respond(history: list[dict]):
         clar_md_update,
     )
 
-
 def login_user(email, password):
     if not email or not email.strip():
         return (
-            "Vui lòng nhập email.",
+            "❌ Vui lòng nhập email.",
             gr.update(visible=True),
             gr.update(visible=False),
         )
@@ -153,6 +98,11 @@ def login_user(email, password):
 
 
 def register_user(name, email, password, confirm_password):
+    """
+    Validate giao diện đăng ký.
+    Sau này sẽ gọi API backend.
+    """
+
     if not name or not name.strip():
         return "❌ Vui lòng nhập họ và tên."
 
@@ -170,7 +120,6 @@ def register_user(name, email, password, confirm_password):
 
     return "✅ Thông tin hợp lệ. Backend đăng ký tài khoản đang được tích hợp."
 
-
 def logout_user():
     return (
         gr.update(visible=True),
@@ -179,10 +128,14 @@ def logout_user():
         "",
     )
 
-
-def create_app() -> gr.Blocks:
+def create_app():
     """
-    Build and return the Gradio Blocks application.
+    Build Gradio UI application.
+    Gồm:
+    - Login / Register
+    - Chat Interface
+    - Clarification Box
+    - Evidence Panel
     """
 
     with gr.Blocks(title="Trợ lý Thủ tục Hành chính AI") as demo:
@@ -206,9 +159,7 @@ def create_app() -> gr.Blocks:
                 "dựa trên mô hình RAG và dữ liệu pháp lý xác thực."
             )
 
-            chatbot = gr.Chatbot(
-                height=450,
-            )
+            chatbot = gr.Chatbot(height=450)
 
             # Clarification box
             clar_box, clar_md = build_clarification_box()
@@ -229,49 +180,24 @@ def create_app() -> gr.Blocks:
                 send_btn = gr.Button(
                     "Gửi",
                     variant="primary",
-                    scale=1,
+                    scale=1
                 )
 
-            # ============================================
-            # INSTANT SUBMIT EVENT CHAINING
-            # 1. user_submit: clears textbox & renders prompt in chatbot instantly without progress spinner
-            # 2. bot_respond: runs RAG pipeline in background and appends answer
-            # ============================================
-            msg_input.submit(
-                fn=user_submit,
-                inputs=[msg_input, chatbot],
-                outputs=[msg_input, chatbot],
-                show_progress="hidden",
-            ).then(
-                fn=bot_respond,
-                inputs=[chatbot],
-                outputs=[
+            submit_args = {
+                "fn": respond,
+                "inputs": [msg_input, chatbot],
+                "outputs": [
+                    msg_input,
                     chatbot,
                     acc,
                     acc_md,
                     clar_box,
                     clar_md,
                 ],
-                show_progress="hidden",
-            )
+            }
 
-            send_btn.click(
-                fn=user_submit,
-                inputs=[msg_input, chatbot],
-                outputs=[msg_input, chatbot],
-                show_progress="hidden",
-            ).then(
-                fn=bot_respond,
-                inputs=[chatbot],
-                outputs=[
-                    chatbot,
-                    acc,
-                    acc_md,
-                    clar_box,
-                    clar_md,
-                ],
-                show_progress="hidden",
-            )
+            msg_input.submit(**submit_args)
+            send_btn.click(**submit_args)
 
         # ============================================
         # LOGIN EVENT
@@ -288,16 +214,15 @@ def create_app() -> gr.Blocks:
                 main_app,
             ],
         )
-
         logout_btn.click(
-            fn=logout_user,
-            outputs=[
-                auth["container"],
-                main_app,
-                auth["login_email"],
-                auth["login_password"],
-            ],
-        )
+        fn=logout_user,
+        outputs=[
+            auth["container"],
+            main_app,
+            auth["login_email"],
+            auth["login_password"],
+        ],
+    )
 
         # ============================================
         # REGISTER EVENT
@@ -319,5 +244,5 @@ def create_app() -> gr.Blocks:
 
 
 if __name__ == "__main__":
-    demo = create_app()
-    demo.launch(server_name="127.0.0.1", server_port=7860)
+    app = create_app()
+    app.launch()

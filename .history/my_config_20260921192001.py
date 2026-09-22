@@ -30,4 +30,4 @@ TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-VAST_URL = "https://foundations-sub-pollution-oecd.trycloudflare.com"
+VAST_URL = "https://modeling-wesley-display-likelihood.trycloudflare.com"

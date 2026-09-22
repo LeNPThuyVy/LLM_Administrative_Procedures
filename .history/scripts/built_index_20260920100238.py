@@ -24,7 +24,7 @@ from pathlib import Path
 
 import chromadb
 from sentence_transformers import SentenceTransformer
-import my_config as cfg
+import my as cfg
 
 #Load procedure
 def load_procedures()-> list[dict]:

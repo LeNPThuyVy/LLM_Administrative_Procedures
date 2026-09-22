@@ -1,7 +1,6 @@
 import re
 from collections.abc import Callable
 
-import my_config as cfg
 from rag.evidence_builder import build_evidence_candidates
 from rag.hybrid_generator import generate_hybrid
 from rag.history_reader import history_reader
@@ -10,7 +9,7 @@ from rag.procedure_reader import procedure_reader
 from rag.prompt_builder import build_prompt
 from rag.rerank import rerank
 from rag.retrieval import retrieve
-from rag.synthesizer import synthesizer
+# from rag.synthesizer import synthesizer
 from rag.verification import verify_answer
 
 
@@ -18,48 +17,6 @@ FALLBACK_TEXT = (
     "Thông tin trong tài liệu được cung cấp "
     "chưa đủ để trả lời câu hỏi này."
 )
-
-# Returned when user references a location outside the HCMC dataset (Issue #7).
-LOCATION_NOT_SUPPORTED_TEXT = (
-    "Hiện tại hệ thống chỉ hỗ trợ thông tin thủ tục hành chính tại "
-    "Thành phố Hồ Chí Minh. Địa điểm bạn hỏi chưa có trong cơ sở dữ liệu."
-)
-
-# Vietnamese location terms that are definitely NOT HCMC.
-# Keep this list to cases clearly outside the dataset.
-_NON_HCMC_PATTERNS = re.compile(
-    r"\b(bình dương|bình phước|đồng nai|long an|tây ninh|"
-    r"bà rịa|vũng tàu|tiền giang|cần thơ|hà nội|đà nẵng|"
-    r"hải phòng|huế|nha trang|đà lạt|quy nhơn|vinh|"
-    r"hải dương|nam định|ninh bình)\b",
-    re.IGNORECASE | re.UNICODE,
-)
-
-
-def _extract_text(val: object) -> str:
-    """Safely extract string text from string, list, or dict message content."""
-    if isinstance(val, str):
-        return val
-    if isinstance(val, list):
-        return " ".join(_extract_text(item) for item in val if item)
-    if isinstance(val, dict):
-        if "text" in val and isinstance(val["text"], str):
-            return val["text"]
-        if "content" in val:
-            return _extract_text(val["content"])
-        return " ".join(_extract_text(v) for v in val.values() if v)
-    return str(val) if val is not None else ""
-
-
-def _detect_unsupported_location(text: str) -> bool:
-    """
-    Return True if text contains a Vietnamese location that is
-    explicitly NOT in the HCMC dataset.
-
-    Only triggers for well-known non-HCMC cities / provinces
-    to avoid false positives.
-    """
-    return bool(_NON_HCMC_PATTERNS.search(text))
 
 
 def _answer_from_evidence(evidence_candidates):
@@ -127,13 +84,36 @@ def answer_query(
 ) -> AnswerResponse:
     """
     Run the complete AI Core / RAG pipeline.
-    """
-    _ = session_id
 
-    if isinstance(query, (list, dict)):
-        query = _extract_text(query)
-    elif not isinstance(query, str):
-        query = str(query) if query is not None else ""
+    Flow:
+        query
+            ↓
+        history_reader
+            ↓
+        procedure_reader
+            ↓
+        synthesizer
+            ↓
+        clarification OR resolved_query
+            ↓
+        official retrieval
+            ↓
+        rerank
+            ↓
+        evidence builder
+            ↓
+        prompt builder
+            ↓
+        answer generation
+            ↓
+        verification
+            ↓
+        mapper
+            ↓
+        AnswerResponse
+    """
+
+    _ = session_id
 
     if not query or not query.strip():
         return AnswerResponse(
@@ -145,33 +125,6 @@ def answer_query(
 
     if context is None:
         context = {}
-
-    # ---------------------------------------------------------
-    # Issue #7 — Out-of-scope location detection
-    # Check query AND recent history for non-HCMC location references.
-    # ---------------------------------------------------------
-    recent_messages = context.get("recent_messages", [])
-    history_texts = []
-    for m in recent_messages:
-        if isinstance(m, dict):
-            history_texts.append(_extract_text(m.get("content", "")))
-        elif isinstance(m, (list, tuple)):
-            history_texts.append(" ".join(_extract_text(item) for item in m))
-        elif isinstance(m, str):
-            history_texts.append(m)
-
-    full_text_for_location = query + " " + " ".join(history_texts)
-    if _detect_unsupported_location(full_text_for_location):
-        print(
-            f"[pipeline] Unsupported location detected in: "
-            f"{full_text_for_location[:100]!r}"
-        )
-        return AnswerResponse(
-            answer=LOCATION_NOT_SUPPORTED_TEXT,
-            claims=[],
-            needs_clarification=False,
-            clarification_question=None,
-        )
 
     # ---------------------------------------------------------
     # Multi-agent preprocessing
@@ -188,12 +141,12 @@ def answer_query(
     )
 
     # 3. Synthesize the query using history + procedure hints.
-    consolidated = synthesizer(
-        query=query,
-        history=history,
-        procedure_hint=procedure_hint,
-        generator=generator,
-    )
+    # consolidated = synthesizer(
+    #     query=query,
+    #     history=history,
+    #     procedure_hint=procedure_hint,
+    #     generator=generator,
+    # )
 
     # ---------------------------------------------------------
     # Clarification branch
@@ -220,22 +173,6 @@ def answer_query(
     )
 
     if not retrieved_chunks:
-        return AnswerResponse(
-            answer=FALLBACK_TEXT,
-            claims=[],
-            needs_clarification=False,
-            clarification_question=None,
-        )
-
-    # Issue #1 — Relevance threshold gate.
-    # If the best retrieval score is below MIN_RETRIEVAL_SCORE, skip
-    # generation entirely and return FALLBACK_TEXT to avoid hallucination.
-    top_score = retrieved_chunks[0].retrieval_score
-    if top_score < cfg.MIN_RETRIEVAL_SCORE:
-        print(
-            f"[pipeline] Top-1 score {top_score:.3f} < "
-            f"MIN_RETRIEVAL_SCORE {cfg.MIN_RETRIEVAL_SCORE} → FALLBACK"
-        )
         return AnswerResponse(
             answer=FALLBACK_TEXT,
             claims=[],
