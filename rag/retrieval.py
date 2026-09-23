@@ -22,12 +22,19 @@ class RetrievedChunk:
     metadata: dict
 
 
-# Module-level singletons — loaded once, reused across all queries
+# =========================================================
+# MODULE-LEVEL SINGLETONS
+# Loaded once and reused across all queries
+# =========================================================
+
 _embedding_model: SentenceTransformer | None = None
 _chroma_collection = None
 
 
-# Model / Vector Store
+# =========================================================
+# MODEL / VECTOR STORE
+# =========================================================
+
 def load_embedding_model() -> SentenceTransformer:
     """
     Load embedding model only once.
@@ -59,9 +66,8 @@ def load_vector_store():
 
 def _get_embedding_model() -> SentenceTransformer:
     """
-    Return the cached embedding model, loading it on first call.
-
-    Subsequent calls reuse the same instance.
+    Return cached embedding model.
+    Load on first call.
     """
     global _embedding_model
 
@@ -73,9 +79,8 @@ def _get_embedding_model() -> SentenceTransformer:
 
 def _get_chroma_collection():
     """
-    Return the cached Chroma collection, loading it on first call.
-
-    Subsequent calls reuse the same instance.
+    Return cached Chroma collection.
+    Load on first call.
     """
     global _chroma_collection
 
@@ -85,38 +90,134 @@ def _get_chroma_collection():
     return _chroma_collection
 
 
-# Query Processing
+# =========================================================
+# STRUCTURED CONTEXT HELPERS
+# =========================================================
+
+def _get_structured_context(
+    context: dict | None
+) -> dict:
+    """
+    Lấy structured_context từ Context Manager.
+
+    Nếu structured_context chưa có thì thử fallback
+    sang long_term_memory.
+    """
+    if not context:
+        return {}
+
+    structured_context = context.get(
+        "structured_context",
+        {}
+    ) or {}
+
+    if structured_context:
+        return structured_context
+
+    long_term_memory = context.get(
+        "long_term_memory",
+        {}
+    ) or {}
+
+    return long_term_memory
+
+
+def _format_context_value(value) -> str:
+    """
+    Chuyển value của structured_context thành chuỗi
+    phù hợp để đưa vào search query.
+    """
+    if value is None:
+        return ""
+
+    if isinstance(value, str):
+        return value.strip()
+
+    if isinstance(value, (list, tuple, set)):
+        values = [
+            str(item).strip()
+            for item in value
+            if str(item).strip()
+        ]
+
+        return ", ".join(values)
+
+    return str(value).strip()
+
+
+# =========================================================
+# QUERY PROCESSING
+# =========================================================
+
 def build_search_query(
     query: str,
     context: dict | None = None
 ) -> str:
     """
-    Build search query from user query and structured context.
+    Build retrieval query using:
+    - current user query
+    - structured_context
+    - long_term_memory fallback
+
+    Các field quan trọng được đưa vào theo thứ tự ưu tiên.
     """
-    query = query.strip()
 
-    if not context:
-        return query
+    query = (query or "").strip()
 
-    structured_context = context.get(
-        "structured_context",
-        {}
+    if not query:
+        return ""
+
+    structured_context = _get_structured_context(
+        context
     )
 
     if not structured_context:
         return query
 
+    # Các field ảnh hưởng trực tiếp đến retrieval.
+    priority_fields = [
+        "procedure_name",
+        "location",
+        "intent",
+        "method",
+        "applicant_type",
+        "documents",
+        "fee",
+        "processing_time",
+    ]
+
     context_parts = []
 
-    for key, value in structured_context.items():
-        if value is None:
+    for key in priority_fields:
+
+        value = structured_context.get(key)
+
+        formatted_value = _format_context_value(
+            value
+        )
+
+        if not formatted_value:
             continue
 
-        if isinstance(value, str) and not value.strip():
-            continue
+        # Dùng label tiếng Việt tự nhiên hơn cho embedding.
+        labels = {
+            "procedure_name": "thủ tục",
+            "location": "địa phương",
+            "intent": "nhu cầu",
+            "method": "phương thức",
+            "applicant_type": "đối tượng",
+            "documents": "giấy tờ",
+            "fee": "lệ phí",
+            "processing_time": "thời gian xử lý",
+        }
+
+        label = labels.get(
+            key,
+            key
+        )
 
         context_parts.append(
-            f"{key}: {value}"
+            f"{label}: {formatted_value}"
         )
 
     if not context_parts:
@@ -124,8 +225,8 @@ def build_search_query(
 
     return (
         query
-        + " "
-        + " ".join(context_parts)
+        + " | "
+        + " | ".join(context_parts)
     )
 
 
@@ -158,6 +259,10 @@ def _normalize_words(text: str) -> set[str]:
         "các",
         "hồ",
         "sơ",
+        "tôi",
+        "muốn",
+        "hỏi",
+        "về",
     }
 
     return {
@@ -173,30 +278,45 @@ def _calculate_keyword_bonus(
     content: str
 ) -> float:
     """
-    Prefer results whose title directly matches
-    important words in the user's query.
+    Prefer results whose title/content directly matches
+    important words in the retrieval query.
     """
-    query_words = _normalize_words(query)
 
-    title = str(
-        metadata.get("title", "")
+    query_words = _normalize_words(
+        query
     )
 
-    title_words = _normalize_words(title)
-    content_words = _normalize_words(content)
+    title = str(
+        metadata.get(
+            "title",
+            ""
+        )
+    )
+
+    title_words = _normalize_words(
+        title
+    )
+
+    content_words = _normalize_words(
+        content
+    )
 
     if not query_words:
         return 0.0
 
     title_overlap = len(
-        query_words.intersection(title_words)
+        query_words.intersection(
+            title_words
+        )
     )
 
     content_overlap = len(
-        query_words.intersection(content_words)
+        query_words.intersection(
+            content_words
+        )
     )
 
-    # Title match is much more important.
+    # Title match is more important.
     bonus = (
         title_overlap * 0.30
         + content_overlap * 0.03
@@ -204,6 +324,66 @@ def _calculate_keyword_bonus(
 
     return bonus
 
+
+def _calculate_context_bonus(
+    structured_context: dict,
+    metadata: dict,
+    content: str
+) -> float:
+    """
+    Tăng điểm nhẹ khi candidate phù hợp với
+    procedure_name/location từ structured_context.
+
+    Không filter cứng để tránh làm mất kết quả đúng
+    khi metadata chưa đầy đủ.
+    """
+
+    if not structured_context:
+        return 0.0
+
+    bonus = 0.0
+
+    searchable_text = " ".join(
+        [
+            str(metadata.get("title", "")),
+            str(metadata.get("location", "")),
+            str(metadata.get("procedure_name", "")),
+            content or "",
+        ]
+    ).lower()
+
+    procedure_name = _format_context_value(
+        structured_context.get(
+            "procedure_name"
+        )
+    )
+
+    location = _format_context_value(
+        structured_context.get(
+            "location"
+        )
+    )
+
+    if (
+        procedure_name
+        and procedure_name.lower()
+        in searchable_text
+    ):
+        bonus += 0.35
+
+    if (
+        location
+        and location.lower()
+        in searchable_text
+    ):
+        bonus += 0.15
+
+    return bonus
+
+
+# =========================================================
+# RETRIEVAL
+# =========================================================
 
 def retrieve(
     query: str,
@@ -213,21 +393,35 @@ def retrieve(
     """
     Retrieve relevant chunks.
 
-    First use vector search, then improve ranking
-    using title/query keyword overlap.
+    Flow:
+    1. Build search query with structured context
+    2. Vector search
+    3. Keyword bonus
+    4. Structured-context bonus
+    5. Sort and return top_k
     """
+
     if not query or not query.strip():
         return []
 
     if top_k <= 0:
         return []
 
+    structured_context = (
+        _get_structured_context(
+            context
+        )
+    )
+
     search_query = build_search_query(
         query=query,
         context=context
     )
 
-    # Load embedding model
+    # =====================================================
+    # EMBEDDING
+    # =====================================================
+
     model = _get_embedding_model()
 
     query_embedding = model.encode(
@@ -235,10 +429,12 @@ def retrieve(
         normalize_embeddings=True
     ).tolist()
 
-    # Load persistent ChromaDB
+    # =====================================================
+    # VECTOR STORE
+    # =====================================================
+
     collection = _get_chroma_collection()
 
-    # Retrieve candidate chunks
     collection_count = collection.count()
 
     candidate_count = min(
@@ -250,7 +446,9 @@ def retrieve(
         return []
 
     results = collection.query(
-        query_embeddings=[query_embedding],
+        query_embeddings=[
+            query_embedding
+        ],
         n_results=candidate_count
     )
 
@@ -271,12 +469,19 @@ def retrieve(
 
     retrieved_chunks = []
 
+    # =====================================================
+    # RANKING
+    # =====================================================
+
     for content, metadata, distance in zip(
         documents,
         metadatas,
         distances
     ):
+
         metadata = metadata or {}
+
+        content = content or ""
 
         chunk_id = str(
             metadata.get(
@@ -297,15 +502,30 @@ def retrieve(
             1.0 + float(distance)
         )
 
-        keyword_bonus = _calculate_keyword_bonus(
-            query=query,
-            metadata=metadata,
-            content=content
+        # Dùng search_query thay vì query gốc
+        # để keyword ranking cũng nhận context.
+        keyword_bonus = (
+            _calculate_keyword_bonus(
+                query=search_query,
+                metadata=metadata,
+                content=content
+            )
+        )
+
+        context_bonus = (
+            _calculate_context_bonus(
+                structured_context=(
+                    structured_context
+                ),
+                metadata=metadata,
+                content=content
+            )
         )
 
         final_score = (
             vector_score
             + keyword_bonus
+            + context_bonus
         )
 
         retrieved_chunks.append(
@@ -320,7 +540,9 @@ def retrieve(
 
     # Highest score first.
     retrieved_chunks.sort(
-        key=lambda item: item.retrieval_score,
+        key=lambda item: (
+            item.retrieval_score
+        ),
         reverse=True
     )
 

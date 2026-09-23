@@ -132,9 +132,9 @@ class ConversationSummary(Base):
 class LongTermMemory(Base):
     __tablename__ = "long_term_memory"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    session_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("sessions.id"),
         primary_key=True
     )
 

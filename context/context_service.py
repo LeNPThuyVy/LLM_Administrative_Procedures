@@ -10,6 +10,8 @@ from context.models import (
     LongTermMemory
 )
 
+from context.structured_context import extract_structured_context
+
 
 async def get_context(
     session_id,
@@ -65,9 +67,7 @@ async def get_context(
             )
         )
 
-        summary = (
-            summary_result.scalar_one_or_none()
-        )
+        summary = summary_result.scalar_one_or_none()
 
         structured_result = await db.execute(
             select(StructuredContext)
@@ -77,21 +77,17 @@ async def get_context(
             )
         )
 
-        structured = (
-            structured_result.scalar_one_or_none()
-        )
+        structured = structured_result.scalar_one_or_none()
 
         memory_result = await db.execute(
             select(LongTermMemory)
             .where(
-                LongTermMemory.user_id
-                == session.user_id
+                LongTermMemory.session_id
+                == session_id
             )
         )
 
-        memory = (
-            memory_result.scalar_one_or_none()
-        )
+        memory = memory_result.scalar_one_or_none()
 
         return {
             "session": {
@@ -131,6 +127,7 @@ async def get_context(
             )
         }
 
+
 async def update_memory(
     session_id,
     query: str,
@@ -138,6 +135,9 @@ async def update_memory(
 ):
     async with AsyncSessionLocal() as db:
 
+        # =========================
+        # GET SESSION
+        # =========================
         session_result = await db.execute(
             select(ChatSession)
             .where(
@@ -152,12 +152,20 @@ async def update_memory(
                 f"Session not found: {session_id}"
             )
 
+        # =========================
+        # SAVE USER MESSAGE
+        # =========================
         user_message = Message(
             session_id=session_id,
             role="user",
             content=query
         )
 
+        db.add(user_message)
+
+        # =========================
+        # SAVE ASSISTANT MESSAGE
+        # =========================
         answer = final_result.get(
             "answer",
             ""
@@ -175,51 +183,100 @@ async def update_memory(
             evidence=evidence_list
         )
 
-        db.add(user_message)
         db.add(assistant_message)
 
-        new_structured_context = final_result.get(
-            "structured_context",
-            {}
+        # =========================
+        # LOAD OLD STRUCTURED CONTEXT
+        # =========================
+        structured_result = await db.execute(
+            select(StructuredContext)
+            .where(
+                StructuredContext.session_id
+                == session_id
+            )
         )
 
-        if new_structured_context:
-            structured_result = await db.execute(
-                select(StructuredContext)
-                .where(
-                    StructuredContext.session_id
-                    == session_id
-                )
+        existing_structured = (
+            structured_result.scalar_one_or_none()
+        )
+
+        old_structured_context = (
+            existing_structured.data
+            if existing_structured
+            else {}
+        )
+
+        # =========================
+        # AUTO EXTRACT STRUCTURED CONTEXT
+        # =========================
+        new_structured_context = (
+            extract_structured_context(
+                message=query,
+                old_context=old_structured_context
+            )
+        )
+
+        # =========================
+        # SAVE STRUCTURED CONTEXT
+        # =========================
+        if existing_structured is None:
+
+            new_structured_record = StructuredContext(
+                session_id=session_id,
+                data=new_structured_context
             )
 
-            structured = (
-                structured_result.scalar_one_or_none()
+            db.add(new_structured_record)
+
+        else:
+
+            existing_structured.data = (
+                new_structured_context
             )
 
-            if structured is None:
-                structured = StructuredContext(
-                    session_id=session_id,
-                    data=new_structured_context
-                )
+        # =========================
+        # LOAD LONG TERM MEMORY
+        # =========================
+        memory_result = await db.execute(
+            select(LongTermMemory)
+            .where(
+                LongTermMemory.session_id
+                == session_id
+            )
+        )
 
-                db.add(structured)
+        memory = memory_result.scalar_one_or_none()
 
-            else:
-                current_data = dict(
-                    structured.data or {}
-                )
+        # =========================
+        # SAVE LONG TERM MEMORY
+        # =========================
+        if memory is None:
 
-                current_data.update(
-                    new_structured_context
-                )
+            memory = LongTermMemory(
+                session_id=session_id,
+                data=new_structured_context
+            )
 
-                structured.data = current_data
+            db.add(memory)
 
+        else:
+
+            memory.data = dict(
+                new_structured_context
+            )
+
+        # =========================
+        # COMMIT
+        # =========================
         await db.commit()
 
-        await _update_conversation_summary(
-            session_id=session_id
-        )
+    # =========================
+    # UPDATE CONVERSATION SUMMARY
+    # =========================
+    await _update_conversation_summary(
+        session_id=session_id
+    )
+
 
 SUMMARY_TRIGGER = 20
 RECENT_KEEP = 10
@@ -273,6 +330,7 @@ async def _update_conversation_summary(
         )
 
         if summary is None:
+
             summary = ConversationSummary(
                 session_id=session_id,
                 summary=summary_text
@@ -281,6 +339,7 @@ async def _update_conversation_summary(
             db.add(summary)
 
         else:
+
             summary.summary = summary_text
 
         await db.commit()
