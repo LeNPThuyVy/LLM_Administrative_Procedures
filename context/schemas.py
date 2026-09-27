@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -37,9 +37,6 @@ class APIEvidence:
     title: str
     snippet: str
     page_number: Optional[int] = None
-
-from dataclasses import dataclass, field
-from typing import Any, Dict, List
 
 
 @dataclass
