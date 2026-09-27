@@ -229,3 +229,6 @@ __pycache__/
 
 #ignore history
 .history
+
+#ignore model
+model/
