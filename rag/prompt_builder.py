@@ -70,27 +70,17 @@ def _detect_field_types(query: str) -> list[str]:
 def _build_field_restriction_rule(field_types: list[str]) -> str:
     """
     Build the field-restriction rule text for however many fields were
-    detected. Restricts the answer to exactly the fields asked about,
-    and only excludes the fields that were NOT asked about.
+    detected. Restricts the answer to exactly the fields asked about.
     """
     if not field_types:
         return ""
 
-    asked_labels = "; ".join(_FIELD_LABELS[k] for k in field_types)
     asked_sections = ", ".join(_FIELD_SECTION_NAMES[k] for k in field_types)
-    excluded = [k for k in _FIELD_LABELS if k not in field_types]
-
-    exclusion_text = ""
-    if excluded:
-        excluded_labels = ", ".join(_FIELD_LABELS[k] for k in excluded)
-        exclusion_text = (
-            f" Không đề cập các nội dung khác không được hỏi ({excluded_labels})."
-        )
 
     return (
-        f"16. Câu hỏi này hỏi về: {asked_labels}. "
-        f"Chỉ trả lời đúng (các) phần {asked_sections} từ bằng chứng."
-        f"{exclusion_text}"
+        f"16. LƯU Ý ĐẶC BIỆT: Người dùng CHỈ HỎI về {asked_sections}. "
+        f"Bạn BẮT BUỘC CHỈ trích xuất nội dung của {asked_sections} từ Bằng chứng. "
+        f"TUYỆT ĐỐI KHÔNG viết ra các phần khác."
     )
 
 
@@ -187,7 +177,7 @@ def build_prompt(query: str, evidence_candidates: list[EvidenceCandidate], conte
     4. Không đưa ra giải thích hoặc kết luận nếu nội dung đó không được nêu rõ trong bằng chứng.
     5. Không thêm bất kỳ giấy tờ nào ngoài những giấy tờ được liệt kê rõ ràng trong bằng chứng.
     6. Không lặp lại giấy tờ hoặc thông tin.
-    7. Nếu bằng chứng có chứa ít nhất 2 thông tin trực tiếp trả lời câu hỏi, hãy trả lời bằng những thông tin đó. Không yêu cầu bằng chứng phải mô tả
+    7. Nếu bằng chứng có chứa thông tin trực tiếp trả lời câu hỏi, hãy trả lời đầy đủ các thông tin đó. Không yêu cầu bằng chứng phải mô tả
     toàn bộ thủ tục mới được trả lời.
 
     Chỉ trả lời:

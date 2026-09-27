@@ -62,23 +62,59 @@ def _detect_unsupported_location(text: str) -> bool:
     return bool(_NON_HCMC_PATTERNS.search(text))
 
 
-def _answer_from_evidence(evidence_candidates):
+def _answer_from_evidence(evidence_candidates, field_types: list[str] = None):
     """
     Nếu LLM không tạo được câu trả lời hữu ích,
-    dùng trực tiếp evidence tốt nhất.
+    dùng trực tiếp evidence tốt nhất có chứa thông tin cần tìm.
     """
-
     if not evidence_candidates:
         return FALLBACK_TEXT
 
-    best = evidence_candidates[0]
+    # Nếu chỉ cần docs, tìm chunk có chứa "Thành phần hồ sơ:"
+    if field_types and "docs" in field_types and len(field_types) == 1:
+        for ev in evidence_candidates:
+            content = (ev.content or "").strip()
+            if "Thành phần hồ sơ:" in content:
+                docs_part = content.split("Thành phần hồ sơ:")[1]
+                return f"Thành phần hồ sơ:\n{docs_part.strip()} [{ev.candidate_id}]"
 
-    content = (best.content or "").strip()
-
-    if not content:
-        return FALLBACK_TEXT
-
-    return f"{content} [{best.candidate_id}]"
+    # Nếu không filter được hoặc filter thất bại, trả về các chunk phù hợp (loại bỏ lặp Tên thủ tục)
+    parts = []
+    seen_titles = set()
+    
+    # 1. Ưu tiên chunk general: tìm các document_id có chunk _general
+    general_docs = {
+        ev.document_id for ev in evidence_candidates 
+        if ev.chunk_id and ev.chunk_id.endswith("_general")
+    }
+    
+    for ev in evidence_candidates:
+        # Nếu doc này đã có general chunk, bỏ qua các chunk con (_docs, _fee...)
+        if ev.document_id in general_docs and not (ev.chunk_id and ev.chunk_id.endswith("_general")):
+            continue
+            
+        content = (ev.content or "").strip()
+        if not content:
+            continue
+            
+        # Tìm và xử lý dòng Tên thủ tục để tránh lặp
+        import re
+        title_match = re.search(r"^Tên thủ tục: (.*?)\n", content)
+        if title_match:
+            title = title_match.group(1).strip()
+            if title not in seen_titles:
+                parts.append(f"Tên thủ tục: {title}")
+                seen_titles.add(title)
+            # Cắt bỏ dòng Tên thủ tục ở chunk này
+            content = content.replace(title_match.group(0), "").strip()
+            
+        if content:
+            parts.append(f"{content} [{ev.candidate_id}]")
+            
+    if parts:
+        return "\n\n".join(parts)
+        
+    return FALLBACK_TEXT
 
 
 def _is_useless_answer(answer: str) -> bool:
@@ -93,6 +129,9 @@ def _is_useless_answer(answer: str) -> bool:
     text = answer.strip()
 
     if FALLBACK_TEXT.lower() in text.lower():
+        return True
+        
+    if "thông tin trong chưa đủ" in text.lower() or "chưa đủ để trả lời" in text.lower():
         return True
 
     # Ví dụ: [EC_001]
@@ -273,7 +312,9 @@ def answer_query(
 
     # 6. Fallback if useless answer
     if _is_useless_answer(generated_answer):
-        generated_answer = _answer_from_evidence(evidence_candidates)
+        from rag.prompt_builder import _detect_field_types
+        field_types = _detect_field_types(consolidated.resolved_query)
+        generated_answer = _answer_from_evidence(evidence_candidates, field_types)
 
     # 7. Verification
     verification_results = verify_answer(

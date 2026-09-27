@@ -45,6 +45,6 @@ def generate_hybrid(prompt: str) -> str:
             f"[HybridGenerator] Remote unavailable: {exc}"
         )
 
-    last_model_used = "local/Qwen2.5-0.5B"
-    print("[HybridGenerator] [MODEL_USED=local/Qwen2.5-0.5B] Falling back to local Qwen")
+    last_model_used = "local/Qwen2.5-1.5B-Q4_K_M"
+    print("[HybridGenerator] [MODEL_USED=local/Qwen2.5-1.5B-Q4_K_M] Falling back to local Qwen")
     return generate_local(prompt)
