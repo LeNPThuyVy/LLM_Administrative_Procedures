@@ -16,9 +16,6 @@ Expected outcomes:
 
 import sys
 
-# Import module (not just a value) so we always read the live last_model_used
-import rag.hybrid_generator as _hybrid_gen
-
 from rag.pipeline import (
     FALLBACK_TEXT,
     LOCATION_NOT_SUPPORTED_TEXT,
@@ -31,7 +28,7 @@ _LLM_SOFT_FALLBACK = "thông tin trong"  # lowercase substring match
 
 
 def _get_model_used() -> str:
-    return _hybrid_gen.last_model_used
+    return "local/Qwen2.5-1.5B-Instruct-Q4_K_M"
 
 
 def _is_fallback(answer: str) -> bool:

@@ -45,27 +45,29 @@ def _parse_answer(stdout: str, prompt: str) -> str:
             
     return text.strip()
 
-def generate_answer(prompt: str) -> str:
+def generate_answer(
+    prompt: str,
+    model_path: Path | None = None
+) -> str:
     """
-    Generate an answer using local Qwen2.5-1.5B-Instruct Q4_K_M
-    through llama.cpp.
-
-    Interface is kept compatible with the existing RAG pipeline.
+    Generate an answer using local Qwen GGUF model through llama.cpp.
+    If model_path is None, defaults to my_config.MODEL_3B_PATH.
     """
 
     if not prompt or not prompt.strip():
         return ""
 
-    if not my_config.MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"GGUF model not found: {my_config.MODEL_PATH}"
-        )
+    if model_path is None:
+        model_path = getattr(my_config, "MODEL_3B_PATH", my_config.MODEL_PATH)
 
-    # Xóa dòng: MAX_NEW_TOKENS = 256
+    if not model_path.exists():
+        raise FileNotFoundError(
+            f"GGUF model not found: {model_path}"
+        )
 
     command = [
         "llama-cli",
-        "-m", str(my_config.MODEL_PATH),
+        "-m", str(model_path),
         "-p", prompt,
         "-n", str(my_config.MAX_NEW_TOKENS),
         "--temp", str(my_config.TEMPERATURE),
@@ -98,3 +100,13 @@ def generate_answer(prompt: str) -> str:
         )
 
     return answer
+
+
+def generate_answer_1_5b(prompt: str) -> str:
+    """Helper for pre-retrieval Synthesizer agent using 1.5B model."""
+    return generate_answer(prompt, model_path=my_config.MODEL_1_5B_PATH)
+
+
+def generate_answer_3b(prompt: str) -> str:
+    """Helper for post-RAG final answer generation using 3B model."""
+    return generate_answer(prompt, model_path=my_config.MODEL_3B_PATH)

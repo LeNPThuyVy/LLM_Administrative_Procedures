@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 import my_config as cfg
 from rag.evidence_builder import build_evidence_candidates
-from rag.hybrid_generator import generate_hybrid
+from rag.generator import generate_answer_1_5b, generate_answer_3b
 from rag.history_reader import history_reader
 from rag.mapper import AnswerResponse, map_verification_results
 from rag.procedure_reader import procedure_reader
@@ -98,7 +98,6 @@ def _answer_from_evidence(evidence_candidates, field_types: list[str] = None):
             continue
             
         # Tìm và xử lý dòng Tên thủ tục để tránh lặp
-        import re
         title_match = re.search(r"^Tên thủ tục: (.*?)\n", content)
         if title_match:
             title = title_match.group(1).strip()
@@ -162,7 +161,8 @@ def answer_query(
     query: str,
     session_id: str | None = None,
     context: dict | None = None,
-    generator: Callable[[str], str] = generate_hybrid,
+    generator: Callable[[str], str] = generate_answer_3b,
+    synthesizer_generator: Callable[[str], str] = generate_answer_1_5b,
 ) -> AnswerResponse:
     """
     Run the complete AI Core / RAG pipeline.
@@ -226,12 +226,12 @@ def answer_query(
         top_k=2,
     )
 
-    # 3. Synthesize the query using history + procedure hints.
+    # 3. Synthesize the query using history + procedure hints (uses 1.5B model).
     consolidated = synthesizer(
         query=query,
         history=history,
         procedure_hint=procedure_hint,
-        generator=generator,
+        generator=synthesizer_generator,
     )
 
     # ---------------------------------------------------------

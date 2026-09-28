@@ -10,7 +10,10 @@ from context.models import (
     LongTermMemory
 )
 
-from context.structured_context import extract_structured_context
+from context.structured_context import (
+    extract_structured_context,
+    merge_long_term_memory,
+)
 
 
 async def get_context(
@@ -82,8 +85,8 @@ async def get_context(
         memory_result = await db.execute(
             select(LongTermMemory)
             .where(
-                LongTermMemory.session_id
-                == session_id
+                LongTermMemory.user_id
+                == session.user_id
             )
         )
 
@@ -235,35 +238,50 @@ async def update_memory(
             )
 
         # =========================
-        # LOAD LONG TERM MEMORY
+        # LOAD LONG TERM MEMORY (theo user_id, không phải
+        # session_id — phải sống xuyên suốt nhiều session)
         # =========================
         memory_result = await db.execute(
             select(LongTermMemory)
             .where(
-                LongTermMemory.session_id
-                == session_id
+                LongTermMemory.user_id
+                == session.user_id
             )
         )
 
-        memory = memory_result.scalar_one_or_none()
+        existing_memory = (
+            memory_result.scalar_one_or_none()
+        )
+
+        old_memory_data = (
+            existing_memory.data
+            if existing_memory
+            else {}
+        )
+
+        # =========================
+        # MERGE (không ghi đè) LONG TERM MEMORY
+        # =========================
+        new_memory_data = merge_long_term_memory(
+            old_memory=old_memory_data,
+            new_structured_context=new_structured_context,
+        )
 
         # =========================
         # SAVE LONG TERM MEMORY
         # =========================
-        if memory is None:
+        if existing_memory is None:
 
-            memory = LongTermMemory(
-                session_id=session_id,
-                data=new_structured_context
+            new_memory_record = LongTermMemory(
+                user_id=session.user_id,
+                data=new_memory_data,
             )
 
-            db.add(memory)
+            db.add(new_memory_record)
 
         else:
 
-            memory.data = dict(
-                new_structured_context
-            )
+            existing_memory.data = new_memory_data
 
         # =========================
         # COMMIT

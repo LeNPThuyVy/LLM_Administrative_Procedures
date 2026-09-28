@@ -493,6 +493,67 @@ def extract_structured_context(
     return context
 
 
+def merge_long_term_memory(
+    old_memory: Dict[str, Any] | None,
+    new_structured_context: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Cập nhật long-term memory của MỘT USER, xuyên suốt nhiều session.
+
+    Khác với extract_structured_context() (chỉ giữ trạng thái của
+    một phiên hội thoại), hàm này phải cộng dồn qua thời gian:
+
+    - Các field vô hướng (procedure_name, location, method, fee,
+      processing_time, applicant_type, intent): nếu lượt hiện tại
+      có giá trị mới -> cập nhật thành "giá trị gần nhất biết được
+      về user này". Không có giá trị mới -> giữ nguyên giá trị cũ.
+    - documents: cộng dồn, không ghi đè (union qua toàn bộ lịch sử).
+    - procedure_history: danh sách duy nhất tất cả procedure_name
+      mà user từng hỏi qua, ở bất kỳ session nào — đây là phần
+      thực sự khác biệt so với structured_context, vì
+      structured_context của phiên hiện tại không hề biết user đã
+      từng hỏi những thủ tục nào ở các phiên trước.
+    """
+
+    if old_memory:
+        memory = deepcopy(DEFAULT_STRUCTURED_CONTEXT)
+        memory["procedure_history"] = []
+
+        for key, value in old_memory.items():
+            memory[key] = deepcopy(value)
+
+    else:
+        memory = deepcopy(DEFAULT_STRUCTURED_CONTEXT)
+        memory["procedure_history"] = []
+
+    for key, value in new_structured_context.items():
+
+        if key in ("documents", "procedure_history"):
+            continue
+
+        if value not in (None, [], ""):
+            memory[key] = value
+
+    memory["documents"] = _merge_documents(
+        memory.get("documents", []),
+        new_structured_context.get("documents", []),
+    )
+
+    new_procedure_name = new_structured_context.get(
+        "procedure_name"
+    )
+
+    if new_procedure_name:
+        history = list(memory.get("procedure_history", []))
+
+        if new_procedure_name not in history:
+            history.append(new_procedure_name)
+
+        memory["procedure_history"] = history
+
+    return memory
+
+
 if __name__ == "__main__":
     context = None
 

@@ -232,3 +232,5 @@ __pycache__/
 
 #ignore model
 model/
+
+*.zip

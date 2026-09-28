@@ -15,7 +15,11 @@ CHUNK_OVERLAP = 200
 
 DEFAULT_TOP_K = 5
 
-MODEL_PATH = Path( BASE_DIR/"model"/"Qwen2.5-3B-Instruct-Q4_K_M.gguf" )
+MODEL_1_5B_PATH = Path(BASE_DIR / "model" / "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf")
+MODEL_3B_PATH = Path(BASE_DIR / "model" / "Qwen2.5-3B-Instruct-Q4_K_M.gguf")
+
+# Default model path for RAG final answer generation
+MODEL_PATH = MODEL_3B_PATH
 
 MIN_RETRIEVAL_SCORE = 0.50
 

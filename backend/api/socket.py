@@ -198,10 +198,29 @@ async def websocket_chat(
                     )
 
                     # Truyền session_id xuống Context
-                    context = await get_context(
-                        session_id,
-                        query,
-                    )
+                    # BUG-F fix: get_context() raises ValueError nếu
+                    # session không tồn tại (race condition / DB reset).
+                    # Bắt lỗi và báo client thay vì để crash WS.
+                    try:
+                        context = await get_context(
+                            session_id,
+                            query,
+                        )
+                    except ValueError as exc:
+                        print(
+                            f"[WS] get_context error for "
+                            f"session={session_id}: {exc}"
+                        )
+                        await websocket.send_json({
+                            "type": "error",
+                            "data": {
+                                "message": (
+                                    "Phiên làm việc không hợp lệ. "
+                                    "Vui lòng tải lại trang."
+                                ),
+                            },
+                        })
+                        continue
 
                     # Gọi AI giống chat.py
                     result = await generate_answer(
