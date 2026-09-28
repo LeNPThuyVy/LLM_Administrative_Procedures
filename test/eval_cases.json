@@ -1,0 +1,116 @@
+[
+  {"id":"ST_001","type":"single","query":"Đăng ký kết hôn cần giấy tờ gì?","expected_doc_id":"PROC_004","expected_field":"docs","description":"Hỏi hồ sơ kết hôn"},
+  {"id":"ST_002","type":"single","query":"Lệ phí đăng ký kết hôn bao nhiêu?","expected_doc_id":"PROC_004","expected_field":"fee","description":"Hỏi lệ phí kết hôn"},
+  {"id":"ST_003","type":"single","query":"Thời gian giải quyết đăng ký kết hôn là bao lâu?","expected_doc_id":"PROC_004","expected_field":"time","description":"Hỏi thời gian kết hôn"},
+  {"id":"ST_004","type":"single","query":"Đăng ký khai sinh cần những giấy tờ nào?","expected_doc_id":"PROC_002","expected_field":"docs","description":"Hỏi hồ sơ khai sinh"},
+  {"id":"ST_005","type":"single","query":"Lệ phí đăng ký khai sinh là bao nhiêu?","expected_doc_id":"PROC_002","expected_field":"fee","description":"Hỏi lệ phí khai sinh"},
+  {"id":"ST_006","type":"single","query":"Đăng ký khai tử mất bao nhiêu ngày?","expected_doc_id":"PROC_003","expected_field":"time","description":"Hỏi thời gian khai tử"},
+  {"id":"ST_007","type":"single","query":"Hồ sơ đăng ký khai tử gồm những gì?","expected_doc_id":"PROC_003","expected_field":"docs","description":"Hỏi hồ sơ khai tử"},
+  {"id":"ST_008","type":"single","query":"Xác nhận tình trạng hôn nhân cần giấy tờ gì?","expected_doc_id":"PROC_001","expected_field":"docs","description":"Hỏi hồ sơ xác nhận hôn nhân"},
+  {"id":"ST_009","type":"single","query":"Lệ phí xác nhận tình trạng hôn nhân là bao nhiêu?","expected_doc_id":"PROC_001","expected_field":"fee","description":"Hỏi lệ phí xác nhận hôn nhân"},
+  {"id":"ST_010","type":"single","query":"Nộp hồ sơ xác nhận tình trạng hôn nhân ở đâu?","expected_doc_id":"PROC_001","expected_field":"method","description":"Hỏi nơi nộp xác nhận hôn nhân"},
+  {"id":"ST_011","type":"single","query":"Thủ tục nhận cha mẹ con cần giấy tờ gì?","expected_doc_id":"PROC_005","expected_field":"docs","description":"Hỏi hồ sơ nhận cha mẹ con"},
+  {"id":"ST_012","type":"single","query":"Lệ phí làm thủ tục nhận cha mẹ con là bao nhiêu?","expected_doc_id":"PROC_005","expected_field":"fee","description":"Hỏi lệ phí nhận cha mẹ con"},
+  {"id":"ST_013","type":"single","query":"Xác định mức độ khuyết tật cần hồ sơ gì?","expected_doc_id":"PROC_023","expected_field":"docs","description":"Hỏi hồ sơ xác định khuyết tật"},
+  {"id":"ST_014","type":"single","query":"Thời gian xử lý hồ sơ xác định mức độ khuyết tật bao lâu?","expected_doc_id":"PROC_023","expected_field":"time","description":"Hỏi thời gian xác định khuyết tật"},
+  {"id":"ST_015","type":"single","query":"Xin cấp giấy phép xây dựng cần những giấy tờ nào?","expected_doc_id":"PROC_027","expected_field":"docs","description":"Hỏi hồ sơ cấp phép xây dựng"},
+  {"id":"ST_016","type":"single","query":"Lệ phí cấp giấy phép xây dựng là bao nhiêu?","expected_doc_id":"PROC_027","expected_field":"fee","description":"Hỏi lệ phí xây dựng"},
+  {"id":"ST_017","type":"single","query":"Nộp hồ sơ xin cấp phép xây dựng ở đâu?","expected_doc_id":"PROC_027","expected_field":"method","description":"Hỏi nơi nộp xin phép xây dựng"},
+  {"id":"ST_018","type":"single","query":"Vay vốn hỗ trợ việc làm cần hồ sơ gì?","expected_doc_id":"PROC_032","expected_field":"docs","description":"Hỏi hồ sơ vay vốn việc làm"},
+  {"id":"ST_019","type":"single","query":"Thời gian giải quyết vay vốn việc làm mất bao lâu?","expected_doc_id":"PROC_032","expected_field":"time","description":"Hỏi thời gian vay vốn việc làm"},
+  {"id":"ST_020","type":"single","query":"Chuyển trường THCS cần những giấy tờ nào?","expected_doc_id":"PROC_029","expected_field":"docs","description":"Hỏi hồ sơ chuyển trường THCS"},
+  {"id":"ST_021","type":"single","query":"Nộp hồ sơ chuyển trường THCS ở đâu?","expected_doc_id":"PROC_029","expected_field":"method","description":"Hỏi nơi nộp chuyển trường THCS"},
+  {"id":"ST_022","type":"single","query":"Đăng ký hộ kinh doanh cần giấy tờ gì?","expected_doc_id":"PROC_036","expected_field":"docs","description":"Hỏi hồ sơ đăng ký hộ kinh doanh"},
+  {"id":"ST_023","type":"single","query":"Lệ phí đăng ký hộ kinh doanh là bao nhiêu?","expected_doc_id":"PROC_036","expected_field":"fee","description":"Hỏi lệ phí đăng ký hộ kinh doanh"},
+  {"id":"ST_024","type":"single","query":"Thay đổi nội dung đăng ký hộ kinh doanh cần hồ sơ gì?","expected_doc_id":"PROC_037","expected_field":"docs","description":"Hỏi hồ sơ thay đổi hộ kinh doanh"},
+  {"id":"ST_025","type":"single","query":"Học bổng chính sách cần điều kiện và hồ sơ gì?","expected_doc_id":"PROC_041","expected_field":"docs","description":"Hỏi hồ sơ học bổng chính sách"},
+  {"id":"ST_026","type":"single","query":"Thời hạn nộp hồ sơ học bổng chính sách là khi nào?","expected_doc_id":"PROC_041","expected_field":"time","description":"Hỏi thời hạn học bổng chính sách"},
+  {"id":"ST_027","type":"single","query":"Chứng thực chữ ký cần giấy tờ gì?","expected_doc_id":"PROC_042","expected_field":"docs","description":"Hỏi hồ sơ chứng thực chữ ký"},
+  {"id":"ST_028","type":"single","query":"Lệ phí chứng thực chữ ký là bao nhiêu?","expected_doc_id":"PROC_042","expected_field":"fee","description":"Hỏi lệ phí chứng thực chữ ký"},
+  {"id":"ST_029","type":"single","query":"Tôi muốn hỏi về thủ tục hành chính","expected_doc_id":null,"expected_field":null,"description":"Câu mơ hồ không rõ thủ tục"},
+  {"id":"ST_030","type":"single","query":"Làm thế nào để đăng ký kinh doanh xe tải liên tỉnh?","expected_doc_id":null,"expected_field":null,"description":"Câu ngoài phạm vi các thủ tục hiện có"},
+
+  {
+    "id":"MT_001",
+    "type":"multi_turn",
+    "description":"Hỏi kết hôn toàn diện: hồ sơ, lệ phí, nơi nộp",
+    "turns":[
+      {"query":"Thủ tục đăng ký kết hôn cần những gì?","expected_doc_id":"PROC_004","expected_field":"docs"},
+      {"query":"Lệ phí thì sao?","expected_doc_id":"PROC_004","expected_field":"fee"},
+      {"query":"Nộp ở đâu?","expected_doc_id":"PROC_004","expected_field":"method"}
+    ]
+  },
+  {
+    "id":"MT_002",
+    "type":"multi_turn",
+    "description":"Hỏi khai sinh: hồ sơ rồi hỏi thêm thời gian",
+    "turns":[
+      {"query":"Đăng ký khai sinh cho trẻ cần giấy tờ gì?","expected_doc_id":"PROC_002","expected_field":"docs"},
+      {"query":"Bao lâu thì có kết quả?","expected_doc_id":"PROC_002","expected_field":"time"},
+      {"query":"Có mất lệ phí không?","expected_doc_id":"PROC_002","expected_field":"fee"}
+    ]
+  },
+  {
+    "id":"MT_003",
+    "type":"multi_turn",
+    "description":"Hỏi xác nhận hôn nhân rồi chuyển sang hỏi kết hôn",
+    "turns":[
+      {"query":"Xác nhận tình trạng hôn nhân cần giấy tờ gì?","expected_doc_id":"PROC_001","expected_field":"docs"},
+      {"query":"Mất bao lâu để được cấp giấy?","expected_doc_id":"PROC_001","expected_field":"time"},
+      {"query":"Vậy nếu tôi muốn đăng ký kết hôn luôn thì cần thêm gì?","expected_doc_id":"PROC_004","expected_field":"docs"}
+    ]
+  },
+  {
+    "id":"MT_004",
+    "type":"multi_turn",
+    "description":"Hỏi cấp phép xây dựng toàn diện",
+    "turns":[
+      {"query":"Tôi muốn xin cấp giấy phép xây dựng nhà ở, cần hồ sơ gì?","expected_doc_id":"PROC_027","expected_field":"docs"},
+      {"query":"Thời gian xử lý bao lâu?","expected_doc_id":"PROC_027","expected_field":"time"},
+      {"query":"Lệ phí cấp phép là bao nhiêu?","expected_doc_id":"PROC_027","expected_field":"fee"},
+      {"query":"Nộp hồ sơ theo hình thức nào?","expected_doc_id":"PROC_027","expected_field":"method"}
+    ]
+  },
+  {
+    "id":"MT_005",
+    "type":"multi_turn",
+    "description":"Hỏi đăng ký hộ kinh doanh rồi hỏi thay đổi nội dung",
+    "turns":[
+      {"query":"Đăng ký hộ kinh doanh cần giấy tờ gì?","expected_doc_id":"PROC_036","expected_field":"docs"},
+      {"query":"Lệ phí đăng ký bao nhiêu?","expected_doc_id":"PROC_036","expected_field":"fee"},
+      {"query":"Sau này nếu muốn thay đổi địa chỉ kinh doanh thì làm sao?","expected_doc_id":"PROC_037","expected_field":"docs"},
+      {"query":"Lệ phí thay đổi là bao nhiêu?","expected_doc_id":"PROC_037","expected_field":"fee"}
+    ]
+  },
+  {
+    "id":"MT_006",
+    "type":"multi_turn",
+    "description":"Hỏi vay vốn việc làm chi tiết",
+    "turns":[
+      {"query":"Muốn vay vốn hỗ trợ việc làm cần điều kiện gì?","expected_doc_id":"PROC_032","expected_field":"docs"},
+      {"query":"Thời gian xét duyệt hồ sơ mất bao lâu?","expected_doc_id":"PROC_032","expected_field":"time"},
+      {"query":"Nộp hồ sơ ở đâu?","expected_doc_id":"PROC_032","expected_field":"method"}
+    ]
+  },
+  {
+    "id":"MT_007",
+    "type":"multi_turn",
+    "description":"Hỏi chuyển trường THCS rồi hỏi về học bổng",
+    "turns":[
+      {"query":"Con tôi muốn chuyển trường THCS cần làm gì?","expected_doc_id":"PROC_029","expected_field":"docs"},
+      {"query":"Nộp hồ sơ chuyển trường ở đâu?","expected_doc_id":"PROC_029","expected_field":"method"},
+      {"query":"Học sinh có thể xin học bổng chính sách không, cần hồ sơ gì?","expected_doc_id":"PROC_041","expected_field":"docs"}
+    ]
+  },
+  {
+    "id":"MT_008",
+    "type":"multi_turn",
+    "description":"Hỏi chứng thực chữ ký rồi hỏi khai tử",
+    "turns":[
+      {"query":"Chứng thực chữ ký cần giấy tờ gì và lệ phí bao nhiêu?","expected_doc_id":"PROC_042","expected_field":"docs"},
+      {"query":"Lệ phí chứng thực chữ ký cụ thể là bao nhiêu?","expected_doc_id":"PROC_042","expected_field":"fee"},
+      {"query":"Tôi cần đăng ký khai tử cho người thân, hồ sơ gồm những gì?","expected_doc_id":"PROC_003","expected_field":"docs"},
+      {"query":"Thời gian giải quyết khai tử mất bao nhiêu ngày?","expected_doc_id":"PROC_003","expected_field":"time"}
+    ]
+  }
+]
