@@ -9,7 +9,7 @@ from rag.mapper import AnswerResponse, map_verification_results
 from rag.procedure_reader import procedure_reader
 from rag.prompt_builder import build_prompt
 from rag.rerank import rerank
-from rag.retrieval import retrieve
+from rag.retrieval import retrieve, retrieve_two_step
 from rag.synthesizer import synthesizer
 from rag.verification import verify_answer
 
@@ -118,8 +118,16 @@ def _answer_from_evidence(evidence_candidates, field_types: list[str] = None):
 
 def _is_useless_answer(answer: str) -> bool:
     """
-    Kiểm tra câu trả lời rỗng, chỉ có citation,
-    hoặc chỉ trả fallback.
+    Kiểm tra câu trả lời rỗng, chỉ có citation, hoặc dưới 15 ký tự.
+
+    GĐ1 fix: Chỉ coi là vô dụng khi:
+    - Rỗng / chỉ whitespace
+    - Chỉ chứa citation [EC_xxx]
+    - Dưới 15 ký tự sau khi bỏ citation
+
+    KHÔNG còn đánh dấu "chưa đủ để trả lời" là vô dụng —
+    câu trả lời đúng có kèm một ý thiếu thông tin vẫn được giữ.
+    _answer_from_evidence chỉ dùng khi generator lỗi hoặc trả rỗng.
     """
 
     if not answer or not answer.strip():
@@ -127,10 +135,8 @@ def _is_useless_answer(answer: str) -> bool:
 
     text = answer.strip()
 
-    if FALLBACK_TEXT.lower() in text.lower():
-        return True
-        
-    if "thông tin trong chưa đủ" in text.lower() or "chưa đủ để trả lời" in text.lower():
+    # Chỉ từ chối khi đây là TOÀN BỘ nội dung là FALLBACK_TEXT (không có thêm gì)
+    if text.lower().strip() == FALLBACK_TEXT.lower().strip():
         return True
 
     # Ví dụ: [EC_001]
@@ -186,24 +192,15 @@ def answer_query(
         context = {}
 
     # ---------------------------------------------------------
-    # Issue #7 — Out-of-scope location detection
-    # Check query AND recent history for non-HCMC location references.
+    # GĐ1 fix — Out-of-scope location detection (mục 5)
+    # Chỉ kiểm tra tin nhắn user HIỆN TẠI, không quét history.
+    # Trước đây quét cả history khiến user nhắc "Hà Nội" một lần
+    # là mọi lượt sau đều bị từ chối.
     # ---------------------------------------------------------
-    recent_messages = context.get("recent_messages", [])
-    history_texts = []
-    for m in recent_messages:
-        if isinstance(m, dict):
-            history_texts.append(_extract_text(m.get("content", "")))
-        elif isinstance(m, (list, tuple)):
-            history_texts.append(" ".join(_extract_text(item) for item in m))
-        elif isinstance(m, str):
-            history_texts.append(m)
-
-    full_text_for_location = query + " " + " ".join(history_texts)
-    if _detect_unsupported_location(full_text_for_location):
+    if _detect_unsupported_location(query):
         print(
-            f"[pipeline] Unsupported location detected in: "
-            f"{full_text_for_location[:100]!r}"
+            f"[pipeline] Unsupported location in current query: "
+            f"{query[:100]!r}"
         )
         return AnswerResponse(
             answer=LOCATION_NOT_SUPPORTED_TEXT,
@@ -252,18 +249,23 @@ def answer_query(
     # Official RAG pipeline
     # ---------------------------------------------------------
 
-    # 1. Retrieval using resolved query
-    retrieved_chunks = retrieve(
+    # 1. GĐ2: Two-step retrieval để tránh nhầm thủ tục
+    # retrieve_two_step trả [] khi query mơ hồ + top scores sát nhau
+    # → pipeline sẽ trả clarification question
+    retrieved_chunks = retrieve_two_step(
         query=consolidated.resolved_query,
         context=context,
     )
 
     if not retrieved_chunks:
         return AnswerResponse(
-            answer=FALLBACK_TEXT,
+            answer=None,
             claims=[],
-            needs_clarification=False,
-            clarification_question=None,
+            needs_clarification=True,
+            clarification_question=(
+                "Bạn muốn hỏi về thủ tục hành chính nào cụ thể? "
+                "Vui lòng nêu tên thủ tục để tôi có thể hỗ trợ chính xác hơn."
+            ),
         )
 
     # Issue #1 — Relevance threshold gate.

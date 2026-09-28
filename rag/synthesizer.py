@@ -298,11 +298,87 @@ def _has_specific_procedure_keyword(query: str, extra_text: str = "") -> bool:
 
     This is a deterministic guard — the LLM is NOT consulted here.
 
-    `extra_text` is appended (lowercased) before the keyword search so that
-    recent conversation messages can also contribute procedure context.
+    GĐ3 mục 12: `extra_text` nên chỉ chứa nội dung tin nhắn USER,
+    không bao gồm câu trả lời assistant (tránh match keyword không liên quan).
     """
     combined = (query + " " + (extra_text or "")).lower()
     return any(kw in combined for kw in _PROCEDURE_KEYWORDS)
+
+
+def _get_active_procedure(history: dict, procedure_hint: list) -> str:
+    """
+    GĐ3 mục 10: Xác định thủ tục đang active theo thứ tự ưu tiên:
+    1. structured_context.procedure_name (do Person 2 điền)
+    2. Thủ tục khớp mạnh ở tin nhắn USER gần nhất trong history
+    3. Top-1 procedure_hint title
+    """
+    # 1. structured_context (nếu có)
+    if isinstance(history, dict):
+        sc = history.get("structured_context") or {}
+        if isinstance(sc, dict) and sc.get("procedure_name"):
+            return sc["procedure_name"]
+
+    # 2. Tin nhắn USER gần nhất có keyword thủ tục
+    if isinstance(history, dict):
+        msgs = history.get("recent_messages", [])
+        # Duyệt ngược để lấy tin nhắn gần nhất
+        for msg in reversed(msgs):
+            if isinstance(msg, dict):
+                role = msg.get("role", "")
+                if role == "user":
+                    content = _extract_text(msg.get("content", ""))
+                    if _has_specific_procedure_keyword(content):
+                        return content  # trả về text để extract sau
+            elif isinstance(msg, (list, tuple)) and len(msg) >= 2:
+                user_text = _extract_text(msg[0])
+                if _has_specific_procedure_keyword(user_text):
+                    return user_text
+
+    # 3. procedure_hint title
+    if procedure_hint:
+        title = procedure_hint[0].metadata.get("title", "")
+        if title:
+            return title
+
+    return ""
+
+
+def _resolve_followup_rule_based(
+    query: str,
+    active_procedure: str,
+) -> str | None:
+    """
+    GĐ3 mục 10: Rule-based follow-up resolution.
+
+    Nếu query hiện tại KHÔNG chứa keyword thủ tục cụ thể
+    (ví dụ: "lệ phí thì sao?", "nộp ở đâu?", "mất bao lâu?"),
+    ghép tên thủ tục đang active vào để tạo resolved_query độc lập.
+
+    Trả về resolved_query mới, hoặc None nếu không cần.
+    """
+    if not active_procedure:
+        return None
+
+    # Nếu query đã có keyword thủ tục → không cần resolve
+    if _has_specific_procedure_keyword(query):
+        return None
+
+    # Lấy tên thủ tục ngắn gọn từ active_procedure
+    # (active_procedure có thể là tên đầy đủ hoặc nội dung tin nhắn)
+    proc_name = active_procedure
+    # Nếu active_procedure là một câu dài (tin nhắn user), rút gọn
+    if len(proc_name) > 80:
+        # Thử tìm keyword thủ tục trong chuỗi đó
+        for kw in _PROCEDURE_KEYWORDS:
+            if kw in proc_name.lower():
+                proc_name = kw
+                break
+        else:
+            proc_name = proc_name[:60] + "..."
+
+    resolved = f"{query} (liên quan đến: {proc_name})"
+    print(f"[synthesizer] Rule-based resolve_followup: '{query}' → '{resolved}'")
+    return resolved
 
 
 def synthesizer(
@@ -314,29 +390,31 @@ def synthesizer(
     """
     Synthesize the current query into an independent ConsolidatedQuery.
 
-    Issue #3 fix: apply rule-based override BEFORE calling LLM.
-    Check both the query and the recent conversation history for procedure
-    keywords.  If neither contains a keyword → force needs_clarification=True.
-    This prevents vague queries like "Tôi muốn làm thủ tục" from reaching
-    generation even when procedure_hint is non-empty (e.g. spurious matches).
+    GĐ3 cải tiến:
+    - Mục 12: Chỉ quét USER messages cho keyword check (không quét assistant).
+    - Mục 10: Rule-based resolve_followup trước khi gọi LLM.
+    - Mục 11: Khi parse JSON lỗi, ghép thủ tục đang active vào fallback.
     """
 
-    # Build the combined text from query + recent_messages for keyword check.
+    # GĐ3 mục 12: Chỉ lấy tin nhắn USER cho keyword check
     recent_messages = (
         history.get("recent_messages", [])
         if isinstance(history, dict)
         else []
     )
-    history_kw_texts = []
+    user_kw_texts = []
     for m in recent_messages:
         if isinstance(m, dict):
-            history_kw_texts.append(_extract_text(m.get("content", "")))
+            # Chỉ lấy tin nhắn user, bỏ assistant
+            if m.get("role", "") == "user":
+                user_kw_texts.append(_extract_text(m.get("content", "")))
         elif isinstance(m, (list, tuple)):
-            history_kw_texts.append(" ".join(_extract_text(item) for item in m))
+            # Format (user_text, assistant_text) — chỉ lấy user_text
+            user_kw_texts.append(_extract_text(m[0]))
         elif isinstance(m, str):
-            history_kw_texts.append(m)
+            user_kw_texts.append(m)
 
-    history_text_for_kw = " ".join(history_kw_texts)
+    history_text_for_kw = " ".join(user_kw_texts)
 
     # -----------------------------------------------------------------
     # Rule-based clarification override (Issue #3)
@@ -358,6 +436,21 @@ def synthesizer(
         )
 
     # -----------------------------------------------------------------
+    # GĐ3 mục 10: Rule-based follow-up resolution
+    # Nếu query không có keyword thủ tục nhưng history đã có thủ tục active
+    # → ghép tên thủ tục vào resolved_query mà không cần gọi LLM.
+    # -----------------------------------------------------------------
+    active_procedure = _get_active_procedure(history, procedure_hint)
+    resolved_via_rule = _resolve_followup_rule_based(query, active_procedure)
+    if resolved_via_rule:
+        return ConsolidatedQuery(
+            resolved_query=resolved_via_rule,
+            original_query=query,
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
+    # -----------------------------------------------------------------
     # Normal path: call LLM synthesizer
     # -----------------------------------------------------------------
     prompt = _build_synthesizer_prompt(
@@ -372,10 +465,17 @@ def synthesizer(
         parsed_output = _parse_json_output(raw_output)
         return _validate_consolidated_query(parsed_output)
     except ValueError as exc:
+        # GĐ3 mục 11: khi parse lỗi, ghép thủ tục active vào fallback
+        # thay vì dùng nguyên câu gốc (dễ gây nhầm trong multi-turn)
         print(f"[synthesizer] Fallback do lỗi parse: {exc}")
+        fallback_query = query
+        if active_procedure:
+            proc_short = active_procedure[:60] if len(active_procedure) > 60 else active_procedure
+            fallback_query = f"{query} (liên quan đến: {proc_short})"
         return ConsolidatedQuery(
-            resolved_query=query,
+            resolved_query=fallback_query,
             original_query=query,
             needs_clarification=False,
             clarification_question=None,
         )
+

@@ -20,50 +20,50 @@ from rag.evidence_builder import EvidenceCandidate
 # FIELD DETECTION
 # =========================================================
 
-_DOCS_PATTERNS = (
-    "giấy tờ",
-    "hồ sơ",
-    "thành phần hồ sơ",
-    "cần chuẩn bị",
-    "tài liệu",
-    "giấy chứng minh",
-    "giấy chứng sinh",
-    "giấy khai",
-    "cần gì",
-    "bao gồm những gì",
-    "required",
+import re as _re
+
+# =========================================================
+# FIELD DETECTION PATTERNS
+# GĐ1 mục 3: Dùng regex word-boundary, tránh match substring rộng.
+# Thứ tự kiểm tra: method → docs → fee → time
+# để "nộp hồ sơ ở đâu" ra method, không ra docs.
+# =========================================================
+
+# Regex patterns — dùng \b để tránh match giữa từ
+_METHOD_REGEX = _re.compile(
+    r"\b(hình\s+thức\s+nộp|nộp\s+online|nộp\s+trực\s+tuyến|"
+    r"nộp\s+trực\s+tiếp|cách\s+nộp|nộp\s+ở\s+đâu|submission\s+method)\b",
+    _re.IGNORECASE | _re.UNICODE,
 )
 
-_FEE_PATTERNS = (
-    "lệ phí",
-    "phí",
-    "chi phí",
-    "miễn phí",
-    "bao nhiêu tiền",
-    "fee",
-    "mất bao nhiêu",
+# "hồ sơ" và "phí" đứng riêng bị bỏ (quá rộng).
+# Chỉ giữ cụm từ cụ thể hơn.
+_DOCS_REGEX = _re.compile(
+    r"\b(giấy\s+tờ|thành\s+phần\s+hồ\s+sơ|cần\s+chuẩn\s+bị|"
+    r"tài\s+liệu|giấy\s+chứng\s+minh|giấy\s+chứng\s+sinh|"
+    r"giấy\s+khai|cần\s+gì|bao\s+gồm\s+những\s+gì|required)\b",
+    _re.IGNORECASE | _re.UNICODE,
 )
 
-_TIME_PATTERNS = (
-    "thời gian",
-    "bao lâu",
-    "mấy ngày",
-    "mấy ngày làm việc",
-    "thời hạn",
-    "bao nhiêu ngày",
-    "processing time",
+_FEE_REGEX = _re.compile(
+    r"\b(lệ\s+phí|chi\s+phí|miễn\s+phí|bao\s+nhiêu\s+tiền|"
+    r"fee|mất\s+bao\s+nhiêu)\b",
+    _re.IGNORECASE | _re.UNICODE,
 )
 
-_METHOD_PATTERNS = (
-    "hình thức nộp",
-    "nộp online",
-    "nộp trực tuyến",
-    "nộp trực tiếp",
-    "cách nộp",
-    "nộp ở đâu",
-    "submission method",
+_TIME_REGEX = _re.compile(
+    r"\b(thời\s+gian|bao\s+lâu|mấy\s+ngày|thời\s+hạn|"
+    r"bao\s+nhiêu\s+ngày|processing\s+time)\b",
+    _re.IGNORECASE | _re.UNICODE,
 )
 
+# Thứ tự kiểm tra: method trước docs
+_ORDERED_FIELD_CHECKS = [
+    ("method", _METHOD_REGEX),
+    ("docs",   _DOCS_REGEX),
+    ("fee",    _FEE_REGEX),
+    ("time",   _TIME_REGEX),
+]
 
 _FIELD_LABELS = {
     "docs": "GIẤY TỜ / HỒ SƠ cần thiết",
@@ -79,13 +79,6 @@ _FIELD_SECTION_NAMES = {
     "method": "'Hình thức nộp'",
 }
 
-_FIELD_PATTERNS = {
-    "docs": _DOCS_PATTERNS,
-    "fee": _FEE_PATTERNS,
-    "time": _TIME_PATTERNS,
-    "method": _METHOD_PATTERNS,
-}
-
 
 # =========================================================
 # FIELD RESTRICTION
@@ -98,46 +91,26 @@ def _detect_field_types(
     """
     Detect all procedure fields requested by the user.
 
-    Ngoài query hiện tại, có thể dùng intent trong
-    structured_context để hiểu câu hỏi multi-turn.
+    GĐ1 mục 3:
+    - Dùng regex word-boundary thay vì simple substring.
+    - Thứ tự kiểm tra: method → docs → fee → time
+      để "nộp hồ sơ ở đâu" ra method, không ra docs.
+    - Nếu không detect được field nào → trả [] (không thêm restriction).
     """
 
-    text_parts = [
-        query or ""
-    ]
+    text_parts = [query or ""]
 
     if isinstance(context, dict):
-
-        structured_context = context.get(
-            "structured_context",
-            {}
-        ) or {}
-
-        intent = structured_context.get(
-            "intent"
-        )
-
+        structured_context = context.get("structured_context", {}) or {}
+        intent = structured_context.get("intent")
         if intent:
-            text_parts.append(
-                str(intent)
-            )
+            text_parts.append(str(intent))
 
-    q = " ".join(
-        text_parts
-    ).lower()
+    q = " ".join(text_parts)
 
     detected = []
-
-    for key in (
-        "docs",
-        "fee",
-        "time",
-        "method"
-    ):
-        if any(
-            pattern in q
-            for pattern in _FIELD_PATTERNS[key]
-        ):
+    for key, pattern in _ORDERED_FIELD_CHECKS:
+        if pattern.search(q):
             detected.append(key)
 
     return detected
@@ -147,13 +120,15 @@ def _build_field_restriction_rule(
     field_types: list[str]
 ) -> str:
     """
-    Restrict the answer to only the fields
-    actually asked by the user.
+    Build a soft focus rule for detected fields.
+
+    GĐ1 mục 3: Chỉ nói "tập trung vào...", không cấm đề cập
+    phần khác nếu thực sự liên quan trực tiếp.
+    Khi không có field nào → trả "" (không thêm rule).
     """
 
     if not field_types:
         return ""
-
 
     asked_labels = "; ".join(
         _FIELD_LABELS[key]
@@ -165,31 +140,10 @@ def _build_field_restriction_rule(
         for key in field_types
     )
 
-    excluded = [
-        key
-        for key in _FIELD_LABELS
-        if key not in field_types
-    ]
-
-    exclusion_text = ""
-
-    if excluded:
-
-        excluded_labels = ", ".join(
-            _FIELD_LABELS[key]
-            for key in excluded
-        )
-
-        exclusion_text = (
-            " Không đề cập các nội dung khác "
-            f"không được hỏi ({excluded_labels})."
-        )
-
     return (
-        f"16. Câu hỏi này hỏi về: {asked_labels}. "
-        f"Chỉ trả lời đúng (các) phần "
-        f"{asked_sections} từ bằng chứng."
-        f"{exclusion_text}"
+        f"Câu hỏi này tập trung vào: {asked_labels}. "
+        f"Ưu tiên trả lời phần {asked_sections}. "
+        "Bạn vẫn có thể đề cập thông tin khác nếu nó liên quan trực tiếp."
     )
 
 
@@ -539,99 +493,42 @@ def build_prompt(
         )
     )
 
-    field_restriction_rule = (
-        "\n    " + restriction_text
-        if restriction_text
-        else ""
+    # =====================================================
+    # FINAL PROMPT — GĐ1 mục 2
+    # Tách system/user, 6 quy tắc tích cực, few-shot example.
+    # Citation chỉ ở cuối đoạn, không chèn giữa câu.
+    # =====================================================
+
+    field_focus = (
+        f"\n{restriction_text}" if restriction_text else ""
     )
 
-    # =====================================================
-    # FINAL PROMPT
-    # =====================================================
+    system_block = f"""Bạn là cán bộ tư vấn thủ tục hành chính thân thiện và chính xác.
 
-    prompt = f"""
-    Bạn là Trợ lý AI hỗ trợ các thủ tục hành chính.
+QUY TẮC:
+1. Diễn đạt lại bằng lời của bạn — không chép nguyên văn từ bằng chứng.
+2. Giữ nguyên chính xác: số tiền, thời hạn, tên giấy tờ, tên cơ quan.
+3. Ý nào bằng chứng không đề cập → nói rõ "chưa có thông tin về phần này".
+4. Cuối câu trả lời, gợi ý một điều người dùng có thể hỏi tiếp.
+5. Trả lời bằng tiếng Việt, rõ ràng, tự nhiên.
+6. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không dùng kiến thức riêng.{field_focus}
 
-    Nhiệm vụ của bạn là trả lời câu hỏi của người dùng
-    bằng cách chỉ sử dụng thông tin được nêu rõ trong
-    các bằng chứng được cung cấp.
+VÍ DỤ:
+Hỏi: Đăng ký kết hôn cần giấy tờ gì?
+Trả lời: Để đăng ký kết hôn, bạn cần chuẩn bị: (1) Tờ khai đăng ký kết hôn theo mẫu; (2) Giấy tờ tùy thân của hai bên (CCCD/hộ chiếu); (3) Giấy xác nhận tình trạng hôn nhân (nếu cần). [EC_001] Bạn có muốn biết thêm về lệ phí hoặc nơi nộp hồ sơ không?"""
 
-    QUY TẮC BẮT BUỘC
+    user_block = f"""NGỮ CẢNH HỘI THOẠI:
+{context_text}
 
-    1. Chỉ sử dụng thông tin có trong bằng chứng.
-    2. Không sử dụng kiến thức riêng của bạn hoặc bất kỳ thông tin nào không được cung cấp trong bằng chứng.
-    3. Không tự suy luận, phỏng đoán hoặc bổ sung thông tin còn thiếu.
-    4. Không đưa ra giải thích hoặc kết luận nếu nội dung đó không được nêu rõ trong bằng chứng.
-    5. Không thêm bất kỳ giấy tờ nào ngoài những giấy tờ được liệt kê rõ ràng trong bằng chứng.
-    6. Không lặp lại giấy tờ hoặc thông tin.
-    7. Nếu bằng chứng có chứa thông tin trực tiếp trả lời câu hỏi, hãy trả lời đầy đủ các thông tin đó. Không yêu cầu bằng chứng phải mô tả
-    toàn bộ thủ tục mới được trả lời.
+BẰNG CHỨNG:
+{evidence_text}
 
+CÂU HỎI: {query}
 
-    Chỉ trả lời:
+Hãy trả lời dựa trên bằng chứng trên, diễn đạt tự nhiên, kèm citation [EC_xxx] ở cuối đoạn dùng thông tin đó."""
 
-    "Thông tin trong bằng chứng chưa đủ để trả lời câu hỏi này."
-
-    khi bằng chứng hoàn toàn không chứa thông tin liên quan
-    trực tiếp đến câu hỏi.
-
-    8. Ngữ cảnh hội thoại, structured context và long-term
-    memory chỉ được sử dụng để hiểu người dùng đang hỏi
-    thủ tục nào, ở đâu và đang hỏi tiếp vấn đề gì.
-
-    Không xem chúng là bằng chứng pháp lý hoặc nguồn để
-    tạo ra thông tin hành chính.
-
-    9. Luôn trả lời bằng tiếng Việt, ngắn gọn và rõ ràng.
-
-    10. Khi sử dụng thông tin từ một evidence candidate,
-    phải trích dẫn candidate ID tương ứng theo định dạng:
-
-    [EC_XXX]. Title của evidence candidate
-
-    Chỉ dùng đúng candidate ID đã được liệt kê trong phần
-    BẰNG CHỨNG ĐƯỢC CUNG CẤP.
-
-    11. Nếu người dùng hỏi về giấy tờ cần thiết và bằng
-    chứng có nêu tên một hoặc nhiều giấy tờ, hãy liệt kê
-    chính xác các giấy tờ đó.
-
-    Không được từ chối trả lời chỉ vì bằng chứng có thể
-    chưa liệt kê toàn bộ hồ sơ.
-
-    12. Nếu có nhiều evidence candidate chứa cùng một
-    thông tin, không lặp lại thông tin đó và chỉ cần
-    trích dẫn evidence phù hợp.
-
-    13. Không được tạo hoặc thay đổi candidate ID.
-    Chỉ sử dụng candidate ID đã được cung cấp.
-
-    14. Nếu câu hỏi chứa nhiều ý, chỉ trả lời những ý
-    có đủ bằng chứng.
-
-    Với những ý không có đủ bằng chứng, sử dụng câu trả
-    lời mặc định ở Quy tắc 7.
-
-    15. Không đề cập đến quá trình suy luận, hệ thống RAG,
-    evidence, prompt, structured context, long-term memory
-    hoặc các quy tắc nội bộ trong câu trả lời cho người dùng.
-    {field_restriction_rule}
-
-    CÂU HỎI CỦA NGƯỜI DÙNG
-
-    {query}
-
-    NGỮ CẢNH HỘI THOẠI
-
-    {context_text}
-
-    BẰNG CHỨNG ĐƯỢC CUNG CẤP
-
-    {evidence_text}
-
-    Hãy trả lời câu hỏi của người dùng dựa chỉ trên các
-    bằng chứng được cung cấp và tuân thủ nghiêm ngặt
-    tất cả các quy tắc trên.
-    """.strip()
+    # Kết hợp thành một prompt duy nhất
+    # (llama-cli không hỗ trợ chat template nên ghép trực tiếp)
+    prompt = f"{system_block}\n\n{user_block}"
 
     return prompt
