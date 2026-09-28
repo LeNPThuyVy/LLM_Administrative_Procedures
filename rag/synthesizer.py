@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from rag.generator import generate_answer
+from rag.generator import generate_answer_1_5b
 from rag.retrieval import RetrievedChunk
 
 
@@ -309,7 +309,7 @@ def synthesizer(
     query: str,
     history: dict[str, Any],
     procedure_hint: list[RetrievedChunk],
-    generator: Callable[[str], str] = generate_answer,
+    generator: Callable[[str], str] = generate_answer_1_5b,
 ) -> ConsolidatedQuery:
     """
     Synthesize the current query into an independent ConsolidatedQuery.

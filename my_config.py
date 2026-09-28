@@ -13,7 +13,13 @@ EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 CHUNK_SIZE = 1400
 CHUNK_OVERLAP = 200
 
-DEFAULT_TOP_K = 3
+DEFAULT_TOP_K = 5
+
+MODEL_1_5B_PATH = Path(BASE_DIR / "model" / "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf")
+MODEL_3B_PATH = Path(BASE_DIR / "model" / "Qwen2.5-3B-Instruct-Q4_K_M.gguf")
+
+# Default model path for RAG final answer generation
+MODEL_PATH = MODEL_3B_PATH
 
 MIN_RETRIEVAL_SCORE = 0.50
 
@@ -30,4 +36,4 @@ TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-VAST_URL = "https://foundations-sub-pollution-oecd.trycloudflare.com"
+VAST_URL = "https://coast-relevance-november-everyone.trycloudflare.com"

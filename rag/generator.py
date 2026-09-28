@@ -1,136 +1,97 @@
-from typing import Any
+from pathlib import Path
+import subprocess
+import my_config
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-from my_config import (
-    MODEL_NAME,
-    MAX_NEW_TOKENS,
-    TEMPERATURE,
-    TOP_P,
-    DEVICE,
-)
-
-
-_tokenizer = None
-_model = None
-
-
-def _load_model() -> tuple[Any, Any]:
+def _parse_answer(stdout: str, prompt: str) -> str:
     """
-    Load tokenizer and model only once.
+    Extract the generated answer from llama-cli stdout.
     """
-    global _tokenizer, _model
+    if not stdout:
+        return ""
 
-    if _tokenizer is None or _model is None:
-        _tokenizer = AutoTokenizer.from_pretrained(
-            MODEL_NAME,
-            trust_remote_code=True,
-        )
+    text = stdout.strip()
 
-        dtype = torch.float16 if DEVICE == "cuda" else torch.float32
+    if "[ Prompt:" in text:
+        text = text.split("[ Prompt:", 1)[0].rstrip()
 
-        _model = AutoModelForCausalLM.from_pretrained(
-            MODEL_NAME,
-            torch_dtype=dtype,
-            trust_remote_code=True,
-        )
+    # llama-cli có thể tự động cắt bớt prompt khi hiển thị ra màn hình bằng "... (truncated)"
+    idx_truncated = text.rfind("... (truncated)")
+    if idx_truncated != -1:
+        # Câu trả lời nằm sau dấu xuống dòng của chuỗi này
+        idx_nl = text.find("\n", idx_truncated)
+        if idx_nl != -1:
+            return text[idx_nl:].strip()
+        return text[idx_truncated + len("... (truncated)"):].strip()
 
-        _model.to(DEVICE)
-        _model.eval()
+    # Nếu không bị truncate, nó có thể in toàn bộ prompt
+    # 1. Prompt của synthesizer kết thúc sau "GỢI Ý THỦ TỤC/CHỦ ĐỀ:"
+    # 2. Prompt của RAG kết thúc bằng "...tuân thủ nghiêm ngặt tất cả các quy tắc trên."
+    idx_rag = text.rfind("tuân thủ nghiêm ngặt tất cả các quy tắc trên.")
+    if idx_rag != -1:
+        return text[idx_rag + len("tuân thủ nghiêm ngặt tất cả các quy tắc trên."):].strip()
+        
+    idx_syn = text.rfind("GỢI Ý THỦ TỤC/CHỦ ĐỀ:")
+    if idx_syn != -1:
+        idx_json_start = text.find("{", idx_syn)
+        if idx_json_start != -1:
+            return text[idx_json_start:].strip()
 
-        if _tokenizer.pad_token_id is None:
-            if _tokenizer.eos_token_id is not None:
-                _tokenizer.pad_token = _tokenizer.eos_token
+    # Fallback an toàn (nếu không có gì ở trên khớp)
+    idx_prompt_start = text.find("\n> ")
+    if idx_prompt_start != -1:
+        text_after_prompt = text[idx_prompt_start + 3:]
+        if "{" in text_after_prompt and "}" in text_after_prompt:
+            return text_after_prompt[text_after_prompt.find("{"):].strip()
+            
+    return text.strip()
 
-    return _tokenizer, _model
-
-
-def generate_answer(prompt: str) -> str:
+def generate_answer(
+    prompt: str,
+    model_path: Path | None = None
+) -> str:
     """
-    Generate answer from RAG prompt.
+    Generate an answer using local Qwen GGUF model through llama.cpp.
+    If model_path is None, defaults to my_config.MODEL_3B_PATH.
     """
 
     if not prompt or not prompt.strip():
         return ""
 
-    tokenizer, model = _load_model()
+    if model_path is None:
+        model_path = getattr(my_config, "MODEL_3B_PATH", my_config.MODEL_PATH)
 
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "Bạn là trợ lý thủ tục hành chính. "
-                "Chỉ sử dụng thông tin trong bằng chứng được cung cấp. "
-                "Nếu bằng chứng có thông tin trực tiếp trả lời câu hỏi "
-                "thì phải sử dụng thông tin đó để trả lời."
-            ),
-        },
-        {
-            "role": "user",
-            "content": prompt,
-        },
+    if not model_path.exists():
+        raise FileNotFoundError(
+            f"GGUF model not found: {model_path}"
+        )
+
+    command = [
+        "llama-cli",
+        "-m", str(model_path),
+        "-p", prompt,
+        "-n", str(my_config.MAX_NEW_TOKENS),
+        "--temp", str(my_config.TEMPERATURE),
+        "--top-p", str(my_config.TOP_P),
+        "--single-turn",
     ]
-
-    # Tạo prompt text trước để tránh lỗi BatchEncoding/Tensor
-    try:
-        formatted_prompt = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-    except Exception:
-        formatted_prompt = (
-            "Bạn là trợ lý thủ tục hành chính.\n\n"
-            + prompt
-            + "\n\nTRẢ LỜI:"
-        )
-
-    # Tokenize theo cách chuẩn, luôn nhận BatchEncoding
-    encoded = tokenizer(
-        formatted_prompt,
-        return_tensors="pt",
-        padding=False,
-        truncation=True,
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=120,
     )
 
-    input_ids = encoded["input_ids"].to(DEVICE)
+    print("RAW STDOUT:", repr(result.stdout))
 
-    attention_mask = encoded.get("attention_mask")
-    if attention_mask is not None:
-        attention_mask = attention_mask.to(DEVICE)
-
-    generation_kwargs = {
-        "input_ids": input_ids,
-        "max_new_tokens": MAX_NEW_TOKENS,
-        "do_sample": TEMPERATURE > 0,
-        "repetition_penalty": 1.05,
-    }
-
-    if attention_mask is not None:
-        generation_kwargs["attention_mask"] = attention_mask
-
-    if tokenizer.pad_token_id is not None:
-        generation_kwargs["pad_token_id"] = tokenizer.pad_token_id
-
-    if tokenizer.eos_token_id is not None:
-        generation_kwargs["eos_token_id"] = tokenizer.eos_token_id
-
-    if TEMPERATURE > 0:
-        generation_kwargs["temperature"] = TEMPERATURE
-        generation_kwargs["top_p"] = TOP_P
-
-    with torch.no_grad():
-        outputs = model.generate(
-            **generation_kwargs
+    if result.returncode != 0:
+        raise RuntimeError(
+            "llama-cli failed:\n"
+            f"{result.stderr}"
         )
 
-    generated_tokens = outputs[0][input_ids.shape[-1]:]
-
-    answer = tokenizer.decode(
-        generated_tokens,
-        skip_special_tokens=True,
-    ).strip()
+    answer = _parse_answer(result.stdout, prompt)
 
     if not answer:
         return (
@@ -139,3 +100,13 @@ def generate_answer(prompt: str) -> str:
         )
 
     return answer
+
+
+def generate_answer_1_5b(prompt: str) -> str:
+    """Helper for pre-retrieval Synthesizer agent using 1.5B model."""
+    return generate_answer(prompt, model_path=my_config.MODEL_1_5B_PATH)
+
+
+def generate_answer_3b(prompt: str) -> str:
+    """Helper for post-RAG final answer generation using 3B model."""
+    return generate_answer(prompt, model_path=my_config.MODEL_3B_PATH)

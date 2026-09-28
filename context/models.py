@@ -132,6 +132,8 @@ class ConversationSummary(Base):
 class LongTermMemory(Base):
     __tablename__ = "long_term_memory"
 
+    # Khóa theo user_id (không phải session_id) vì đây là bộ nhớ
+    # phải sống xuyên suốt nhiều session của cùng một người dùng.
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),

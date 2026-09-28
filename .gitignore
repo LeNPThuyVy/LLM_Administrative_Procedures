@@ -227,4 +227,10 @@ __pycache__/
 *.pyc
 .env
 
-data/chroma_db/
+#ignore history
+.history
+
+#ignore model
+model/
+
+*.zip
