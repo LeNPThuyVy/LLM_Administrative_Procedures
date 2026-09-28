@@ -8,4 +8,4 @@ torch
 transformers
 sqlalchemy
 asyncpg
-psycopg2-binarypython
+psycopg2-binary

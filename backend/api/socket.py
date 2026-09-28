@@ -1,9 +1,11 @@
 import asyncio
 import uuid
+
 from sqlalchemy import select
 
 from context.database import AsyncSessionLocal
 from context.models import User, ChatSession
+
 from fastapi import (
     APIRouter,
     Request,
@@ -11,12 +13,14 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
+
 from fastapi.encoders import jsonable_encoder
 
 from backend.services.context_service import (
     get_context,
     update_memory,
 )
+
 from backend.services.ai_service import generate_answer
 from backend.services.queue_service import queue_manager
 
@@ -25,10 +29,14 @@ router = APIRouter(
     tags=["anonymous-session", "websocket"]
 )
 
+
 COOKIE_NAME = "session_id"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 ngày
 
 
+# =========================================================
+# SESSION HELPER
+# =========================================================
 async def ensure_anonymous_session(session_id: str):
     async with AsyncSessionLocal() as db:
         session_uuid = uuid.UUID(session_id)
@@ -66,6 +74,9 @@ async def ensure_anonymous_session(session_id: str):
         )
 
 
+# =========================================================
+# SESSION BOOTSTRAP
+# =========================================================
 @router.get("/api/session/bootstrap")
 async def bootstrap_session(
     request: Request,
@@ -97,6 +108,7 @@ async def bootstrap_session(
         )
 
         created = True
+
     else:
         created = False
 
@@ -108,14 +120,26 @@ async def bootstrap_session(
     }
 
 
+# =========================================================
+# WEBSOCKET CHAT
+# =========================================================
 @router.websocket("/ws/chat")
 async def websocket_chat(
     websocket: WebSocket,
 ):
-    # Lấy session_id trực tiếp từ cookie
+    # =====================================================
+    # Quan trọng:
+    # Accept trước để browser nhận được custom close code
+    # 4401 / 4400 thay vì HTTP 403 / WebSocket 1006.
+    # =====================================================
+    await websocket.accept()
+
+    # Lấy session_id từ cookie
     session_id = websocket.cookies.get(COOKIE_NAME)
 
-    # Bắt buộc phải có cookie
+    # =====================================================
+    # WS-02: Không có cookie
+    # =====================================================
     if not session_id:
         await websocket.close(
             code=4401,
@@ -123,23 +147,24 @@ async def websocket_chat(
         )
         return
 
-    # Kiểm tra UUID
+    # =====================================================
+    # WS-03: Cookie không phải UUID hợp lệ
+    # =====================================================
     try:
         uuid.UUID(session_id)
-    except ValueError:
+
+    except (ValueError, TypeError):
         await websocket.close(
             code=4400,
             reason="Invalid session_id cookie",
         )
         return
 
-    await websocket.accept()
-
     print(
         f"[WS] session={session_id} CONNECTED"
     )
 
-    # Báo client biết socket đã kết nối
+    # Báo client socket đã kết nối
     await websocket.send_json({
         "type": "connected",
         "data": {
@@ -149,15 +174,22 @@ async def websocket_chat(
 
     try:
         while True:
-            # Nhận JSON từ client
+
+            # =================================================
+            # NHẬN REQUEST
+            # =================================================
             payload = await websocket.receive_json()
 
             query = str(
                 payload.get("query", "")
             ).strip()
 
-            # Query rỗng
+            # =================================================
+            # WS-04 / WS-05:
+            # Query rỗng hoặc không có key query
+            # =================================================
             if not query:
+
                 await websocket.send_json({
                     "type": "clarification",
                     "data": {
@@ -175,7 +207,9 @@ async def websocket_chat(
 
                 continue
 
-            # Queue giống SSE cũ
+            # =================================================
+            # QUEUE + SESSION LOCK
+            # =================================================
             session_lock = (
                 queue_manager.get_session_lock(
                     session_id
@@ -183,6 +217,7 @@ async def websocket_chat(
             )
 
             async with session_lock:
+
                 async with queue_manager.semaphore:
 
                     request_type = (
@@ -197,20 +232,24 @@ async def websocket_chat(
                         f"type={request_type} START"
                     )
 
-                    # Truyền session_id xuống Context
-                    # BUG-F fix: get_context() raises ValueError nếu
-                    # session không tồn tại (race condition / DB reset).
-                    # Bắt lỗi và báo client thay vì để crash WS.
+                    # =========================================
+                    # CONTEXT
+                    # =========================================
+                    # get_context() có thể raise ValueError
+                    # khi session không tồn tại trong DB.
                     try:
                         context = await get_context(
                             session_id,
                             query,
                         )
+
                     except ValueError as exc:
+
                         print(
                             f"[WS] get_context error for "
                             f"session={session_id}: {exc}"
                         )
+
                         await websocket.send_json({
                             "type": "error",
                             "data": {
@@ -220,18 +259,21 @@ async def websocket_chat(
                                 ),
                             },
                         })
+
                         continue
 
-                    # Gọi AI giống chat.py
+                    # =========================================
+                    # AI / RAG
+                    # =========================================
                     result = await generate_answer(
                         query=query,
                         session_id=session_id,
                         context=context,
                     )
 
-                    # =========================
+                    # =========================================
                     # 1. CLARIFICATION
-                    # =========================
+                    # =========================================
                     if result["needs_clarification"]:
 
                         await websocket.send_json({
@@ -257,7 +299,6 @@ async def websocket_chat(
                             f"session={session_id} DONE"
                         )
 
-                        # Update memory theo session_id
                         asyncio.create_task(
                             update_memory(
                                 session_id=session_id,
@@ -274,9 +315,9 @@ async def websocket_chat(
 
                         continue
 
-                    # =========================
+                    # =========================================
                     # 2. EVIDENCE
-                    # =========================
+                    # =========================================
                     evidence_data = {
                         "evidence_list":
                             result["evidence_list"]
@@ -289,12 +330,13 @@ async def websocket_chat(
                         })
                     )
 
-                    # =========================
+                    # =========================================
                     # 3. CHUNK
-                    # =========================
+                    # =========================================
                     for word in (
                         result["answer"].split()
                     ):
+
                         await websocket.send_json({
                             "type": "chunk",
                             "data": {
@@ -304,14 +346,16 @@ async def websocket_chat(
 
                         await asyncio.sleep(0.05)
 
-                    # =========================
+                    # =========================================
                     # 4. DONE
-                    # =========================
+                    # =========================================
                     done_data = {
                         "answer":
                             result["answer"],
+
                         "evidence_list":
                             result["evidence_list"],
+
                         "needs_clarification":
                             False,
                     }
@@ -328,8 +372,9 @@ async def websocket_chat(
                         f"session={session_id} DONE"
                     )
 
-                    # Truyền đúng session_id
-                    # xuống Long-term Memory
+                    # =========================================
+                    # LONG-TERM MEMORY
+                    # =========================================
                     asyncio.create_task(
                         update_memory(
                             session_id=session_id,
@@ -345,6 +390,7 @@ async def websocket_chat(
                     )
 
     except WebSocketDisconnect:
+
         print(
             f"[WS] "
             f"session={session_id} "

@@ -72,6 +72,11 @@ def generate_answer(
         "-n", str(my_config.MAX_NEW_TOKENS),
         "--temp", str(my_config.TEMPERATURE),
         "--top-p", str(my_config.TOP_P),
+
+        "--no-warmup",
+        "-ngl", "0",
+        "-c", "2048",
+
         "--single-turn",
     ]
     result = subprocess.run(
