@@ -447,9 +447,21 @@ def build_prompt(
     evidence_sections: list[str] = []
 
     for evidence in evidence_candidates:
+        cid = evidence.chunk_id or ""
+        category_label = ""
+        if cid.endswith("_docs"):
+            category_label = " [MỤC THÀNH PHẦN HỒ SƠ / GIẤY TỜ]"
+        elif cid.endswith("_fee"):
+            category_label = " [MỤC LỆ PHÍ / CHI PHÍ]"
+        elif cid.endswith("_time"):
+            category_label = " [MỤC THỜI GIAN GIẢI QUYẾT]"
+        elif cid.endswith("_method"):
+            category_label = " [MỤC HÌNH THỨC NỘP HỒ SƠ / ĐỊA ĐIỂM]"
+        elif cid.endswith("_general"):
+            category_label = " [MỤC THÔNG TIN TỔNG QUAN THỦ TỤC]"
 
         section = (
-            f"[Evidence {evidence.candidate_id}]\n"
+            f"[Evidence {evidence.candidate_id}]{category_label}\n"
             f"document_id: {evidence.document_id}\n"
             f"chunk_id: {evidence.chunk_id}\n"
             f"title: {evidence.title}\n"
@@ -457,26 +469,18 @@ def build_prompt(
             f"{evidence.content}"
         )
 
-        evidence_sections.append(
-            section
-        )
+        evidence_sections.append(section)
 
-    evidence_text = "\n\n".join(
-        evidence_sections
-    )
+    evidence_text = "\n\n".join(evidence_sections)
 
     if not evidence_text:
-        evidence_text = (
-            "No evidence was provided."
-        )
+        evidence_text = "No evidence was provided."
 
     # =====================================================
     # CONTEXT
     # =====================================================
 
-    context_text = _format_context(
-        context
-    )
+    context_text = _format_context(context)
 
     # =====================================================
     # FIELD RESTRICTION
@@ -487,11 +491,7 @@ def build_prompt(
         context=context
     )
 
-    restriction_text = (
-        _build_field_restriction_rule(
-            field_types
-        )
-    )
+    restriction_text = _build_field_restriction_rule(field_types)
 
     # =====================================================
     # FINAL PROMPT — GĐ1 mục 2
@@ -508,10 +508,11 @@ def build_prompt(
 QUY TẮC:
 1. Diễn đạt lại bằng lời của bạn — không chép nguyên văn từ bằng chứng.
 2. Giữ nguyên chính xác: số tiền, thời hạn, tên giấy tờ, tên cơ quan.
-3. Ý nào bằng chứng không đề cập → nói rõ "chưa có thông tin về phần này".
-4. Cuối câu trả lời, gợi ý một điều người dùng có thể hỏi tiếp.
-5. Trả lời bằng tiếng Việt, rõ ràng, tự nhiên.
-6. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không dùng kiến thức riêng.{field_focus}
+3. Nếu người dùng hỏi nhiều ý (multi-intent: vừa hỏi giấy tờ, vừa hỏi thời gian hay lệ phí), hãy trả lời đầy đủ từng ý theo cấu trúc rõ ràng.
+4. Ý nào bằng chứng không đề cập → nói rõ "chưa có thông tin về phần này". KHÔNG tự suy đoán.
+5. Cuối câu trả lời, gợi ý một điều người dùng có thể hỏi tiếp.
+6. Trả lời bằng tiếng Việt, rõ ràng, tự nhiên.
+7. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không dùng kiến thức riêng.{field_focus}
 
 VÍ DỤ:
 Hỏi: Đăng ký kết hôn cần giấy tờ gì?
@@ -528,7 +529,6 @@ CÂU HỎI: {query}
 Hãy trả lời dựa trên bằng chứng trên, diễn đạt tự nhiên, kèm citation [EC_xxx] ở cuối đoạn dùng thông tin đó."""
 
     # Kết hợp thành một prompt duy nhất
-    # (llama-cli không hỗ trợ chat template nên ghép trực tiếp)
     prompt = f"{system_block}\n\n{user_block}"
 
     return prompt
