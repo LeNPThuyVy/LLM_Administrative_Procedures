@@ -564,13 +564,18 @@ def _is_ambiguous_query(query: str) -> bool:
         return True
 
     # Các từ chỉ định thủ tục cụ thể
-    specific_markers = [
-        "kết hôn", "khai sinh", "khai tử", "nhận cha", "nhận mẹ",
-        "hộ kinh doanh", "xây dựng", "khuyết tật", "chuyển trường",
-        "học bổng", "chứng thực", "đất đai", "tạm ngừng kinh doanh",
-        "hưu trí", "trợ cấp", "liệt sĩ", "mai táng", "hỏa táng",
-        "vay vốn", "việc làm", "hộ tịch",
-    ]
+    try:
+        from rag.synthesizer import _PROCEDURE_KEYWORDS
+        specific_markers = _PROCEDURE_KEYWORDS
+    except ImportError:
+        specific_markers = {
+            "kết hôn", "khai sinh", "khai tử", "nhận cha", "nhận mẹ", "nhận con",
+            "hôn nhân", "tình trạng hôn nhân", "xác nhận tình trạng",
+            "hộ kinh doanh", "xây dựng", "khuyết tật", "chuyển trường",
+            "học bổng", "chứng thực", "đất đai", "tạm ngừng kinh doanh",
+            "hưu trí", "trợ cấp", "liệt sĩ", "mai táng", "hỏa táng",
+            "vay vốn", "việc làm", "hộ tịch",
+        }
     q_lower = query.lower()
     return not any(m in q_lower for m in specific_markers)
 
@@ -589,7 +594,7 @@ def retrieve_two_step(
 
     Fallback: nếu không tìm được doc_id rõ ràng → dùng retrieve() thường.
 
-    Clarification: nếu top-1 và top-2 sát nhau (<0.05 delta),
+    Clarification: nếu top-1 và top-2 thuộc các thủ tục khác nhau sát nhau (<0.08 delta),
     không có thủ tục đang active, và query mơ hồ → trả []
     (pipeline sẽ trả clarification).
     """
@@ -603,11 +608,18 @@ def retrieve_two_step(
     if not raw_results:
         return []
 
-    # Ambiguity check: nếu top-1 và top-2 sát nhau và query mơ hồ
+    # Ambiguity check: so sánh top chunk thuộc các document_id KHÁC NHAU
+    distinct_doc_chunks = []
+    seen_docs = set()
+    for chunk in raw_results:
+        if chunk.document_id not in seen_docs:
+            distinct_doc_chunks.append(chunk)
+            seen_docs.add(chunk.document_id)
+
     if (
-        len(raw_results) >= 2
+        len(distinct_doc_chunks) >= 2
         and _is_ambiguous_query(query)
-        and (raw_results[0].retrieval_score - raw_results[1].retrieval_score) < 0.08
+        and (distinct_doc_chunks[0].retrieval_score - distinct_doc_chunks[1].retrieval_score) < 0.08
     ):
         # Lấy context hiện tại để xem có thủ tục đang active không
         structured_context = _get_structured_context(context)
@@ -615,9 +627,9 @@ def retrieve_two_step(
         if not active_procedure:
             # Trả [] để pipeline biết cần hỏi clarification
             print(
-                f"[retrieval] Ambiguous query, top scores close: "
-                f"{raw_results[0].retrieval_score:.3f} vs "
-                f"{raw_results[1].retrieval_score:.3f} — trigger clarification"
+                f"[retrieval] Ambiguous query, top distinct doc scores close: "
+                f"{distinct_doc_chunks[0].document_id} ({distinct_doc_chunks[0].retrieval_score:.3f}) vs "
+                f"{distinct_doc_chunks[1].document_id} ({distinct_doc_chunks[1].retrieval_score:.3f}) — trigger clarification"
             )
             return []
 
@@ -668,24 +680,63 @@ def retrieve_two_step(
             "time": "_time",
             "method": "_method",
         }
-        target_suffixes = {field_suffixes[f] for f in field_types if f in field_suffixes}
 
-        # Ưu tiên chunk đúng field; nếu không tìm thấy thì lấy _general
-        targeted = [c for c in doc_chunks if any(
-            c.chunk_id.endswith(s) for s in target_suffixes
-        )]
-        if not targeted:
-            targeted = [c for c in doc_chunks if c.chunk_id.endswith("_general")]
-        if not targeted:
-            targeted = doc_chunks
+        if len(field_types) >= 2:
+            # Multi-intent quota allocation:
+            # Ensure every detected intent/field gets dedicated chunks, plus 1 general chunk if available.
+            selected_chunks = []
+            seen_ids = set()
 
-        # Thêm _general của doc này vào cuối (cho context tổng quát)
-        general_chunks = [c for c in doc_chunks if c.chunk_id.endswith("_general")]
-        result = targeted[:top_k]
-        for gc in general_chunks:
-            if gc not in result and len(result) < top_k:
-                result.append(gc)
-        return result[:top_k]
+            general_chunks = [c for c in doc_chunks if c.chunk_id.endswith("_general")]
+            quota_per_field = max(1, (top_k - 1) // len(field_types))
+
+            for ftype in field_types:
+                suf = field_suffixes.get(ftype)
+                if not suf:
+                    continue
+                matching = [
+                    c for c in doc_chunks
+                    if c.chunk_id.endswith(suf) and c.chunk_id not in seen_ids
+                ]
+                matching.sort(key=lambda c: c.retrieval_score, reverse=True)
+                for c in matching[:quota_per_field]:
+                    selected_chunks.append(c)
+                    seen_ids.add(c.chunk_id)
+
+            # Add general chunk for overall context if available
+            for gc in general_chunks:
+                if gc.chunk_id not in seen_ids and len(selected_chunks) < top_k:
+                    selected_chunks.append(gc)
+                    seen_ids.add(gc.chunk_id)
+
+            # Fill remaining slots with highest scoring remaining chunks of best_doc_id
+            remaining = [c for c in doc_chunks if c.chunk_id not in seen_ids]
+            remaining.sort(key=lambda c: c.retrieval_score, reverse=True)
+            for c in remaining:
+                if len(selected_chunks) < top_k:
+                    selected_chunks.append(c)
+                    seen_ids.add(c.chunk_id)
+
+            return selected_chunks[:top_k]
+        else:
+            target_suffixes = {field_suffixes[f] for f in field_types if f in field_suffixes}
+
+            # Ưu tiên chunk đúng field; nếu không tìm thấy thì lấy _general
+            targeted = [c for c in doc_chunks if any(
+                c.chunk_id.endswith(s) for s in target_suffixes
+            )]
+            if not targeted:
+                targeted = [c for c in doc_chunks if c.chunk_id.endswith("_general")]
+            if not targeted:
+                targeted = doc_chunks
+
+            # Thêm _general của doc này vào cuối (cho context tổng quát)
+            general_chunks = [c for c in doc_chunks if c.chunk_id.endswith("_general")]
+            result = targeted[:top_k]
+            for gc in general_chunks:
+                if gc not in result and len(result) < top_k:
+                    result.append(gc)
+            return result[:top_k]
 
     # Không có field cụ thể → lấy _general của doc này + top chunks khác
     result = sorted(doc_chunks, key=lambda c: c.retrieval_score, reverse=True)
