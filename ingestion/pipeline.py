@@ -140,7 +140,6 @@ class IngestionPipeline:
         valid_docs, validation_errors = validate_documents(
             all_raw,
             schema_cls,
-            self.domain_id,
         )
 
         print(
