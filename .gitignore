@@ -234,3 +234,6 @@ __pycache__/
 model/
 
 *.zip
+
+#ignore graphify
+graphify-out/
