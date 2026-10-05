@@ -237,3 +237,9 @@ model/
 
 #ignore graphify
 graphify-out/
+
+#ignore test folder 
+test/
+
+#ignore qdrant local db
+data/qdrant_db/

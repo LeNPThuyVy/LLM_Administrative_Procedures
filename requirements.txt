@@ -9,3 +9,5 @@ transformers
 sqlalchemy
 asyncpg
 psycopg2-binarypython
+qdrant-client
+FlagEmbedding

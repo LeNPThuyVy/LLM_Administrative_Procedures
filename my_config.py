@@ -1,14 +1,24 @@
+import os
 from pathlib import Path 
 import torch
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 PROCEDURES_PATH = BASE_DIR / "data" / "procedures.json"
-CHROMA_PATH = BASE_DIR / "data" / "chroma_db"
+CHROMA_PATH = BASE_DIR / "data" / "chroma_db"  # deprecated
 
-COLLECTION_NAME = "procedures"
+# Qdrant Cloud & Vector Store Settings
+QDRANT_URL = os.getenv("QDRANT_URL", "")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
 
-EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+DEFAULT_DOMAIN = "administrative_procedures"
+DEFAULT_COLLECTION = os.getenv("DEFAULT_COLLECTION", "admin_dev")
+COLLECTION_NAME = DEFAULT_COLLECTION
+
+EMBEDDING_MODEL = "BAAI/bge-m3"
+EMBEDDING_DIM = 1024
 
 CHUNK_SIZE = 1400
 CHUNK_OVERLAP = 200
