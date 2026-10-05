@@ -1,0 +1,74 @@
+domain_id: administrative_procedures
+domain_name: Thủ tục hành chính
+
+description: >
+  Tra cứu các thủ tục hành chính công tại TP.HCM.
+
+# =========================
+# Embedding
+# =========================
+embedding_model: BAAI/bge-m3
+embedding_dim: 1024
+
+# =========================
+# Vector Store
+# =========================
+collection_name: administrative_procedures
+distance_metric: cosine
+
+# =========================
+# Chunking
+# =========================
+chunk_fields:
+  - required_documents
+  - fee
+  - processing_time
+  - submission_method
+  - general
+
+chunk_field_specs:
+  required_documents:
+    suffix: _docs
+    label: Thành phần hồ sơ
+    attr: required_documents
+
+  fee:
+    suffix: _fee
+    label: Lệ phí
+    attr: fee
+
+  processing_time:
+    suffix: _time
+    label: Thời gian giải quyết
+    attr: processing_time
+
+  submission_method:
+    suffix: _method
+    label: Hình thức và nơi nộp hồ sơ
+    attr: submission_method
+    merge_with:
+      - submission_location
+
+  general:
+    suffix: _general
+    label: Nội dung tổng quát
+    attr: content
+
+# =========================
+# ETL Sources
+# =========================
+sources:
+  - type: json
+    path: data/procedures.json
+
+# =========================
+# Policy
+# =========================
+mode: friendly
+persona: thân thiện, giản dị
+risk_level: low
+
+# =========================
+# Dedup
+# =========================
+dedup_threshold: 0.95
