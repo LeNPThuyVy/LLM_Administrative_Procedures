@@ -1,0 +1,212 @@
+[
+  {
+    "id": "GS_001",
+    "question": "Tôi cần chuẩn bị những giấy tờ gì để xin xác nhận tình trạng hôn nhân?",
+    "expected_document_id": "PROC_001",
+    "expected_field": "required_documents",
+    "expected_keywords": ["tình trạng hôn nhân"]
+  },
+  {
+    "id": "GS_002",
+    "question": "Xác nhận tình trạng hôn nhân mất bao lâu?",
+    "expected_document_id": "PROC_001",
+    "expected_field": "processing_time",
+    "expected_keywords": ["03 ngày làm việc"]
+  },
+  {
+    "id": "GS_003",
+    "question": "Đăng ký khai sinh cần những hồ sơ gì?",
+    "expected_document_id": "PROC_002",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Giấy chứng sinh"]
+  },
+  {
+    "id": "GS_004",
+    "question": "Lệ phí đăng ký khai sinh là bao nhiêu?",
+    "expected_document_id": "PROC_002",
+    "expected_field": "fee",
+    "expected_keywords": ["Không thu phí"]
+  },
+  {
+    "id": "GS_005",
+    "question": "Tôi đăng ký khai tử thì cần chuẩn bị giấy tờ nào?",
+    "expected_document_id": "PROC_003",
+    "expected_field": "required_documents",
+    "expected_keywords": ["căn cước công dân"]
+  },
+  {
+    "id": "GS_006",
+    "question": "Khai tử được giải quyết trong bao lâu?",
+    "expected_document_id": "PROC_003",
+    "expected_field": "processing_time",
+    "expected_keywords": ["trong ngày làm việc"]
+  },
+  {
+    "id": "GS_007",
+    "question": "Đăng ký kết hôn cần hồ sơ gì?",
+    "expected_document_id": "PROC_004",
+    "expected_field": "required_documents",
+    "expected_keywords": ["căn cước công dân"]
+  },
+  {
+    "id": "GS_008",
+    "question": "Đăng ký kết hôn có mất phí không?",
+    "expected_document_id": "PROC_004",
+    "expected_field": "fee",
+    "expected_keywords": ["Không thu phí"]
+  },
+  {
+    "id": "GS_009",
+    "question": "Thủ tục nhận cha mẹ con mất bao lâu?",
+    "expected_document_id": "PROC_005",
+    "expected_field": "processing_time",
+    "expected_keywords": ["07 ngày làm việc"]
+  },
+  {
+    "id": "GS_010",
+    "question": "Hồ sơ nhận cha mẹ con gồm những gì?",
+    "expected_document_id": "PROC_005",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Tờ khai nhận cha"]
+  },
+  {
+    "id": "GS_011",
+    "question": "Kết hôn có yếu tố nước ngoài cần những giấy tờ nào?",
+    "expected_document_id": "PROC_006",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Giấy xác nhận"]
+  },
+  {
+    "id": "GS_012",
+    "question": "Kết hôn với người nước ngoài giải quyết trong mấy ngày?",
+    "expected_document_id": "PROC_006",
+    "expected_field": "processing_time",
+    "expected_keywords": ["5 ngày làm việc"]
+  },
+  {
+    "id": "GS_013",
+    "question": "Đăng ký nội quy lao động cần hồ sơ gì?",
+    "expected_document_id": "PROC_007",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Nội quy lao động"]
+  },
+  {
+    "id": "GS_014",
+    "question": "Hưởng trợ cấp hưu trí xã hội cần nộp giấy tờ gì?",
+    "expected_document_id": "PROC_020",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Văn bản đề nghị"]
+  },
+  {
+    "id": "GS_015",
+    "question": "Trợ cấp hưu trí xã hội xử lý trong bao lâu?",
+    "expected_document_id": "PROC_020",
+    "expected_field": "processing_time",
+    "expected_keywords": ["10 ngày làm việc"]
+  },
+  {
+    "id": "GS_016",
+    "question": "Hỗ trợ mai táng cho người hưởng trợ cấp hưu trí xã hội cần hồ sơ gì?",
+    "expected_document_id": "PROC_021",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Tờ khai đề nghị hỗ trợ chi phí mai táng"]
+  },
+  {
+    "id": "GS_017",
+    "question": "Hỗ trợ chi phí mai táng cho người hưởng hưu trí xã hội mất bao lâu?",
+    "expected_document_id": "PROC_021",
+    "expected_field": "processing_time",
+    "expected_keywords": ["3 ngày làm việc"]
+  },
+  {
+    "id": "GS_018",
+    "question": "Hồ sơ xác định mức độ khuyết tật cần những gì?",
+    "expected_document_id": "PROC_023",
+    "expected_field": "required_documents",
+    "expected_keywords": ["giấy tờ y tế"]
+  },
+  {
+    "id": "GS_019",
+    "question": "Xác định mức độ khuyết tật mất bao nhiêu ngày?",
+    "expected_document_id": "PROC_023",
+    "expected_field": "processing_time",
+    "expected_keywords": ["25 ngày làm việc"]
+  },
+  {
+    "id": "GS_020",
+    "question": "Tôi muốn cấp giấy phép xây dựng thì cần chuẩn bị hồ sơ gì?",
+    "expected_document_id": "PROC_027",
+    "expected_field": "required_documents",
+    "expected_keywords": ["giấy phép xây dựng"]
+  },
+  {
+    "id": "GS_021",
+    "question": "Nộp hồ sơ cấp giấy phép xây dựng bằng hình thức nào?",
+    "expected_document_id": "PROC_027",
+    "expected_field": "submission_method",
+    "expected_keywords": ["Trực tuyến"]
+  },
+  {
+    "id": "GS_022",
+    "question": "Xin thông tin quy hoạch cần giấy tờ gì?",
+    "expected_document_id": "PROC_026",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Đơn đề nghị"]
+  },
+  {
+    "id": "GS_023",
+    "question": "Thủ tục cung cấp thông tin quy hoạch mất bao lâu?",
+    "expected_document_id": "PROC_026",
+    "expected_field": "processing_time",
+    "expected_keywords": ["10 ngày làm việc"]
+  },
+  {
+    "id": "GS_024",
+    "question": "Cơ sở sản xuất kinh doanh vay vốn tạo việc làm cần hồ sơ gì?",
+    "expected_document_id": "PROC_032",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Giấy đề nghị vay vốn"]
+  },
+  {
+    "id": "GS_025",
+    "question": "Vay vốn tạo việc làm cho cơ sở sản xuất kinh doanh xử lý trong bao lâu?",
+    "expected_document_id": "PROC_032",
+    "expected_field": "processing_time",
+    "expected_keywords": ["5 ngày"]
+  },
+  {
+    "id": "GS_026",
+    "question": "Xin cấp số nhà cần chuẩn bị những giấy tờ gì?",
+    "expected_document_id": "PROC_033",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Đơn xin cấp số nhà"]
+  },
+  {
+    "id": "GS_027",
+    "question": "Hồ sơ xác nhận vị trí nhà đất gồm những gì?",
+    "expected_document_id": "PROC_034",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Đơn xin xác nhận vị trí"]
+  },
+  {
+    "id": "GS_028",
+    "question": "Xác nhận vị trí nhà đất nộp theo hình thức nào?",
+    "expected_document_id": "PROC_034",
+    "expected_field": "submission_method",
+    "expected_keywords": ["Trực tuyến"]
+  },
+  {
+    "id": "GS_029",
+    "question": "Đăng ký đất đai và tài sản gắn liền với đất lần đầu cần hồ sơ gì?",
+    "expected_document_id": "PROC_031",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Đơn đăng ký đất đai"]
+  },
+  {
+    "id": "GS_030",
+    "question": "Thông báo khởi công nhà ở riêng lẻ cần những giấy tờ gì?",
+    "expected_document_id": "PROC_030",
+    "expected_field": "required_documents",
+    "expected_keywords": ["Thông báo khởi công"]
+  }
+]

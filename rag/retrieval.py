@@ -7,8 +7,9 @@ Return RetrievedChunk objects.
 import re
 from dataclasses import dataclass
 
-import chromadb
-from sentence_transformers import SentenceTransformer
+from pathlib import Path
+from qdrant_client import QdrantClient
+from qdrant_client.models import ScoredPoint
 
 import my_config as cfg
 
@@ -27,44 +28,61 @@ class RetrievedChunk:
 # Loaded once and reused across all queries
 # =========================================================
 
-_embedding_model: SentenceTransformer | None = None
-_chroma_collection = None
+_embedding_model = None
+_qdrant_client: QdrantClient | None = None
 
 
 # =========================================================
 # MODEL / VECTOR STORE
 # =========================================================
 
-def load_embedding_model() -> SentenceTransformer:
+def load_embedding_model():
     """
-    Load embedding model only once.
+    Load BGE-M3 embedding model using SentenceTransformer.
     """
     global _embedding_model
 
     if _embedding_model is None:
-        _embedding_model = SentenceTransformer(
-            cfg.EMBEDDING_MODEL
-        )
+        from sentence_transformers import SentenceTransformer
+        print(f"[retrieval] Loading BGE-M3 model using SentenceTransformer ('BAAI/bge-m3')...")
+        _embedding_model = SentenceTransformer("BAAI/bge-m3")
 
     return _embedding_model
 
 
-def load_vector_store():
+import atexit
+
+def load_vector_store() -> QdrantClient:
     """
-    Load existing persistent ChromaDB.
+    Load Qdrant client connection (Cloud if configured, local directory fallback).
     """
-    client = chromadb.PersistentClient(
-        path=str(cfg.CHROMA_PATH)
-    )
+    global _qdrant_client
 
-    collection = client.get_collection(
-        name=cfg.COLLECTION_NAME
-    )
+    if _qdrant_client is None:
+        if cfg.QDRANT_URL:
+            print(f"[retrieval] Connecting to Qdrant Cloud at {cfg.QDRANT_URL}")
+            _qdrant_client = QdrantClient(url=cfg.QDRANT_URL, api_key=cfg.QDRANT_API_KEY)
+        else:
+            local_path = cfg.BASE_DIR / "data" / "qdrant_db"
+            local_path.mkdir(parents=True, exist_ok=True)
+            print(f"[retrieval] QDRANT_URL not set, using local Qdrant at {local_path}")
+            _qdrant_client = QdrantClient(path=str(local_path))
+            atexit.register(close_vector_store)
 
-    return collection
+    return _qdrant_client
+
+def close_vector_store():
+    """Close QdrantClient instance to release file locks."""
+    global _qdrant_client
+    if _qdrant_client is not None:
+        try:
+            _qdrant_client.close()
+        except Exception:
+            pass
+        _qdrant_client = None
 
 
-def _get_embedding_model() -> SentenceTransformer:
+def _get_embedding_model():
     """
     Return cached embedding model.
     Load on first call.
@@ -77,17 +95,24 @@ def _get_embedding_model() -> SentenceTransformer:
     return _embedding_model
 
 
-def _get_chroma_collection():
+def _get_qdrant_client() -> QdrantClient:
     """
-    Return cached Chroma collection.
+    Return cached Qdrant client.
     Load on first call.
     """
-    global _chroma_collection
+    global _qdrant_client
 
-    if _chroma_collection is None:
-        _chroma_collection = load_vector_store()
+    if _qdrant_client is None:
+        _qdrant_client = load_vector_store()
 
-    return _chroma_collection
+    return _qdrant_client
+
+
+def encode_query(query: str) -> list[float]:
+    """Encode query string into 1024-dim BGE-M3 dense vector."""
+    model = _get_embedding_model()
+    vec = model.encode(query, normalize_embeddings=True)
+    return vec.tolist() if hasattr(vec, "tolist") else list(vec)
 
 
 # =========================================================
@@ -388,17 +413,17 @@ def _calculate_context_bonus(
 def retrieve(
     query: str,
     context: dict | None = None,
-    top_k: int = cfg.DEFAULT_TOP_K
+    top_k: int = cfg.DEFAULT_TOP_K,
+    domain: str | None = None,
 ) -> list[RetrievedChunk]:
     """
-    Retrieve relevant chunks.
+    Retrieve relevant chunks using Qdrant vector search and BGE-M3 embeddings.
 
     Flow:
     1. Build search query with structured context
-    2. Vector search
-    3. Keyword bonus
-    4. Structured-context bonus
-    5. Sort and return top_k
+    2. Dense vector search via Qdrant (query_points API)
+    3. Keyword bonus & Structured-context bonus
+    4. Sort and return top_k
     """
 
     if not query or not query.strip():
@@ -407,126 +432,78 @@ def retrieve(
     if top_k <= 0:
         return []
 
-    structured_context = (
-        _get_structured_context(
-            context
-        )
-    )
-
-    search_query = build_search_query(
-        query=query,
-        context=context
-    )
+    structured_context = _get_structured_context(context)
+    search_query = build_search_query(query=query, context=context)
 
     # =====================================================
     # EMBEDDING
     # =====================================================
-
-    model = _get_embedding_model()
-
-    query_embedding = model.encode(
-        search_query,
-        normalize_embeddings=True
-    ).tolist()
+    query_embedding = encode_query(search_query)
 
     # =====================================================
     # VECTOR STORE
     # =====================================================
+    client = _get_qdrant_client()
+    collection_name = getattr(cfg, "DEFAULT_COLLECTION", "admin_dev")
 
-    collection = _get_chroma_collection()
+    try:
+        count_res = client.count(collection_name=collection_name)
+        collection_count = count_res.count if hasattr(count_res, "count") else 1000
+    except Exception:
+        collection_count = 1000
 
-    collection_count = collection.count()
-
-    candidate_count = min(
-        max(top_k * 5, 10),
-        collection_count
-    )
+    candidate_count = min(max(top_k * 5, 10), max(collection_count, 1))
 
     if candidate_count <= 0:
         return []
 
-    results = collection.query(
-        query_embeddings=[
-            query_embedding
-        ],
-        n_results=candidate_count
-    )
-
-    documents = results.get(
-        "documents",
-        [[]]
-    )[0]
-
-    metadatas = results.get(
-        "metadatas",
-        [[]]
-    )[0]
-
-    distances = results.get(
-        "distances",
-        [[]]
-    )[0]
+    # Query Qdrant using query_points API
+    try:
+        query_response = client.query_points(
+            collection_name=collection_name,
+            query=query_embedding,
+            limit=candidate_count,
+            with_payload=True,
+        )
+        hits = query_response.points if hasattr(query_response, "points") else query_response
+    except Exception as e:
+        # Fallback to search if query_points not supported in environment
+        hits = client.search(
+            collection_name=collection_name,
+            query_vector=query_embedding,
+            limit=candidate_count,
+            with_payload=True,
+        )
 
     retrieved_chunks = []
 
     # =====================================================
     # RANKING
     # =====================================================
+    for hit in hits:
+        payload = getattr(hit, "payload", {}) or {}
+        score = getattr(hit, "score", 0.0)
 
-    for content, metadata, distance in zip(
-        documents,
-        metadatas,
-        distances
-    ):
+        content = payload.get("text") or payload.get("content") or ""
+        chunk_id = str(payload.get("chunk_id", getattr(hit, "id", "")))
+        document_id = str(payload.get("document_id", ""))
 
-        metadata = metadata or {}
+        # Qdrant cosine similarity score (higher is better)
+        vector_score = float(score)
 
-        content = content or ""
-
-        chunk_id = str(
-            metadata.get(
-                "chunk_id",
-                ""
-            )
+        keyword_bonus = _calculate_keyword_bonus(
+            query=search_query,
+            metadata=payload,
+            content=content,
         )
 
-        document_id = str(
-            metadata.get(
-                "document_id",
-                ""
-            )
+        context_bonus = _calculate_context_bonus(
+            structured_context=structured_context,
+            metadata=payload,
+            content=content,
         )
 
-        # Vector score: higher is better.
-        vector_score = 1.0 / (
-            1.0 + float(distance)
-        )
-
-        # Dùng search_query thay vì query gốc
-        # để keyword ranking cũng nhận context.
-        keyword_bonus = (
-            _calculate_keyword_bonus(
-                query=search_query,
-                metadata=metadata,
-                content=content
-            )
-        )
-
-        context_bonus = (
-            _calculate_context_bonus(
-                structured_context=(
-                    structured_context
-                ),
-                metadata=metadata,
-                content=content
-            )
-        )
-
-        final_score = (
-            vector_score
-            + keyword_bonus
-            + context_bonus
-        )
+        final_score = vector_score + keyword_bonus + context_bonus
 
         retrieved_chunks.append(
             RetrievedChunk(
@@ -534,18 +511,12 @@ def retrieve(
                 document_id=document_id,
                 content=content,
                 retrieval_score=final_score,
-                metadata=metadata
+                metadata=payload,
             )
         )
 
-    # Highest score first.
-    retrieved_chunks.sort(
-        key=lambda item: (
-            item.retrieval_score
-        ),
-        reverse=True
-    )
-
+    # Highest score first
+    retrieved_chunks.sort(key=lambda item: item.retrieval_score, reverse=True)
     return retrieved_chunks[:top_k]
 
 
@@ -558,12 +529,10 @@ def _is_ambiguous_query(query: str) -> bool:
     Phát hiện query mơ hồ — không có từ khóa thủ tục cụ thể.
     Dùng để quyết định có hỏi làm rõ không.
     """
-    # Query dưới 5 từ và không có keyword thủ tục = mơ hồ
     words = query.strip().split()
     if len(words) <= 4:
         return True
 
-    # Các từ chỉ định thủ tục cụ thể
     try:
         from rag.synthesizer import _PROCEDURE_KEYWORDS
         specific_markers = _PROCEDURE_KEYWORDS
@@ -584,26 +553,16 @@ def retrieve_two_step(
     query: str,
     context: dict | None = None,
     top_k: int = cfg.DEFAULT_TOP_K,
+    domain: str | None = None,
 ) -> list[RetrievedChunk]:
     """
-    GĐ2 mục 7: Retrieval hai bước để tránh nhầm thủ tục.
-
-    Bước 1: Xác định document_id từ chunk _general (tổng quan).
-    Bước 2: Lấy chunk field cụ thể (_docs/_fee/_time/_method)
-            chỉ của document đó, theo _detect_field_types.
-
-    Fallback: nếu không tìm được doc_id rõ ràng → dùng retrieve() thường.
-
-    Clarification: nếu top-1 và top-2 thuộc các thủ tục khác nhau sát nhau (<0.08 delta),
-    không có thủ tục đang active, và query mơ hồ → trả []
-    (pipeline sẽ trả clarification).
+    GĐ2 mục 7: Retrieval hai bước để tránh nhầm thủ tục trên Qdrant.
     """
     if not query or not query.strip():
         return []
 
     # ---- Bước 1: xác định document_id ----
-    # Chạy vector search trên toàn collection để tìm chunk tốt nhất
-    raw_results = retrieve(query=query, context=context, top_k=top_k * 3)
+    raw_results = retrieve(query=query, context=context, top_k=top_k * 3, domain=domain)
 
     if not raw_results:
         return []

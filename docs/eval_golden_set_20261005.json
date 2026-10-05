@@ -1,0 +1,461 @@
+{
+  "timestamp": "2026-10-05T22:48:37.927811",
+  "domain": "administrative_procedures",
+  "total": 30,
+  "retrieval_at_1": 90.0,
+  "retrieval_at_3": 93.33333333333333,
+  "retrieval_at_5": 93.33333333333333,
+  "mrr": 0.9166666666666666,
+  "details": [
+    {
+      "id": "ST_001",
+      "question": "Đăng ký kết hôn cần giấy tờ gì?",
+      "expected_document_id": "PROC_004",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_004",
+        "PROC_006"
+      ],
+      "top_score": 2.0721018202666284,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_002",
+      "question": "Lệ phí đăng ký kết hôn bao nhiêu?",
+      "expected_document_id": "PROC_004",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_006",
+        "PROC_004"
+      ],
+      "top_score": 2.1535549147838844,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_003",
+      "question": "Thời gian giải quyết đăng ký kết hôn là bao lâu?",
+      "expected_document_id": "PROC_004",
+      "expected_field": "time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_006",
+        "PROC_004"
+      ],
+      "top_score": 2.1910047743789205,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_004",
+      "question": "Đăng ký khai sinh cần những giấy tờ nào?",
+      "expected_document_id": "PROC_002",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_002",
+        "PROC_002"
+      ],
+      "top_score": 2.0484002966036248,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_005",
+      "question": "Lệ phí đăng ký khai sinh là bao nhiêu?",
+      "expected_document_id": "PROC_002",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_002",
+        "PROC_002"
+      ],
+      "top_score": 2.1488184520764575,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_006",
+      "question": "Đăng ký khai tử mất bao nhiêu ngày?",
+      "expected_document_id": "PROC_003",
+      "expected_field": "time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_003",
+        "PROC_003"
+      ],
+      "top_score": 2.0812175165061886,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_007",
+      "question": "Hồ sơ đăng ký khai tử gồm những gì?",
+      "expected_document_id": "PROC_003",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_003",
+        "PROC_003"
+      ],
+      "top_score": 2.056346624074751,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_008",
+      "question": "Xác nhận tình trạng hôn nhân cần giấy tờ gì?",
+      "expected_document_id": "PROC_001",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_001",
+        "PROC_001"
+      ],
+      "top_score": 2.7180985480029785,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_009",
+      "question": "Lệ phí xác nhận tình trạng hôn nhân là bao nhiêu?",
+      "expected_document_id": "PROC_001",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_001",
+        "PROC_001"
+      ],
+      "top_score": 2.7504588556898657,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_010",
+      "question": "Nộp hồ sơ xác nhận tình trạng hôn nhân ở đâu?",
+      "expected_document_id": "PROC_001",
+      "expected_field": "method",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_001",
+        "PROC_001"
+      ],
+      "top_score": 2.7423122356964935,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_011",
+      "question": "Thủ tục nhận cha mẹ con cần giấy tờ gì?",
+      "expected_document_id": "PROC_005",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_005",
+        "PROC_005",
+        "PROC_005"
+      ],
+      "top_score": 2.1217066759963066,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_012",
+      "question": "Lệ phí làm thủ tục nhận cha mẹ con là bao nhiêu?",
+      "expected_document_id": "PROC_005",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_005",
+        "PROC_005",
+        "PROC_005"
+      ],
+      "top_score": 2.1841175778357655,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_013",
+      "question": "Xác định mức độ khuyết tật cần hồ sơ gì?",
+      "expected_document_id": "PROC_023",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_023",
+        "PROC_023",
+        "PROC_023"
+      ],
+      "top_score": 2.7595674403084063,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_014",
+      "question": "Thời gian xử lý hồ sơ xác định mức độ khuyết tật bao lâu?",
+      "expected_document_id": "PROC_023",
+      "expected_field": "time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_023",
+        "PROC_023",
+        "PROC_023"
+      ],
+      "top_score": 2.820900452564389,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_015",
+      "question": "Xin cấp giấy phép xây dựng cần những giấy tờ nào?",
+      "expected_document_id": "PROC_027",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_027",
+        "PROC_027"
+      ],
+      "top_score": 2.0136127298978064,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_016",
+      "question": "Lệ phí cấp giấy phép xây dựng là bao nhiêu?",
+      "expected_document_id": "PROC_027",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_027",
+        "PROC_027"
+      ],
+      "top_score": 2.093922098393215,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_017",
+      "question": "Nộp hồ sơ xin cấp phép xây dựng ở đâu?",
+      "expected_document_id": "PROC_027",
+      "expected_field": "method",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_027",
+        "PROC_027"
+      ],
+      "top_score": 2.0478904920798318,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_018",
+      "question": "Vay vốn hỗ trợ việc làm cần hồ sơ gì?",
+      "expected_document_id": "PROC_032",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_032",
+        "PROC_032",
+        "PROC_032"
+      ],
+      "top_score": 2.7072545057338164,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_019",
+      "question": "Thời gian giải quyết vay vốn việc làm mất bao lâu?",
+      "expected_document_id": "PROC_032",
+      "expected_field": "time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_032",
+        "PROC_032",
+        "PROC_032"
+      ],
+      "top_score": 2.2076013147583833,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_020",
+      "question": "Chuyển trường THCS cần những giấy tờ nào?",
+      "expected_document_id": "PROC_029",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_029",
+        "PROC_029",
+        "PROC_029"
+      ],
+      "top_score": 1.765057003340213,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_021",
+      "question": "Nộp hồ sơ chuyển trường THCS ở đâu?",
+      "expected_document_id": "PROC_029",
+      "expected_field": "method",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_029",
+        "PROC_029",
+        "PROC_029"
+      ],
+      "top_score": 1.781223093750408,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_022",
+      "question": "Đăng ký hộ kinh doanh cần giấy tờ gì?",
+      "expected_document_id": "PROC_036",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_037",
+        "PROC_036"
+      ],
+      "top_score": 2.3843718225771364,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_023",
+      "question": "Lệ phí đăng ký hộ kinh doanh là bao nhiêu?",
+      "expected_document_id": "PROC_036",
+      "expected_field": "fee",
+      "rank": 2,
+      "retrieved_top3": [
+        "PROC_037",
+        "PROC_036",
+        "PROC_036"
+      ],
+      "top_score": 2.4160344397996276,
+      "r1": false,
+      "r5": true
+    },
+    {
+      "id": "ST_024",
+      "question": "Thay đổi nội dung đăng ký hộ kinh doanh cần hồ sơ gì?",
+      "expected_document_id": "PROC_037",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_037",
+        "PROC_037",
+        "PROC_037"
+      ],
+      "top_score": 3.765755224060239,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_025",
+      "question": "Học bổng chính sách cần điều kiện và hồ sơ gì?",
+      "expected_document_id": "PROC_041",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_041",
+        "PROC_041",
+        "PROC_041"
+      ],
+      "top_score": 2.0357423487644373,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_026",
+      "question": "Thời hạn nộp hồ sơ học bổng chính sách là khi nào?",
+      "expected_document_id": "PROC_041",
+      "expected_field": "time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_041",
+        "PROC_041",
+        "PROC_041"
+      ],
+      "top_score": 2.0765325285113345,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_027",
+      "question": "Chứng thực chữ ký cần giấy tờ gì?",
+      "expected_document_id": "PROC_042",
+      "expected_field": "docs",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_042",
+        "PROC_042"
+      ],
+      "top_score": 2.0468692182950408,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_028",
+      "question": "Lệ phí chứng thực chữ ký là bao nhiêu?",
+      "expected_document_id": "PROC_042",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_042",
+        "PROC_042"
+      ],
+      "top_score": 2.144539075867421,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "ST_029",
+      "question": "Tôi muốn hỏi về thủ tục hành chính",
+      "expected_document_id": null,
+      "expected_field": null,
+      "rank": 0,
+      "retrieved_top3": [
+        "PROC_031",
+        "PROC_042",
+        "PROC_042"
+      ],
+      "top_score": 0.6830496182546169,
+      "r1": false,
+      "r5": false
+    },
+    {
+      "id": "ST_030",
+      "question": "Làm thế nào để đăng ký kinh doanh xe tải liên tỉnh?",
+      "expected_document_id": null,
+      "expected_field": null,
+      "rank": 0,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_037",
+        "PROC_040"
+      ],
+      "top_score": 1.8699437606705784,
+      "r1": false,
+      "r5": false
+    }
+  ]
+}
