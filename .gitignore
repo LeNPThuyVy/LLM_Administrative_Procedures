@@ -237,3 +237,4 @@ model/
 
 #ignore graphify
 graphify-out/
+data/.ingestion_versions.json
