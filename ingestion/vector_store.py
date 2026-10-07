@@ -36,6 +36,7 @@ class QdrantVectorStore:
         self.client = QdrantClient(
             url=url,
             api_key=api_key,
+            timeout=60,
         )
 
     def ensure_collection(self) -> None:
@@ -93,7 +94,7 @@ class QdrantVectorStore:
         self,
         chunks: list,
         embeddings: list[list[float]],
-        batch_size: int = 100,
+        batch_size: int = 50,
     ) -> int:
         if len(chunks) != len(embeddings):
             raise ValueError("chunks và embeddings phải có cùng số lượng")

@@ -1,5 +1,3 @@
-from llama_index.readers.web import SimpleWebPageReader
-
 from .base_loader import BaseLoader, RawDocument
 
 
@@ -23,6 +21,7 @@ class WebLoader(BaseLoader):
 
         for url in urls:
             try:
+                from llama_index.readers.web import SimpleWebPageReader
                 reader = SimpleWebPageReader(
                     html_to_text=True
                 )
