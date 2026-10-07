@@ -16,11 +16,14 @@ or:
 """
 
 import uvicorn
-import gradio as gr
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
 
 from backend.api.sessions import router as sessions_router
 from backend.api.socket import router as socket_router
+from backend.api.chat import router as chat_router
 
 app = FastAPI(
     title="RAG Backend API",
@@ -30,19 +33,21 @@ app = FastAPI(
 # --- REST / WebSocket routes ---
 app.include_router(sessions_router)
 app.include_router(socket_router)
+app.include_router(chat_router)
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
+# --- Static files and Web UI ---
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- Mount Gradio UI at root ---
-# Imported here (after FastAPI is created) to avoid circular import issues
-# with any module that imports from app.py at top level.
-from app import create_app as _create_gradio_app  # noqa: E402
+# Serve static files from ui/static
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "ui" / "static")), name="static")
 
-_gradio_demo = _create_gradio_app()
-app = gr.mount_gradio_app(app, _gradio_demo, path="/")
+@app.get("/")
+async def get_index():
+    return FileResponse(str(BASE_DIR / "ui" / "web_ui.html"))
 
 
 if __name__ == "__main__":

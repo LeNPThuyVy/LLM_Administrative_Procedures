@@ -7,13 +7,15 @@ from rag.pipeline import answer_query
 async def generate_answer(
     query: str,
     session_id: str,
-    context: dict
+    context: dict,
+    domain: str | None = None
 ):
     response = await asyncio.to_thread(
         answer_query,
         query,
         session_id,
-        context
+        context,
+        domain
     )
 
     # Chuyển các object Pydantic / Citation / nested objects
@@ -31,4 +33,7 @@ async def generate_answer(
         "clarification_question": (
             response.clarification_question
         ),
+        "domain": response.domain,
+        "mode": response.mode,
+        "tool_calls": response.tool_calls,
     }

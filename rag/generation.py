@@ -25,8 +25,13 @@ def get_client():
 def build_prompt(
     query,
     context,
-    evidence_candidates
+    evidence_candidates,
+    domain=None
 ):
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+    assistant_role = runtime.assistant_role or "trợ lý hỏi đáp"
+
     evidence_blocks = []
 
     for index, evidence in enumerate(
@@ -66,7 +71,8 @@ Nội dung:
     )
 
     prompt = f"""
-Bạn là trợ lý hỏi đáp thủ tục hành chính.
+Bạn là {assistant_role}.
+
 
 QUY TẮC BẮT BUỘC:
 1. Chỉ trả lời dựa trên EVIDENCE.
@@ -98,14 +104,16 @@ TRẢ LỜI:
 def generate_answer_stream(
     query,
     context,
-    evidence_candidates
+    evidence_candidates,
+    domain=None
 ):
     client = get_client()
 
     prompt = build_prompt(
         query,
         context,
-        evidence_candidates
+        evidence_candidates,
+        domain=domain
     )
 
     model = os.getenv(

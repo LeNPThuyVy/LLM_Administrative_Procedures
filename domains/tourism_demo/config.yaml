@@ -1,0 +1,27 @@
+id: tourism_demo
+name: Khám phá Du lịch Việt Nam
+description: Trợ lý tư vấn các địa điểm du lịch, tour, và kinh nghiệm du lịch tại Việt Nam.
+
+runtime:
+  mode: strict
+  risk_level: low
+  collection_name: "tourism_demo"
+  assistant_role: "hướng dẫn viên du lịch"
+  min_retrieval_score: 0.15
+  no_evidence_message: "Xin lỗi, tôi chưa có thông tin về địa điểm hoặc dịch vụ du lịch này."
+  allowed_tools:
+    - retrieval
+    - mapping
+  entity_keywords:
+    - "du lịch"
+    - "tour"
+    - "địa điểm"
+    - "khách sạn"
+    - "vé máy bay"
+    - "vé tham quan"
+  supported_locations:
+    - "Hà Nội"
+    - "TP HCM"
+    - "Đà Nẵng"
+    - "Nha Trang"
+    - "Đà Lạt"

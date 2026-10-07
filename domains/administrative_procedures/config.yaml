@@ -64,9 +64,66 @@ sources:
 # =========================
 # Policy
 # =========================
-mode: friendly
+mode: strict
 persona: thân thiện, giản dị
-risk_level: low
+risk_level: high
+
+assistant_role: "cán bộ tư vấn thủ tục hành chính"
+no_evidence_message: "Tôi chưa có đủ thông tin để trả lời câu hỏi này."
+disclaimer: "Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+supported_locations:
+  - "hồ chí minh"
+  - "hcm"
+  - "tp hcm"
+  - "tp.hcm"
+  - "thành phố hồ chí minh"
+  - "sài gòn"
+  - "saigon"
+  - "sg"
+min_retrieval_score: 0.50
+allowed_tools: []
+entity_keywords:
+  - "kết hôn"
+  - "khai sinh"
+  - "khai tử"
+  - "nhận cha"
+  - "nhận mẹ"
+  - "nhận con"
+  - "hôn nhân"
+  - "tình trạng hôn nhân"
+  - "xác nhận tình trạng"
+  - "nội quy lao động"
+  - "việc làm"
+  - "vay vốn"
+  - "khuyết tật"
+  - "hưu trí"
+  - "trợ cấp"
+  - "liệt sĩ"
+  - "bằng tổ quốc"
+  - "thân nhân"
+  - "người có công"
+  - "hỏa táng"
+  - "mai táng"
+  - "hỗ trợ"
+  - "giấy phép xây dựng"
+  - "xây dựng"
+  - "quy hoạch"
+  - "khởi công"
+  - "đất đai"
+  - "số nhà"
+  - "vị trí nhà"
+  - "tình trạng nhà"
+  - "hộ kinh doanh"
+  - "đăng ký kinh doanh"
+  - "kinh doanh"
+  - "tạm ngừng kinh doanh"
+  - "chấm dứt hoạt động"
+  - "học bổng"
+  - "chuyển trường"
+  - "chứng thực"
+  - "chữ ký"
+  - "hợp đồng"
+  - "di chúc"
 
 # =========================
 # Dedup
