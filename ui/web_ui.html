@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light" data-domain-mode="strict">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trợ lý AI Đa Lĩnh Vực - Dịch vụ Công & Đời sống</title>
+  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --bg-page: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-subtle: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --primary: #0284c7;
+      --primary-rgb: 2, 132, 199;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --accent-badge: #0369a1;
+      --badge-bg: #e0f2fe;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px -2px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1);
+      --sidebar-w: 280px;
+      --evidence-w: 360px;
+    }
+    [data-theme="dark"] {
+      --bg-page: #0b1120;
+      --bg-surface: #1e293b;
+      --bg-surface-subtle: #151f32;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --primary-light: rgba(2, 132, 199, 0.15);
+    }
+    [data-domain-mode="strict"] {
+      --primary: #0f4c81;
+      --primary-rgb: 15, 76, 129;
+      --primary-dark: #0a365c;
+      --primary-light: #e6f0fa;
+      --accent-badge: #0f4c81;
+      --badge-bg: #e2eaf4;
+      --radius-md: 10px;
+    }
+    [data-domain-mode="strict"][data-theme="dark"] {
+      --primary: #38bdf8;
+      --primary-light: rgba(56, 189, 248, 0.15);
+      --badge-bg: rgba(56, 189, 248, 0.15);
+    }
+    [data-domain-mode="friendly"] {
+      --primary: #0d9488;
+      --primary-rgb: 13, 148, 136;
+      --primary-dark: #0f766e;
+      --primary-light: #ccfbf1;
+      --accent-badge: #0f766e;
+      --badge-bg: #e6fffa;
+      --radius-md: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-main);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-main);
+      background-color: var(--bg-page);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Layout */
+    #sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.25s ease;
+      z-index: 30;
+    }
+    #chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: var(--bg-page);
+      min-width: 0;
+    }
+    #evidence-panel {
+      width: var(--evidence-w);
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 40;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.06);
+    }
+    #evidence-panel.open { transform: translateX(0); }
+    /* Header */
+    .chat-header {
+      height: 64px;
+      padding: 0 20px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .badge-mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--badge-bg);
+      color: var(--primary);
+    }
+    /* Chat stream & messages */
+    .messages-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .msg-wrapper {
+      display: flex;
+      gap: 12px;
+      max-width: 820px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .msg-wrapper.user { justify-content: flex-end; }
+    .msg-bubble {
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .msg-wrapper.user .msg-bubble {
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+    .msg-wrapper.ai .msg-bubble {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 2px;
+      width: 100%;
+    }
+    .citation-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      margin: 0 3px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid rgba(var(--primary-rgb), 0.3);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      vertical-align: baseline;
+      transition: all 0.15s ease;
+    }
+    .citation-chip:hover {
+      background: var(--primary);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    /* Status banner */
+    .status-stepper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 8px 14px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      display: inline-flex;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: pulse 1.4s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+    /* Welcome screen */
+    .welcome-container {
+      max-width: 680px;
+      margin: auto;
+      text-align: center;
+      padding: 24px;
+    }
+    .suggestion-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+      text-align: left;
+    }
+    .suggestion-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .suggestion-btn:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    /* Input area */
+    .input-wrapper {
+      padding: 14px 24px 18px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .input-box {
+      display: flex;
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .input-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+    textarea.chat-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      resize: none;
+      max-height: 160px;
+      font-family: inherit;
+      font-size: 16px;
+      color: var(--text-main);
+      outline: none;
+      line-height: 1.5;
+      padding: 4px;
+    }
+    .btn-send {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .disclaimer-text {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+    [data-domain-mode="strict"] .disclaimer-text {
+      color: #b91c1c;
+      font-weight: 500;
+    }
+    /* Clarification & Rejection cards */
+    .clarify-card, .refuse-card {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface-subtle);
+      border-left: 4px solid var(--primary);
+    }
+    .refuse-card {
+      border-left-color: #eab308;
+      background: #fefce8;
+      color: #854d0e;
+    }
+    [data-theme="dark"] .refuse-card {
+      background: #422006;
+      color: #fef08a;
+    }
+    .choice-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .btn-choice {
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-choice:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    /* Feedback & Actions */
+    .msg-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border-color);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      padding: 4px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .action-btn:hover {
+      background: var(--bg-surface-subtle);
+      color: var(--text-main);
+    }
+    /* Responsive & Mobile Drawer */
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        transform: translateX(-100%);
+      }
+      #sidebar.open { transform: translateX(0); }
+      #evidence-panel {
+        width: 100%;
+        height: 60vh;
+        top: auto;
+        border-radius: 16px 16px 0 0;
+        transform: translateY(100%);
+      }
+      #evidence-panel.open { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div style="padding: 16px; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="font-size: 18px; font-weight:700; color:var(--primary);">Trợ lý Phường AI</h2>
+      <button id="theme-toggle" class="action-btn" title="Chuyển chế độ sáng/tối" aria-label="Đổi giao diện sáng/tối">🌓</button>
+    </div>
+    
+    <div style="padding: 16px;">
+      <label style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display:block;">LĨNH VỰC HOẠT ĐỘNG</label>
+      <select id="domain-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-size:15px;">
+        <option value="hanh_chinh">🏛️ Thủ tục Phường (Nghiêm ngặt)</option>
+        <option value="du_lich">🏖️ Du lịch & Lễ hội (Thân thiện)</option>
+        <option value="y_te">🏥 Y tế & Tiêm chủng (Nghiêm ngặt)</option>
+      </select>
+    </div>
+
+    <div style="padding: 0 16px 12px;">
+      <button id="btn-new-chat" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); background: var(--primary); color: #fff; border:none; font-weight: 600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span>+</span> Cuộc trò chuyện mới
+      </button>
+    </div>
+
+    <div style="flex:1; overflow-y:auto; padding: 8px 16px;">
+      <div style="font-size: 12px; font-weight:600; color:var(--text-muted); margin-bottom: 8px; text-transform:uppercase;">Lịch sử gần đây</div>
+      <div id="history-list" style="display:flex; flex-direction:column; gap:4px;">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <div style="padding: 14px 16px; border-top: 1px solid var(--border-color); font-size:13px; color:var(--text-muted);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Chế độ Mock API:</span>
+        <input type="checkbox" id="mock-toggle" checked>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Chat Section -->
+  <main id="chat-container">
+    <!-- Header -->
+    <header class="chat-header">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button id="sidebar-toggle" class="action-btn" aria-label="Mở danh mục menu" style="font-size:18px;">☰</button>
+        <div>
+          <h1 id="header-domain-name" style="font-size: 17px; font-weight: 700;">Thủ tục hành chính của phường</h1>
+          <p id="header-subtitle" style="font-size: 12px; color: var(--text-muted);">Hỗ trợ tra cứu hồ sơ, căn cứ pháp lý & quy trình một cửa</p>
+        </div>
+      </div>
+      <div>
+        <span id="domain-mode-badge" class="badge-mode">
+          🛡️ Chế độ: Nghiêm ngặt (Có dẫn chứng)
+        </span>
+      </div>
+    </header>
+
+    <!-- Message Scroll Area -->
+    <section class="messages-scroll" id="messages-list">
+      <!-- Welcome Screen (Default) -->
+      <div class="welcome-container" id="welcome-view">
+        <div style="font-size: 40px; margin-bottom: 12px;">👋</div>
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</h2>
+        <p style="color: var(--text-muted); font-size: 15px;">Mọi câu trả lời trong lĩnh vực này đều được đối soát với quy định pháp luật và văn bản hiện hành.</p>
+        
+        <div class="suggestion-grid" id="suggestion-list">
+          <!-- Dynamic suggestion buttons -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Chat Input Section -->
+    <footer class="input-wrapper">
+      <div id="status-container" style="display:none; margin-bottom:8px;">
+        <div class="status-stepper">
+          <span class="pulse-dot"></span>
+          <span id="status-text">Đang chuẩn bị...</span>
+          <button id="btn-stop-stream" class="action-btn" style="color:var(--primary); font-weight:bold; margin-left:6px;">[Dừng]</button>
+        </div>
+      </div>
+
+      <div class="input-box">
+        <textarea id="user-input" class="chat-input" rows="1" placeholder="Nhập câu hỏi của bạn (Enter để gửi, Shift+Enter xuống dòng)..." maxlength="1000"></textarea>
+        <button id="btn-send-msg" class="btn-send" aria-label="Gửi tin nhắn">
+          Gửi ➤
+        </button>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+        <p class="disclaimer-text">
+          ⚠️ Thông tin mang tính tham khảo. Đối với hồ sơ chính thức, vui lòng đối chiếu văn bản tại UBND phường.
+        </p>
+        <span id="char-counter" style="font-size:12px; color:var(--text-muted);">0/1000</span>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Evidence Panel (Slide Over / Bottom Sheet) -->
+  <aside id="evidence-panel" aria-label="Bảng dẫn chứng trích dẫn">
+    <div style="padding: 16px; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-size: 16px; font-weight: 700; display:flex; align-items:center; gap:6px;">
+        📑 Căn cứ & Dẫn chứng
+      </h3>
+      <button id="btn-close-evidence" class="action-btn" aria-label="Đóng panel dẫn chứng" style="font-size:18px;">✕</button>
+    </div>
+    <div id="evidence-content" style="flex:1; overflow-y:auto; padding: 16px; display:flex; flex-direction:column; gap:14px;">
+      <!-- Populated on click citation chip -->
+    </div>
+  </aside>
+
+  <!-- Notification Banner / Toast -->
+  <div id="toast-banner" style="display:none; position:fixed; top:20px; right:20px; background:#1e293b; color:#fff; padding:12px 18px; border-radius:8px; z-index:999; box-shadow:var(--shadow-lg); font-size:14px;">
+    Thông báo
+  </div>
+
+  <script src="static/js/api.js"></script>
+  <script src="static/js/app.js"></script>
+</body>
+</html>

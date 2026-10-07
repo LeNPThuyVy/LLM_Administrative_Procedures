@@ -245,3 +245,8 @@ test/
 data/qdrant_db/
 
 data/.ingestion_versions.json
+
+#ignore tests_tang1 folder
+tests_tang1/
+
+docs/*test*.md

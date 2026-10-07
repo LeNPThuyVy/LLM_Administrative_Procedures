@@ -61,7 +61,7 @@ def load_vector_store() -> QdrantClient:
     if _qdrant_client is None:
         if cfg.QDRANT_URL:
             print(f"[retrieval] Connecting to Qdrant Cloud at {cfg.QDRANT_URL}")
-            _qdrant_client = QdrantClient(url=cfg.QDRANT_URL, api_key=cfg.QDRANT_API_KEY)
+            _qdrant_client = QdrantClient(url=cfg.QDRANT_URL, api_key=cfg.QDRANT_API_KEY, timeout=60)
         else:
             local_path = cfg.BASE_DIR / "data" / "qdrant_db"
             local_path.mkdir(parents=True, exist_ok=True)
@@ -467,13 +467,8 @@ def retrieve(
         )
         hits = query_response.points if hasattr(query_response, "points") else query_response
     except Exception as e:
-        # Fallback to search if query_points not supported in environment
-        hits = client.search(
-            collection_name=collection_name,
-            query_vector=query_embedding,
-            limit=candidate_count,
-            with_payload=True,
-        )
+        print(f"[retrieval] Qdrant query_points error: {e}")
+        return []
 
     retrieved_chunks = []
 

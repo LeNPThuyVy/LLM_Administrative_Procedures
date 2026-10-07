@@ -14,7 +14,7 @@ QDRANT_URL = os.getenv("QDRANT_URL", "")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
 
 DEFAULT_DOMAIN = "administrative_procedures"
-DEFAULT_COLLECTION = os.getenv("DEFAULT_COLLECTION", "admin_dev")
+DEFAULT_COLLECTION = os.getenv("DEFAULT_COLLECTION", "administrative_procedures")
 COLLECTION_NAME = DEFAULT_COLLECTION
 
 EMBEDDING_MODEL = "BAAI/bge-m3"
@@ -38,12 +38,10 @@ SUPPORTED_LOCATIONS = {
     "sài gòn", "saigon", "sg",
 }
 
-MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
+# MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
 
 MAX_NEW_TOKENS = 512
 TEMPERATURE = 0.0
 TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-VAST_URL = "https://coast-relevance-november-everyone.trycloudflare.com"
