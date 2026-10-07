@@ -156,6 +156,8 @@ async def websocket_chat(
                 payload.get("query", "")
             ).strip()
 
+            domain = payload.get("domain", None)
+
             # Query rỗng
             if not query:
                 await websocket.send_json({
@@ -227,6 +229,7 @@ async def websocket_chat(
                         query=query,
                         session_id=session_id,
                         context=context,
+                        domain=domain,
                     )
 
                     # =========================

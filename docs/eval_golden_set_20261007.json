@@ -1,0 +1,461 @@
+{
+  "timestamp": "2026-10-07T10:06:41.524739",
+  "domain": "administrative_procedures",
+  "total": 30,
+  "retrieval_at_1": 90.0,
+  "retrieval_at_3": 93.33333333333333,
+  "retrieval_at_5": 93.33333333333333,
+  "mrr": 0.9111111111111111,
+  "details": [
+    {
+      "id": "GS_001",
+      "question": "Tôi cần chuẩn bị những giấy tờ gì để xin xác nhận tình trạng hôn nhân?",
+      "expected_document_id": "PROC_001",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_001",
+        "PROC_001"
+      ],
+      "top_score": 2.7149220499999998,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_002",
+      "question": "Xác nhận tình trạng hôn nhân mất bao lâu?",
+      "expected_document_id": "PROC_001",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_001",
+        "PROC_001"
+      ],
+      "top_score": 2.73065494,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_003",
+      "question": "Đăng ký khai sinh cần những hồ sơ gì?",
+      "expected_document_id": "PROC_002",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_002",
+        "PROC_002"
+      ],
+      "top_score": 2.0585974,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_004",
+      "question": "Lệ phí đăng ký khai sinh là bao nhiêu?",
+      "expected_document_id": "PROC_002",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_002",
+        "PROC_002"
+      ],
+      "top_score": 2.14881856,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_005",
+      "question": "Tôi đăng ký khai tử thì cần chuẩn bị giấy tờ nào?",
+      "expected_document_id": "PROC_003",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_003",
+        "PROC_003"
+      ],
+      "top_score": 2.11646507,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_006",
+      "question": "Khai tử được giải quyết trong bao lâu?",
+      "expected_document_id": "PROC_003",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_003",
+        "PROC_024"
+      ],
+      "top_score": 1.3741740999999998,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_007",
+      "question": "Đăng ký kết hôn cần hồ sơ gì?",
+      "expected_document_id": "PROC_004",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_004",
+        "PROC_006"
+      ],
+      "top_score": 2.0779386,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_008",
+      "question": "Đăng ký kết hôn có mất phí không?",
+      "expected_document_id": "PROC_004",
+      "expected_field": "fee",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_006",
+        "PROC_004"
+      ],
+      "top_score": 2.0968061,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_009",
+      "question": "Thủ tục nhận cha mẹ con mất bao lâu?",
+      "expected_document_id": "PROC_005",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_005",
+        "PROC_005",
+        "PROC_005"
+      ],
+      "top_score": 2.0968529699999996,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_010",
+      "question": "Hồ sơ nhận cha mẹ con gồm những gì?",
+      "expected_document_id": "PROC_005",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_005",
+        "PROC_005",
+        "PROC_005"
+      ],
+      "top_score": 2.1026433,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_011",
+      "question": "Kết hôn có yếu tố nước ngoài cần những giấy tờ nào?",
+      "expected_document_id": "PROC_006",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_006",
+        "PROC_006",
+        "PROC_006"
+      ],
+      "top_score": 2.7396778,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_012",
+      "question": "Kết hôn với người nước ngoài giải quyết trong mấy ngày?",
+      "expected_document_id": "PROC_006",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_006",
+        "PROC_006",
+        "PROC_006"
+      ],
+      "top_score": 2.17013744,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_013",
+      "question": "Đăng ký nội quy lao động cần hồ sơ gì?",
+      "expected_document_id": "PROC_007",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_007",
+        "PROC_007",
+        "PROC_007"
+      ],
+      "top_score": 2.0859544,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_014",
+      "question": "Hưởng trợ cấp hưu trí xã hội cần nộp giấy tờ gì?",
+      "expected_document_id": "PROC_020",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_020",
+        "PROC_020",
+        "PROC_020"
+      ],
+      "top_score": 3.02109366,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_015",
+      "question": "Trợ cấp hưu trí xã hội xử lý trong bao lâu?",
+      "expected_document_id": "PROC_020",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_020",
+        "PROC_021",
+        "PROC_020"
+      ],
+      "top_score": 2.7281229299999996,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_016",
+      "question": "Hỗ trợ mai táng cho người hưởng trợ cấp hưu trí xã hội cần hồ sơ gì?",
+      "expected_document_id": "PROC_021",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_021",
+        "PROC_021",
+        "PROC_021"
+      ],
+      "top_score": 4.06431096,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_017",
+      "question": "Hỗ trợ chi phí mai táng cho người hưởng hưu trí xã hội mất bao lâu?",
+      "expected_document_id": "PROC_021",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_021",
+        "PROC_021",
+        "PROC_021"
+      ],
+      "top_score": 4.39533186,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_018",
+      "question": "Hồ sơ xác định mức độ khuyết tật cần những gì?",
+      "expected_document_id": "PROC_023",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_023",
+        "PROC_023",
+        "PROC_023"
+      ],
+      "top_score": 2.7528113999999997,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_019",
+      "question": "Xác định mức độ khuyết tật mất bao nhiêu ngày?",
+      "expected_document_id": "PROC_023",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_023",
+        "PROC_023",
+        "PROC_023"
+      ],
+      "top_score": 2.7355546499999996,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_020",
+      "question": "Tôi muốn cấp giấy phép xây dựng thì cần chuẩn bị hồ sơ gì?",
+      "expected_document_id": "PROC_027",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_027",
+        "PROC_025"
+      ],
+      "top_score": 2.0288035,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_021",
+      "question": "Nộp hồ sơ cấp giấy phép xây dựng bằng hình thức nào?",
+      "expected_document_id": "PROC_027",
+      "expected_field": "submission_method",
+      "rank": 3,
+      "retrieved_top3": [
+        "PROC_025",
+        "PROC_025",
+        "PROC_027"
+      ],
+      "top_score": 2.1236955,
+      "r1": false,
+      "r5": true
+    },
+    {
+      "id": "GS_022",
+      "question": "Xin thông tin quy hoạch cần giấy tờ gì?",
+      "expected_document_id": "PROC_026",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_026",
+        "PROC_026",
+        "PROC_030"
+      ],
+      "top_score": 2.0742915999999996,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_023",
+      "question": "Thủ tục cung cấp thông tin quy hoạch mất bao lâu?",
+      "expected_document_id": "PROC_026",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_026",
+        "PROC_026",
+        "PROC_026"
+      ],
+      "top_score": 2.1105087399999998,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_024",
+      "question": "Cơ sở sản xuất kinh doanh vay vốn tạo việc làm cần hồ sơ gì?",
+      "expected_document_id": "PROC_032",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_032",
+        "PROC_032",
+        "PROC_032"
+      ],
+      "top_score": 4.3513353,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_025",
+      "question": "Vay vốn tạo việc làm cho cơ sở sản xuất kinh doanh xử lý trong bao lâu?",
+      "expected_document_id": "PROC_032",
+      "expected_field": "processing_time",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_032",
+        "PROC_032",
+        "PROC_032"
+      ],
+      "top_score": 4.4116143999999995,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_026",
+      "question": "Xin cấp số nhà cần chuẩn bị những giấy tờ gì?",
+      "expected_document_id": "PROC_033",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_033",
+        "PROC_033",
+        "PROC_033"
+      ],
+      "top_score": 1.7872975,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_027",
+      "question": "Hồ sơ xác nhận vị trí nhà đất gồm những gì?",
+      "expected_document_id": "PROC_034",
+      "expected_field": "required_documents",
+      "rank": 0,
+      "retrieved_top3": [
+        "PROC_035",
+        "PROC_035",
+        "PROC_035"
+      ],
+      "top_score": 1.7161840000000002,
+      "r1": false,
+      "r5": false
+    },
+    {
+      "id": "GS_028",
+      "question": "Xác nhận vị trí nhà đất nộp theo hình thức nào?",
+      "expected_document_id": "PROC_034",
+      "expected_field": "submission_method",
+      "rank": 0,
+      "retrieved_top3": [
+        "PROC_035",
+        "PROC_035",
+        "PROC_035"
+      ],
+      "top_score": 1.8077294999999998,
+      "r1": false,
+      "r5": false
+    },
+    {
+      "id": "GS_029",
+      "question": "Đăng ký đất đai và tài sản gắn liền với đất lần đầu cần hồ sơ gì?",
+      "expected_document_id": "PROC_031",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_031",
+        "PROC_031",
+        "PROC_031"
+      ],
+      "top_score": 4.3717863,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_030",
+      "question": "Thông báo khởi công nhà ở riêng lẻ cần những giấy tờ gì?",
+      "expected_document_id": "PROC_030",
+      "expected_field": "required_documents",
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_030",
+        "PROC_030",
+        "PROC_030"
+      ],
+      "top_score": 2.203607,
+      "r1": true,
+      "r5": true
+    }
+  ]
+}

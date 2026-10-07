@@ -425,7 +425,8 @@ def _format_context(
 def build_prompt(
     query: str,
     evidence_candidates: list[EvidenceCandidate],
-    context: dict | None = None
+    context: dict | None = None,
+    domain: str | None = None
 ) -> str:
     """
     Build final generation prompt.
@@ -439,6 +440,9 @@ def build_prompt(
     Evidence remains the only factual/legal source
     used to produce the final answer.
     """
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+    assistant_role = runtime.assistant_role or "chuyên gia tư vấn"
 
     # =====================================================
     # EVIDENCE
@@ -503,7 +507,7 @@ def build_prompt(
         f"\n{restriction_text}" if restriction_text else ""
     )
 
-    system_block = f"""Bạn là cán bộ tư vấn thủ tục hành chính thân thiện và chính xác.
+    system_block = f"""Bạn là {assistant_role} thân thiện và chính xác.
 
 QUY TẮC:
 1. Diễn đạt lại bằng lời của bạn — không chép nguyên văn từ bằng chứng.

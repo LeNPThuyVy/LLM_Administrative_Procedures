@@ -14,28 +14,7 @@ from rag.retrieval import RetrievedChunk
 # If the user's query contains at least one of these, the query is considered
 # specific enough to proceed (no forced clarification).
 # Add more keywords here whenever new procedures are added to the dataset.
-_PROCEDURE_KEYWORDS: frozenset[str] = frozenset({
-    # Hộ tịch
-    "kết hôn", "khai sinh", "khai tử", "nhận cha", "nhận mẹ", "nhận con",
-    "hôn nhân", "tình trạng hôn nhân", "xác nhận tình trạng",
-    # Lao động - tiền lương
-    "nội quy lao động", "việc làm", "vay vốn",
-    # Người có công / xã hội
-    "khuyết tật", "hưu trí", "trợ cấp", "liệt sĩ", "bằng tổ quốc",
-    "thân nhân", "người có công", "hỏa táng", "mai táng", "hỗ trợ",
-    # Xây dựng / đất đai
-    "giấy phép xây dựng", "xây dựng", "quy hoạch", "khởi công",
-    "đất đai", "số nhà", "vị trí nhà", "tình trạng nhà",
-    # Hộ kinh doanh
-    "hộ kinh doanh", "đăng ký kinh doanh", "kinh doanh",
-    "tạm ngừng kinh doanh", "chấm dứt hoạt động",
-    # Giáo dục
-    "học bổng", "chuyển trường",
-    # Công chứng / chứng thực
-    "chứng thực", "chữ ký", "hợp đồng", "di chúc",
-    # Nhập cảnh / xuất cảnh (không có trong dataset → nên trigger clarification)
-    # (Không thêm vào đây)
-})
+# _PROCEDURE_KEYWORDS has been moved to DomainConfig.entity_keywords
 
 
 @dataclass
@@ -291,7 +270,7 @@ def _validate_consolidated_query(
     )
 
 
-def _has_specific_procedure_keyword(query: str, extra_text: str = "") -> bool:
+def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: str | None = None) -> bool:
     """
     Return True if the query contains at least one keyword that maps to a
     known procedure in the dataset (procedures.json titles).
@@ -301,11 +280,15 @@ def _has_specific_procedure_keyword(query: str, extra_text: str = "") -> bool:
     GĐ3 mục 12: `extra_text` nên chỉ chứa nội dung tin nhắn USER,
     không bao gồm câu trả lời assistant (tránh match keyword không liên quan).
     """
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+    keywords = runtime.entity_keywords
+
     combined = (query + " " + (extra_text or "")).lower()
-    return any(kw in combined for kw in _PROCEDURE_KEYWORDS)
+    return any(kw.lower() in combined for kw in keywords)
 
 
-def _get_active_procedure(history: dict, procedure_hint: list) -> str:
+def _get_active_procedure(history: dict, procedure_hint: list, domain: str | None = None) -> str:
     """
     GĐ3 mục 10: Xác định thủ tục đang active theo thứ tự ưu tiên:
     1. structured_context.procedure_name (do Person 2 điền)
@@ -327,11 +310,11 @@ def _get_active_procedure(history: dict, procedure_hint: list) -> str:
                 role = msg.get("role", "")
                 if role == "user":
                     content = _extract_text(msg.get("content", ""))
-                    if _has_specific_procedure_keyword(content):
+                    if _has_specific_procedure_keyword(content, domain=domain):
                         return content  # trả về text để extract sau
             elif isinstance(msg, (list, tuple)) and len(msg) >= 2:
                 user_text = _extract_text(msg[0])
-                if _has_specific_procedure_keyword(user_text):
+                if _has_specific_procedure_keyword(user_text, domain=domain):
                     return user_text
 
     # 3. procedure_hint title
@@ -346,6 +329,7 @@ def _get_active_procedure(history: dict, procedure_hint: list) -> str:
 def _resolve_followup_rule_based(
     query: str,
     active_procedure: str,
+    domain: str | None = None,
 ) -> str | None:
     """
     GĐ3 mục 10: Rule-based follow-up resolution.
@@ -360,7 +344,7 @@ def _resolve_followup_rule_based(
         return None
 
     # Nếu query đã có keyword thủ tục → không cần resolve
-    if _has_specific_procedure_keyword(query):
+    if _has_specific_procedure_keyword(query, domain=domain):
         return None
 
     # Lấy tên thủ tục ngắn gọn từ active_procedure
@@ -369,8 +353,10 @@ def _resolve_followup_rule_based(
     # Nếu active_procedure là một câu dài (tin nhắn user), rút gọn
     if len(proc_name) > 80:
         # Thử tìm keyword thủ tục trong chuỗi đó
-        for kw in _PROCEDURE_KEYWORDS:
-            if kw in proc_name.lower():
+        from domains.runtime import get_domain_runtime
+        runtime = get_domain_runtime(domain)
+        for kw in runtime.entity_keywords:
+            if kw.lower() in proc_name.lower():
                 proc_name = kw
                 break
         else:
@@ -386,6 +372,7 @@ def synthesizer(
     history: dict[str, Any],
     procedure_hint: list[RetrievedChunk],
     generator: Callable[[str], str] = generate_answer_1_5b,
+    domain: str | None = None,
 ) -> ConsolidatedQuery:
     """
     Synthesize the current query into an independent ConsolidatedQuery.
@@ -419,7 +406,7 @@ def synthesizer(
     # -----------------------------------------------------------------
     # Rule-based clarification override (Issue #3)
     # -----------------------------------------------------------------
-    if not _has_specific_procedure_keyword(query, history_text_for_kw):
+    if not _has_specific_procedure_keyword(query, history_text_for_kw, domain=domain):
         clarification_q = (
             "Bạn muốn hỏi về thủ tục hành chính nào? "
             "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
@@ -440,8 +427,8 @@ def synthesizer(
     # Nếu query không có keyword thủ tục nhưng history đã có thủ tục active
     # → ghép tên thủ tục vào resolved_query mà không cần gọi LLM.
     # -----------------------------------------------------------------
-    active_procedure = _get_active_procedure(history, procedure_hint)
-    resolved_via_rule = _resolve_followup_rule_based(query, active_procedure)
+    active_procedure = _get_active_procedure(history, procedure_hint, domain=domain)
+    resolved_via_rule = _resolve_followup_rule_based(query, active_procedure, domain=domain)
     if resolved_via_rule:
         return ConsolidatedQuery(
             resolved_query=resolved_via_rule,

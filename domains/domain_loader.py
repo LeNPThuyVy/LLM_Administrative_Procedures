@@ -32,6 +32,14 @@ class DomainConfig:
 
     dedup_threshold: float = 0.95
 
+    assistant_role: str = "chuyên gia tư vấn"
+    no_evidence_message: str = "Tôi chưa có đủ thông tin để trả lời câu hỏi này."
+    disclaimer: str = ""
+    supported_locations: list[str] = field(default_factory=list)
+    min_retrieval_score: float = 0.50
+    allowed_tools: list[str] = field(default_factory=list)
+    entity_keywords: list[str] = field(default_factory=list)
+
 
 def load_domain_config(domain_id: str) -> DomainConfig:
     """

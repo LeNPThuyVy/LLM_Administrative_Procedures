@@ -167,6 +167,7 @@ def answer_query(
     query: str,
     session_id: str | None = None,
     context: dict | None = None,
+    domain: str | None = None,
     generator: Callable[[str], str] = generate_answer_3b,
     synthesizer_generator: Callable[[str], str] = generate_answer_1_5b,
 ) -> AnswerResponse:
@@ -186,6 +187,7 @@ def answer_query(
             claims=[],
             needs_clarification=False,
             clarification_question=None,
+            domain=domain,
         )
 
     if context is None:
@@ -207,6 +209,7 @@ def answer_query(
             claims=[],
             needs_clarification=False,
             clarification_question=None,
+            domain=domain,
         )
 
     # ---------------------------------------------------------
@@ -229,6 +232,7 @@ def answer_query(
         history=history,
         procedure_hint=procedure_hint,
         generator=synthesizer_generator,
+        domain=domain,
     )
 
     # ---------------------------------------------------------
@@ -243,6 +247,7 @@ def answer_query(
             clarification_question=(
                 consolidated.clarification_question
             ),
+            domain=domain,
         )
 
     # ---------------------------------------------------------
@@ -255,6 +260,7 @@ def answer_query(
     retrieved_chunks = retrieve_two_step(
         query=consolidated.resolved_query,
         context=context,
+        domain=domain,
     )
 
     if not retrieved_chunks:
@@ -266,22 +272,26 @@ def answer_query(
                 "Bạn muốn hỏi về thủ tục hành chính nào cụ thể? "
                 "Vui lòng nêu tên thủ tục để tôi có thể hỗ trợ chính xác hơn."
             ),
+            domain=domain,
         )
 
     # Issue #1 — Relevance threshold gate.
     # If the best retrieval score is below MIN_RETRIEVAL_SCORE, skip
     # generation entirely and return FALLBACK_TEXT to avoid hallucination.
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
     top_score = retrieved_chunks[0].retrieval_score
-    if top_score < cfg.MIN_RETRIEVAL_SCORE:
+    if top_score < runtime.min_retrieval_score:
         print(
             f"[pipeline] Top-1 score {top_score:.3f} < "
-            f"MIN_RETRIEVAL_SCORE {cfg.MIN_RETRIEVAL_SCORE} → FALLBACK"
+            f"MIN_RETRIEVAL_SCORE {runtime.min_retrieval_score} → FALLBACK"
         )
         return AnswerResponse(
             answer=FALLBACK_TEXT,
             claims=[],
             needs_clarification=False,
             clarification_question=None,
+            domain=domain,
         )
 
     # 2. Rerank
@@ -296,6 +306,7 @@ def answer_query(
             claims=[],
             needs_clarification=False,
             clarification_question=None,
+            domain=domain,
         )
 
     # 4. Prompt Builder
@@ -303,6 +314,7 @@ def answer_query(
         query=consolidated.resolved_query,
         evidence_candidates=evidence_candidates,
         context=context,
+        domain=domain,
     )
 
     # 5. Final Answer Generation
@@ -330,9 +342,14 @@ def answer_query(
         evidence_candidates=evidence_candidates,
     )
 
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+
     return AnswerResponse(
         answer=generated_answer,
         claims=verified_claims,
         needs_clarification=False,
         clarification_question=None,
+        domain=domain,
+        mode=runtime.mode,
     )

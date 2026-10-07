@@ -332,9 +332,10 @@ async def _update_conversation_summary(
             for message in old_messages
         )
 
-        if len(summary_text) > 3000:
-            summary_text = summary_text[-3000:]
-
+        # Sử dụng LLM để tóm tắt
+        from context.llm_summarizer import summarize_text_with_llm
+        
+        # Nếu summary cũ đã tồn tại, nối thêm nó vào để LLM có ngữ cảnh dài hạn
         summary_result = await db.execute(
             select(ConversationSummary)
             .where(
@@ -346,18 +347,25 @@ async def _update_conversation_summary(
         summary = (
             summary_result.scalar_one_or_none()
         )
+        
+        if summary and summary.summary:
+            summary_text = f"Tóm tắt trước đó: {summary.summary}\nLịch sử mới:\n{summary_text}"
+
+        print(f"[MEMORY] Bắt đầu gọi LLM tóm tắt cho session {session_id}...")
+        summarized_text = await summarize_text_with_llm(summary_text)
+        print(f"[MEMORY] Đã tóm tắt xong cho session {session_id}.")
 
         if summary is None:
 
             summary = ConversationSummary(
                 session_id=session_id,
-                summary=summary_text
+                summary=summarized_text
             )
 
             db.add(summary)
 
         else:
 
-            summary.summary = summary_text
+            summary.summary = summarized_text
 
         await db.commit()

@@ -9,7 +9,13 @@ from backend.services.context_service import get_context, update_memory
 from backend.services.ai_service import generate_answer
 from backend.services.queue_service import queue_manager
 
+from domains import list_domains
+
 router = APIRouter()
+
+@router.get("/api/domains")
+async def get_domains():
+    return list_domains()
 
 
 @router.post("/api/chat")
@@ -41,7 +47,8 @@ async def chat(request: ChatRequest):
                 result = await generate_answer(
                     query=request.query,
                     session_id=request.session_id,
-                    context=context
+                    context=context,
+                    domain=request.domain
                 )
 
                 # Trường hợp cần clarification

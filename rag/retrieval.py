@@ -444,7 +444,8 @@ def retrieve(
     # VECTOR STORE
     # =====================================================
     client = _get_qdrant_client()
-    collection_name = getattr(cfg, "DEFAULT_COLLECTION", "admin_dev")
+    from domains.runtime import get_domain_runtime
+    collection_name = get_domain_runtime(domain).collection_name
 
     try:
         count_res = client.count(collection_name=collection_name)
@@ -519,7 +520,7 @@ def retrieve(
 # GĐ2 MỤC 7: TWO-STEP RETRIEVAL
 # =========================================================
 
-def _is_ambiguous_query(query: str) -> bool:
+def _is_ambiguous_query(query: str, domain: str | None = None) -> bool:
     """
     Phát hiện query mơ hồ — không có từ khóa thủ tục cụ thể.
     Dùng để quyết định có hỏi làm rõ không.
@@ -528,20 +529,12 @@ def _is_ambiguous_query(query: str) -> bool:
     if len(words) <= 4:
         return True
 
-    try:
-        from rag.synthesizer import _PROCEDURE_KEYWORDS
-        specific_markers = _PROCEDURE_KEYWORDS
-    except ImportError:
-        specific_markers = {
-            "kết hôn", "khai sinh", "khai tử", "nhận cha", "nhận mẹ", "nhận con",
-            "hôn nhân", "tình trạng hôn nhân", "xác nhận tình trạng",
-            "hộ kinh doanh", "xây dựng", "khuyết tật", "chuyển trường",
-            "học bổng", "chứng thực", "đất đai", "tạm ngừng kinh doanh",
-            "hưu trí", "trợ cấp", "liệt sĩ", "mai táng", "hỏa táng",
-            "vay vốn", "việc làm", "hộ tịch",
-        }
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+    specific_markers = runtime.entity_keywords
+    
     q_lower = query.lower()
-    return not any(m in q_lower for m in specific_markers)
+    return not any(m.lower() in q_lower for m in specific_markers)
 
 
 def retrieve_two_step(
@@ -572,7 +565,7 @@ def retrieve_two_step(
 
     if (
         len(distinct_doc_chunks) >= 2
-        and _is_ambiguous_query(query)
+        and _is_ambiguous_query(query, domain=domain)
         and (distinct_doc_chunks[0].retrieval_score - distinct_doc_chunks[1].retrieval_score) < 0.08
     ):
         # Lấy context hiện tại để xem có thủ tục đang active không

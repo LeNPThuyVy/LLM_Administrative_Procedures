@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from rag.evidence_builder import EvidenceCandidate
 from rag.verification import VerificationResult
@@ -27,6 +27,9 @@ class AnswerResponse:
     claims: list[VerifiedClaim]
     needs_clarification: bool = False
     clarification_question: str | None = None
+    domain: str | None = None
+    mode: str | None = None
+    tool_calls: list = field(default_factory=list)
 
 
 def map_verification_results(

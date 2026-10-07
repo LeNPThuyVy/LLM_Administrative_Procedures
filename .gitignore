@@ -250,3 +250,5 @@ data/.ingestion_versions.json
 tests_tang1/
 
 docs/*test*.md
+
+task/
