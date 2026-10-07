@@ -16,6 +16,10 @@ class EvidenceCandidate:
     retrieval_score: float
     rerank_score: float
 
+    # C - MCP/tool evidence.
+    # Default giữ tương thích với toàn bộ evidence RAG hiện tại.
+    source: str = ""
+
 
 def build_evidence_candidates(chunks: list[RetrievedChunk]) -> list[EvidenceCandidate]:
     """
@@ -62,3 +66,31 @@ def build_evidence_candidates(chunks: list[RetrievedChunk]) -> list[EvidenceCand
         candidates.append(candidate)
 
     return candidates
+def build_tool_evidence_candidate(
+    *,
+    index: int,
+    tool_name: str,
+    content: str,
+    title: str = "",
+    document_id: str = "",
+    source_url: str | None = None,
+) -> EvidenceCandidate:
+    """
+    Convert MCP tool output into an EvidenceCandidate.
+
+    Tool evidence uses source="tool:<tool_name>" so downstream
+    code can distinguish it from normal RAG evidence.
+    """
+    return EvidenceCandidate(
+        candidate_id=f"EC_{900 + index:03d}",
+        chunk_id=f"tool:{tool_name}:{index}",
+        document_id=document_id,
+        content=content,
+        title=title or tool_name,
+        document_type="tool",
+        page=None,
+        source_url=source_url,
+        retrieval_score=1.0,
+        rerank_score=1.0,
+        source=f"tool:{tool_name}",
+    )
