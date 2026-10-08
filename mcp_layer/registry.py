@@ -32,7 +32,7 @@ TOOL_REGISTRY: dict[str, ToolDefinition] = {
     "get_weather": ToolDefinition(
         name="get_weather",
         description="Lấy thời tiết hiện tại theo thành phố.",
-        domains=("tourism",),
+        domains=("tourism", "tourism_demo"),
         timeout_seconds=5.0,
         cache_ttl_seconds=600,
         official=False,
