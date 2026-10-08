@@ -14,18 +14,25 @@ Run with:
 or:
     uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 """
+import asyncio
+import socket
+import subprocess
+import time
+from contextlib import asynccontextmanager
+from pathlib import Path
+from urllib.error import URLError
+from urllib.request import urlopen
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
-import subprocess
-import socket
-import time
-from contextlib import asynccontextmanager
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+
 import my_config
+from context.database import engine
+from rag.retrieval import load_vector_store
 
 from backend.api.sessions import router as sessions_router
 from backend.api.socket import router as socket_router
@@ -33,46 +40,205 @@ from backend.api.chat import router as chat_router
 
 llama_process = None
 
+
 def is_port_in_use(port: int) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('127.0.0.1', port)) == 0
+    with socket.socket(
+        socket.AF_INET,
+        socket.SOCK_STREAM,
+    ) as sock:
+        return (
+            sock.connect_ex(
+                ("127.0.0.1", port)
+            )
+            == 0
+        )
+
+
+def is_llama_server_ready(
+    port: int,
+) -> bool:
+    try:
+        with urlopen(
+            f"http://127.0.0.1:{port}/health",
+            timeout=2,
+        ) as response:
+            return response.status == 200
+
+    except (URLError, OSError):
+        return False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global llama_process
+
     port = 8080
+
     if not is_port_in_use(port):
-        print(f"Bắt đầu khởi động llama-server tại port {port}...")
+        print(
+            f"Bắt đầu khởi động llama-server "
+            f"tại port {port}..."
+        )
+
         cmd = [
-            "llama-server", 
-            "-m", str(my_config.MODEL_3B_PATH), 
-            "--port", str(port), 
-            "--ctx-size", "4096"
+            "llama-server",
+            "-m",
+            str(my_config.MODEL_3B_PATH),
+            "--port",
+            str(port),
+            "--ctx-size",
+            "4096",
         ]
+
         llama_process = subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT
+            stderr=subprocess.STDOUT,
         )
-        
-        for _ in range(30):
-            if is_port_in_use(port):
-                print("Llama-server đã sẵn sàng!")
-                break
-            time.sleep(1)
-        else:
-            print("CẢNH BÁO: Không thể khởi động llama-server.")
+
     else:
-        print(f"Port {port} đang được sử dụng. Bỏ qua khởi động llama-server.")
+        print(
+            f"Port {port} đang được sử dụng. "
+            "Kiểm tra llama-server hiện có..."
+        )
+
+    # Port mở chưa đủ.
+    # Chỉ coi LLM ready khi /health trả 200.
+    for _ in range(60):
+        if is_llama_server_ready(port):
+            print(
+                "Llama-server đã healthy "
+                "và sẵn sàng!"
+            )
+            break
+
+        await asyncio.sleep(1)
+
+    else:
+        print(
+            "CẢNH BÁO: llama-server "
+            "chưa healthy sau 60 giây."
+        )
 
     yield
 
     if llama_process:
         print("Đang tắt llama-server...")
-        llama_process.terminate()
-        llama_process.wait(timeout=5)
-        print("Đã dọn dẹp llama-server.")
 
+        llama_process.terminate()
+
+        try:
+            llama_process.wait(
+                timeout=5
+            )
+        except subprocess.TimeoutExpired:
+            llama_process.kill()
+
+        print(
+            "Đã dọn dẹp llama-server."
+        )
+async def check_database_health() -> dict:
+    started = time.perf_counter()
+
+    try:
+        async with engine.connect() as connection:
+            await connection.execute(text("SELECT 1"))
+
+        return {
+            "status": "ok",
+            "latency_ms": round(
+                (time.perf_counter() - started) * 1000,
+                2,
+            ),
+        }
+
+    except Exception as exc:
+        return {
+            "status": "error",
+            "latency_ms": round(
+                (time.perf_counter() - started) * 1000,
+                2,
+            ),
+            "error": type(exc).__name__,
+        }
+
+
+async def check_qdrant_health() -> dict:
+    started = time.perf_counter()
+
+    try:
+        client = load_vector_store()
+
+        await asyncio.to_thread(
+            client.get_collections
+        )
+
+        return {
+            "status": "ok",
+            "latency_ms": round(
+                (time.perf_counter() - started) * 1000,
+                2,
+            ),
+        }
+
+    except Exception as exc:
+        return {
+            "status": "error",
+            "latency_ms": round(
+                (time.perf_counter() - started) * 1000,
+                2,
+            ),
+            "error": type(exc).__name__,
+        }
+
+
+async def check_llm_health() -> dict:
+    started = time.perf_counter()
+
+    def ping_llama_server():
+        with urlopen(
+            "http://127.0.0.1:8080/health",
+            timeout=3,
+        ) as response:
+            return response.status
+
+    try:
+        status_code = await asyncio.to_thread(
+            ping_llama_server
+        )
+
+        if status_code != 200:
+            raise RuntimeError(
+                f"Unexpected status: "
+                f"{status_code}"
+            )
+
+        return {
+            "status": "ok",
+            "latency_ms": round(
+                (
+                    time.perf_counter()
+                    - started
+                )
+                * 1000,
+                2,
+            ),
+        }
+
+    except Exception as exc:
+        return {
+            "status": "error",
+            "latency_ms": round(
+                (
+                    time.perf_counter()
+                    - started
+                )
+                * 1000,
+                2,
+            ),
+            "error":
+                type(exc).__name__,
+        }
 app = FastAPI(
     title="RAG Backend API",
     version="1.0.0",
@@ -98,7 +264,40 @@ app.include_router(chat_router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    database, qdrant, llm = await asyncio.gather(
+        check_database_health(),
+        check_qdrant_health(),
+        check_llm_health(),
+    )
+
+    dependencies = {
+        "database": database,
+        "qdrant": qdrant,
+        "llm": llm,
+    }
+
+    overall_status = (
+        "ok"
+        if all(
+            item["status"] == "ok"
+            for item in dependencies.values()
+        )
+        else "degraded"
+    )
+
+    payload = {
+        "status": overall_status,
+        "dependencies": dependencies,
+    }
+
+    return JSONResponse(
+        status_code=(
+            200
+            if overall_status == "ok"
+            else 503
+        ),
+        content=payload,
+    )
 
 # --- Static files and Web UI ---
 BASE_DIR = Path(__file__).resolve().parent.parent
