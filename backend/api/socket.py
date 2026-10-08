@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+import my_config
 from sqlalchemy import select
 from backend.services.rate_limit_service import (
     rate_limiter,
@@ -98,7 +99,7 @@ async def bootstrap_session(
             key=COOKIE_NAME,
             value=session_id,
             httponly=True,
-            secure=False,
+            secure=request.url.scheme == "https",
             samesite="lax",
             max_age=COOKIE_MAX_AGE,
         )
@@ -119,6 +120,20 @@ async def bootstrap_session(
 async def websocket_chat(
     websocket: WebSocket,
 ):
+    origin = websocket.headers.get("origin")
+
+    allowed_origins = {
+        item.strip()
+        for item in my_config.ALLOWED_ORIGINS.split(",")
+        if item.strip()
+    }
+
+    if origin and origin not in allowed_origins:
+        await websocket.close(
+            code=4403,
+            reason="Origin not allowed",
+        )
+        return
     # Lấy session_id trực tiếp từ cookie
     session_id = websocket.cookies.get(COOKIE_NAME)
 

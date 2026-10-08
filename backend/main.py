@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
-
+from fastapi.middleware.cors import CORSMiddleware
 import subprocess
 import socket
 import time
@@ -78,7 +78,19 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+allowed_origins = [
+    origin.strip()
+    for origin in my_config.ALLOWED_ORIGINS.split(",")
+    if origin.strip()
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 # --- REST / WebSocket routes ---
 app.include_router(sessions_router)
 app.include_router(socket_router)

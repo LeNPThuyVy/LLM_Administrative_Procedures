@@ -45,3 +45,9 @@ TEMPERATURE = 0.0
 TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://127.0.0.1:8000,http://localhost:8000",
+)
