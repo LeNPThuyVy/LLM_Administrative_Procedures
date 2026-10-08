@@ -12,7 +12,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import ScoredPoint
 
 import my_config as cfg
-
+from domains.runtime import get_domain_runtime
 
 @dataclass
 class RetrievedChunk:
@@ -28,7 +28,7 @@ class RetrievedChunk:
 # Loaded once and reused across all queries
 # =========================================================
 
-_embedding_model = None
+_embedding_models: dict[str, object] = {}
 _qdrant_client: QdrantClient | None = None
 
 
@@ -36,18 +36,32 @@ _qdrant_client: QdrantClient | None = None
 # MODEL / VECTOR STORE
 # =========================================================
 
-def load_embedding_model():
+def load_embedding_model(
+    domain: str | None = None,
+):
     """
-    Load BGE-M3 embedding model using SentenceTransformer.
+    Load embedding model from domain config.
+
+    Reuse the same BGEEmbedder implementation as ingestion
+    so indexing and retrieval use the same embedding backend.
     """
-    global _embedding_model
+    from ingestion.embedder import BGEEmbedder
 
-    if _embedding_model is None:
-        from sentence_transformers import SentenceTransformer
-        print(f"[retrieval] Loading BGE-M3 model using SentenceTransformer ('BAAI/bge-m3')...")
-        _embedding_model = SentenceTransformer("BAAI/bge-m3")
+    runtime = get_domain_runtime(domain)
+    config = runtime.config
+    model_name = config.embedding_model
 
-    return _embedding_model
+    if model_name not in _embedding_models:
+        print(
+            f"[retrieval] Loading embedding model "
+            f"from domain config: {model_name}"
+        )
+
+        _embedding_models[model_name] = BGEEmbedder(
+            config
+        )
+
+    return _embedding_models[model_name]
 
 
 import atexit
@@ -82,17 +96,12 @@ def close_vector_store():
         _qdrant_client = None
 
 
-def _get_embedding_model():
-    """
-    Return cached embedding model.
-    Load on first call.
-    """
-    global _embedding_model
-
-    if _embedding_model is None:
-        _embedding_model = load_embedding_model()
-
-    return _embedding_model
+def _get_embedding_model(
+    domain: str | None = None,
+):
+    return load_embedding_model(
+        domain=domain
+    )
 
 
 def _get_qdrant_client() -> QdrantClient:
@@ -108,12 +117,28 @@ def _get_qdrant_client() -> QdrantClient:
     return _qdrant_client
 
 
-def encode_query(query: str) -> list[float]:
-    """Encode query string into 1024-dim BGE-M3 dense vector."""
-    model = _get_embedding_model()
-    vec = model.encode(query, normalize_embeddings=True)
-    return vec.tolist() if hasattr(vec, "tolist") else list(vec)
+def encode_query(
+    query: str,
+    domain: str | None = None,
+) -> list[float]:
+    """
+    Encode one query using the same BGE embedder as ingestion.
+    """
+    if not query or not query.strip():
+        return []
 
+    model = _get_embedding_model(
+        domain=domain
+    )
+
+    vectors = model.encode(
+        [query]
+    )
+
+    if not vectors:
+        return []
+
+    return vectors[0]
 
 # =========================================================
 # STRUCTURED CONTEXT HELPERS
@@ -438,13 +463,15 @@ def retrieve(
     # =====================================================
     # EMBEDDING
     # =====================================================
-    query_embedding = encode_query(search_query)
+    query_embedding = encode_query(
+        search_query,
+        domain=domain,
+    )
 
     # =====================================================
     # VECTOR STORE
     # =====================================================
     client = _get_qdrant_client()
-    from domains.runtime import get_domain_runtime
     collection_name = get_domain_runtime(domain).collection_name
 
     try:
