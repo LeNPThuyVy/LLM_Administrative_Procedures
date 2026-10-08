@@ -5,13 +5,22 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from backend.schemas.chat import ChatRequest
-from backend.services.context_service import get_context, update_memory
+from backend.services.context_service import (
+    get_context,
+    update_memory,
+)
 from backend.services.ai_service import generate_answer
-from backend.services.queue_service import queue_manager
+from backend.services.queue_service import (
+    queue_manager,
+    QueueFullError,
+    QueueTimeoutError,
+)
 
 from domains import list_domains, is_valid_domain
 
+
 router = APIRouter()
+
 
 @router.get("/api/domains")
 async def get_domains():
@@ -23,42 +32,47 @@ async def chat(request: ChatRequest):
     if not is_valid_domain(request.domain):
         raise HTTPException(
             status_code=400,
-            detail=f"Domain không hợp lệ: {request.domain}"
+            detail=f"Domain không hợp lệ: {request.domain}",
         )
 
     async def event_stream():
+        try:
+            async with queue_manager.session_scope(
+                request.session_id
+            ):
 
-        session_lock = queue_manager.get_session_lock(
-            request.session_id
-        )
+                # Chỉ giữ semaphore trong lúc xử lý AI.
+                async with queue_manager.execution_slot():
+                    request_type = (
+                        queue_manager.classify_request(
+                            request.query
+                        )
+                    )
 
-        async with session_lock:
-            async with queue_manager.semaphore:
+                    print(
+                        f"[QUEUE] session={request.session_id} "
+                        f"type={request_type} START"
+                    )
 
-                request_type = queue_manager.classify_request(
-                    request.query
-                )
+                    context = await get_context(
+                        request.session_id,
+                        request.query,
+                    )
 
-                print(
-                    f"[QUEUE] session={request.session_id} "
-                    f"type={request_type} START"
-                )
+                    result = await generate_answer(
+                        query=request.query,
+                        session_id=request.session_id,
+                        context=context,
+                        domain=request.domain,
+                    )
 
-                context = await get_context(
-                    request.session_id,
-                    request.query
-                )
+                # ==========================================
+                # Từ đây semaphore đã được release.
+                # Chỉ còn gửi dữ liệu về client.
+                # ==========================================
 
-                result = await generate_answer(
-                    query=request.query,
-                    session_id=request.session_id,
-                    context=context,
-                    domain=request.domain
-                )
-
-                # Trường hợp cần clarification
+                # Clarification
                 if result["needs_clarification"]:
-
                     data = {
                         "question":
                             result["clarification_question"]
@@ -66,28 +80,38 @@ async def chat(request: ChatRequest):
 
                     yield (
                         "event: clarification\n"
-                        f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+                        f"data: "
+                        f"{json.dumps(data, ensure_ascii=False)}"
+                        "\n\n"
                     )
+
+                    done_data = {
+                        "needs_clarification": True,
+                    }
 
                     yield (
                         "event: done\n"
-                        f"data: {json.dumps({'needs_clarification': True}, ensure_ascii=False)}\n\n"
+                        f"data: "
+                        f"{json.dumps(done_data, ensure_ascii=False)}"
+                        "\n\n"
                     )
 
                     print(
-                        f"[QUEUE] session={request.session_id} DONE"
+                        f"[QUEUE] "
+                        f"session={request.session_id} DONE"
                     )
 
                     asyncio.create_task(
                         update_memory(
                             session_id=request.session_id,
                             query=request.query,
-                            final_result=result
+                            final_result=result,
                         )
                     )
 
                     print(
-                        f"[MEMORY] session={request.session_id} "
+                        f"[MEMORY] "
+                        f"session={request.session_id} "
                         f"update scheduled"
                     )
 
@@ -101,15 +125,24 @@ async def chat(request: ChatRequest):
 
                 yield (
                     "event: evidence\n"
-                    f"data: {json.dumps(evidence_data, ensure_ascii=False)}\n\n"
+                    f"data: "
+                    f"{json.dumps(evidence_data, ensure_ascii=False)}"
+                    "\n\n"
                 )
 
-                # Stream answer
+                # Streaming giả hiện tại.
+                # Sẽ nối streaming thật sau khi B cung cấp
+                # answer_question_stream().
                 for word in result["answer"].split():
+                    chunk_data = {
+                        "text": word + " ",
+                    }
 
                     yield (
                         "event: chunk\n"
-                        f"data: {json.dumps({'text': word + ' '}, ensure_ascii=False)}\n\n"
+                        f"data: "
+                        f"{json.dumps(chunk_data, ensure_ascii=False)}"
+                        "\n\n"
                     )
 
                     await asyncio.sleep(0.05)
@@ -119,33 +152,68 @@ async def chat(request: ChatRequest):
                     "answer": result["answer"],
                     "evidence_list":
                         result["evidence_list"],
-                    "needs_clarification": False
+                    "needs_clarification": False,
                 }
 
                 yield (
                     "event: done\n"
-                    f"data: {json.dumps(done_data, ensure_ascii=False)}\n\n"
+                    f"data: "
+                    f"{json.dumps(done_data, ensure_ascii=False)}"
+                    "\n\n"
                 )
 
                 print(
-                    f"[QUEUE] session={request.session_id} DONE"
+                    f"[QUEUE] "
+                    f"session={request.session_id} DONE"
                 )
 
-                # Update memory chạy nền, không block client
+                # Update memory chạy nền,
+                # không block client.
                 asyncio.create_task(
                     update_memory(
                         session_id=request.session_id,
                         query=request.query,
-                        final_result=result
+                        final_result=result,
                     )
                 )
 
                 print(
-                    f"[MEMORY] session={request.session_id} "
+                    f"[MEMORY] "
+                    f"session={request.session_id} "
                     f"update scheduled"
                 )
 
+        except QueueFullError:
+            error_data = {
+                "code": 429,
+                "message":
+                    "Hệ thống đang quá tải. "
+                    "Vui lòng thử lại sau.",
+            }
+
+            yield (
+                "event: error\n"
+                f"data: "
+                f"{json.dumps(error_data, ensure_ascii=False)}"
+                "\n\n"
+            )
+
+        except QueueTimeoutError:
+            error_data = {
+                "code": 429,
+                "message":
+                    "Yêu cầu chờ quá lâu. "
+                    "Vui lòng thử lại sau.",
+            }
+
+            yield (
+                "event: error\n"
+                f"data: "
+                f"{json.dumps(error_data, ensure_ascii=False)}"
+                "\n\n"
+            )
+
     return StreamingResponse(
         event_stream(),
-        media_type="text/event-stream"
+        media_type="text/event-stream",
     )

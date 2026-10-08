@@ -18,7 +18,11 @@ from backend.services.context_service import (
     update_memory,
 )
 from backend.services.ai_service import generate_answer
-from backend.services.queue_service import queue_manager
+from backend.services.queue_service import (
+    queue_manager,
+    QueueFullError,
+    QueueTimeoutError,
+)
 
 
 router = APIRouter(
@@ -188,66 +192,67 @@ async def websocket_chat(
 
                 continue
 
-            # Queue giống SSE cũ
-            session_lock = (
-                queue_manager.get_session_lock(
-                    session_id
-                )
-            )
+            try:
+                async with queue_manager.session_scope(
+                        session_id
+                ):
 
-            async with session_lock:
-                async with queue_manager.semaphore:
-
-                    request_type = (
-                        queue_manager.classify_request(
-                            query
+                    # Chỉ giữ semaphore trong lúc xử lý AI.
+                    async with queue_manager.execution_slot():
+                        request_type = (
+                            queue_manager.classify_request(
+                                query
+                            )
                         )
-                    )
 
-                    print(
-                        f"[WS QUEUE] "
-                        f"session={session_id} "
-                        f"type={request_type} START"
-                    )
-
-                    # Truyền session_id xuống Context
-                    # BUG-F fix: get_context() raises ValueError nếu
-                    # session không tồn tại (race condition / DB reset).
-                    # Bắt lỗi và báo client thay vì để crash WS.
-                    try:
-                        context = await get_context(
-                            session_id,
-                            query,
-                        )
-                    except ValueError as exc:
                         print(
-                            f"[WS] get_context error for "
-                            f"session={session_id}: {exc}"
+                            f"[WS QUEUE] "
+                            f"session={session_id} "
+                            f"type={request_type} START"
                         )
-                        await websocket.send_json({
-                            "type": "error",
-                            "data": {
-                                "message": (
-                                    "Phiên làm việc không hợp lệ. "
-                                    "Vui lòng tải lại trang."
-                                ),
-                            },
-                        })
-                        continue
 
-                    # Gọi AI giống chat.py
-                    result = await generate_answer(
-                        query=query,
-                        session_id=session_id,
-                        context=context,
-                        domain=domain,
-                    )
+                        # Truyền session_id xuống Context
+                        try:
+                            context = await get_context(
+                                session_id,
+                                query,
+                            )
+
+                        except ValueError as exc:
+                            print(
+                                f"[WS] get_context error for "
+                                f"session={session_id}: {exc}"
+                            )
+
+                            await websocket.send_json({
+                                "type": "error",
+                                "data": {
+                                    "message": (
+                                        "Phiên làm việc không hợp lệ. "
+                                        "Vui lòng tải lại trang."
+                                    ),
+                                },
+                            })
+
+                            continue
+
+                        # Gọi AI
+                        result = await generate_answer(
+                            query=query,
+                            session_id=session_id,
+                            context=context,
+                            domain=domain,
+                        )
+
+                    # =====================================
+                    # Từ đây semaphore đã được release.
+                    # Chỉ còn gửi dữ liệu về client.
+                    # =====================================
 
                     # =========================
                     # 1. CLARIFICATION
                     # =========================
                     if result["needs_clarification"]:
-
                         await websocket.send_json({
                             "type": "clarification",
                             "data": {
@@ -261,8 +266,7 @@ async def websocket_chat(
                         await websocket.send_json({
                             "type": "done",
                             "data": {
-                                "needs_clarification":
-                                    True,
+                                "needs_clarification": True,
                             },
                         })
 
@@ -271,7 +275,6 @@ async def websocket_chat(
                             f"session={session_id} DONE"
                         )
 
-                        # Update memory theo session_id
                         asyncio.create_task(
                             update_memory(
                                 session_id=session_id,
@@ -306,9 +309,11 @@ async def websocket_chat(
                     # =========================
                     # 3. CHUNK
                     # =========================
-                    for word in (
-                        result["answer"].split()
-                    ):
+                    # Tạm thời vẫn là streaming giả.
+                    # Sau khi B cung cấp
+                    # answer_question_stream()
+                    # thì mới nối streaming thật.
+                    for word in result["answer"].split():
                         await websocket.send_json({
                             "type": "chunk",
                             "data": {
@@ -342,8 +347,6 @@ async def websocket_chat(
                         f"session={session_id} DONE"
                     )
 
-                    # Truyền đúng session_id
-                    # xuống Long-term Memory
                     asyncio.create_task(
                         update_memory(
                             session_id=session_id,
@@ -358,6 +361,29 @@ async def websocket_chat(
                         f"update scheduled"
                     )
 
+            except QueueFullError:
+                await websocket.send_json({
+                    "type": "error",
+                    "data": {
+                        "code": 429,
+                        "message": (
+                            "Hệ thống đang quá tải. "
+                            "Vui lòng thử lại sau."
+                        ),
+                    },
+                })
+
+            except QueueTimeoutError:
+                await websocket.send_json({
+                    "type": "error",
+                    "data": {
+                        "code": 429,
+                        "message": (
+                            "Yêu cầu chờ quá lâu. "
+                            "Vui lòng thử lại sau."
+                        ),
+                    },
+                })
     except WebSocketDisconnect:
         print(
             f"[WS] "
