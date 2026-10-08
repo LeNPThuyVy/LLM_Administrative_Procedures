@@ -22,13 +22,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
-
+import uuid
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
+from backend.services.logging_service import log_event
 
 import my_config
 from context.database import engine
@@ -244,6 +245,74 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+@app.middleware("http")
+async def request_logging_middleware(
+    request: Request,
+    call_next,
+):
+    incoming_request_id = (
+        request.headers.get("X-Request-ID", "")
+        .strip()
+    )
+
+    request_id = (
+        incoming_request_id[:128]
+        if incoming_request_id
+        else str(uuid.uuid4())
+    )
+
+    request.state.request_id = request_id
+
+    started = time.perf_counter()
+
+    try:
+        response = await call_next(request)
+
+    except Exception as exc:
+        latency_ms = round(
+            (
+                time.perf_counter()
+                - started
+            )
+            * 1000,
+            2,
+        )
+
+        log_event(
+            "http_request",
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            status_code=500,
+            latency_ms=latency_ms,
+            error=type(exc).__name__,
+        )
+
+        raise
+
+    latency_ms = round(
+        (
+            time.perf_counter()
+            - started
+        )
+        * 1000,
+        2,
+    )
+
+    response.headers[
+        "X-Request-ID"
+    ] = request_id
+
+    log_event(
+        "http_request",
+        request_id=request_id,
+        method=request.method,
+        path=request.url.path,
+        status_code=response.status_code,
+        latency_ms=latency_ms,
+    )
+
+    return response
 allowed_origins = [
     origin.strip()
     for origin in my_config.ALLOWED_ORIGINS.split(",")

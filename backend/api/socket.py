@@ -1,13 +1,13 @@
 import asyncio
+import time
 import uuid
+
 import my_config
 from sqlalchemy import select
-from backend.services.rate_limit_service import (
-    rate_limiter,
-    RateLimitExceeded,
-)
+
 from context.database import AsyncSessionLocal
 from context.models import User, ChatSession
+
 from fastapi import (
     APIRouter,
     Request,
@@ -27,27 +27,46 @@ from backend.services.queue_service import (
     QueueFullError,
     QueueTimeoutError,
 )
+from backend.services.rate_limit_service import (
+    rate_limiter,
+    RateLimitExceeded,
+)
+from backend.services.logging_service import log_event
 
 
 router = APIRouter(
-    tags=["anonymous-session", "websocket"]
+    tags=[
+        "anonymous-session",
+        "websocket",
+    ]
 )
 
 COOKIE_NAME = "session_id"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 ngày
 
 
-async def ensure_anonymous_session(session_id: str):
+# =========================================================
+# SESSION HELPERS
+# =========================================================
+
+async def ensure_anonymous_session(
+    session_id: str,
+):
     async with AsyncSessionLocal() as db:
-        session_uuid = uuid.UUID(session_id)
+        session_uuid = uuid.UUID(
+            session_id
+        )
 
         result = await db.execute(
             select(ChatSession).where(
-                ChatSession.id == session_uuid
+                ChatSession.id
+                == session_uuid
             )
         )
 
-        existing_session = result.scalar_one_or_none()
+        existing_session = (
+            result.scalar_one_or_none()
+        )
 
         if existing_session is not None:
             return
@@ -69,10 +88,14 @@ async def ensure_anonymous_session(session_id: str):
         await db.commit()
 
         print(
-            f"[SESSION] anonymous session created: "
-            f"{session_id}"
+            "[SESSION] anonymous session "
+            f"created: {session_id}"
         )
 
+
+# =========================================================
+# SESSION BOOTSTRAP
+# =========================================================
 
 @router.get("/api/session/bootstrap")
 async def bootstrap_session(
@@ -80,11 +103,15 @@ async def bootstrap_session(
     response: Response,
 ):
     """
-    Tạo anonymous session_id nếu browser chưa có cookie.
+    Tạo anonymous session_id nếu browser
+    chưa có cookie.
+
     Nếu đã có thì giữ nguyên session_id cũ.
     """
 
-    session_id = request.cookies.get(COOKIE_NAME)
+    session_id = request.cookies.get(
+        COOKIE_NAME
+    )
 
     if session_id:
         try:
@@ -93,22 +120,30 @@ async def bootstrap_session(
             session_id = None
 
     if not session_id:
-        session_id = str(uuid.uuid4())
+        session_id = str(
+            uuid.uuid4()
+        )
 
         response.set_cookie(
             key=COOKIE_NAME,
             value=session_id,
             httponly=True,
-            secure=request.url.scheme == "https",
+            secure=(
+                request.url.scheme
+                == "https"
+            ),
             samesite="lax",
             max_age=COOKIE_MAX_AGE,
         )
 
         created = True
+
     else:
         created = False
 
-    await ensure_anonymous_session(session_id)
+    await ensure_anonymous_session(
+        session_id
+    )
 
     return {
         "session_id": session_id,
@@ -116,56 +151,146 @@ async def bootstrap_session(
     }
 
 
+# =========================================================
+# WEBSOCKET CHAT
+# =========================================================
+
 @router.websocket("/ws/chat")
 async def websocket_chat(
     websocket: WebSocket,
 ):
-    origin = websocket.headers.get("origin")
+    # Một ID riêng cho mỗi WebSocket connection.
+    connection_id = str(
+        uuid.uuid4()
+    )
+
+    # =====================================================
+    # ORIGIN CHECK
+    # =====================================================
+
+    origin = websocket.headers.get(
+        "origin"
+    )
 
     allowed_origins = {
         item.strip()
-        for item in my_config.ALLOWED_ORIGINS.split(",")
+        for item
+        in my_config.ALLOWED_ORIGINS.split(
+            ","
+        )
         if item.strip()
     }
 
-    if origin and origin not in allowed_origins:
+    if (
+        origin
+        and origin
+        not in allowed_origins
+    ):
+        log_event(
+            "ws_rejected",
+            connection_id=connection_id,
+            reason="origin_not_allowed",
+        )
+
         await websocket.close(
             code=4403,
             reason="Origin not allowed",
         )
-        return
-    # Lấy session_id trực tiếp từ cookie
-    session_id = websocket.cookies.get(COOKIE_NAME)
 
-    # Bắt buộc phải có cookie
+        return
+
+    # =====================================================
+    # SESSION COOKIE CHECK
+    # =====================================================
+
+    session_id = websocket.cookies.get(
+        COOKIE_NAME
+    )
+
     if not session_id:
+        log_event(
+            "ws_rejected",
+            connection_id=connection_id,
+            reason="missing_session_cookie",
+        )
+
         await websocket.close(
             code=4401,
-            reason="Missing session_id cookie",
+            reason=(
+                "Missing session_id cookie"
+            ),
         )
+
         return
 
-    # Kiểm tra UUID
     try:
         uuid.UUID(session_id)
+
     except ValueError:
+        log_event(
+            "ws_rejected",
+            connection_id=connection_id,
+            reason="invalid_session_cookie",
+        )
+
         await websocket.close(
             code=4400,
-            reason="Invalid session_id cookie",
+            reason=(
+                "Invalid session_id cookie"
+            ),
         )
+
         return
 
+    # =====================================================
+    # ACCEPT CONNECTION
+    # =====================================================
+
     await websocket.accept()
+
     client_ip = (
         websocket.client.host
         if websocket.client
         else "unknown"
     )
+
+    # Helper log cho từng message.
+    # Không log query, cookie, token hoặc IP.
+    def log_ws_message(
+        message_id: str,
+        started: float,
+        status: str,
+        **extra,
+    ) -> None:
+        latency_ms = round(
+            (
+                time.perf_counter()
+                - started
+            )
+            * 1000,
+            2,
+        )
+
+        log_event(
+            "ws_message",
+            connection_id=connection_id,
+            message_id=message_id,
+            status=status,
+            latency_ms=latency_ms,
+            **extra,
+        )
+
     print(
-        f"[WS] session={session_id} CONNECTED"
+        "[WS] "
+        f"session={session_id} "
+        "CONNECTED"
     )
 
-    # Báo client biết socket đã kết nối
+    log_event(
+        "ws_connected",
+        connection_id=connection_id,
+    )
+
     await websocket.send_json({
         "type": "connected",
         "data": {
@@ -173,46 +298,99 @@ async def websocket_chat(
         },
     })
 
+    # =====================================================
+    # MESSAGE LOOP
+    # =====================================================
+
     try:
         while True:
-            # Nhận JSON từ client
-            payload = await websocket.receive_json()
+            payload = (
+                await websocket.receive_json()
+            )
+
+            message_id = str(
+                uuid.uuid4()
+            )
+
+            message_started = (
+                time.perf_counter()
+            )
 
             query = str(
-                payload.get("query", "")
+                payload.get(
+                    "query",
+                    "",
+                )
             ).strip()
 
-            domain = payload.get("domain", None)
+            domain = payload.get(
+                "domain",
+                None,
+            )
 
-            from domains import is_valid_domain
-            if not is_valid_domain(domain):
+            # =============================================
+            # DOMAIN VALIDATION
+            # =============================================
+
+            from domains import (
+                is_valid_domain,
+            )
+
+            if not is_valid_domain(
+                domain
+            ):
                 await websocket.send_json({
                     "type": "error",
                     "data": {
                         "code": 400,
-                        "message": "Domain không hợp lệ",
-                    }
+                        "message":
+                            "Domain không hợp lệ",
+                    },
                 })
+
+                log_ws_message(
+                    message_id,
+                    message_started,
+                    "invalid_domain",
+                )
+
                 continue
 
-            # Query rỗng
+            # =============================================
+            # EMPTY QUERY
+            # =============================================
+
             if not query:
                 await websocket.send_json({
                     "type": "clarification",
                     "data": {
                         "question":
-                            "Bạn vui lòng nhập câu hỏi.",
+                            "Bạn vui lòng nhập "
+                            "câu hỏi.",
                     },
                 })
 
                 await websocket.send_json({
                     "type": "done",
                     "data": {
-                        "needs_clarification": True,
+                        "needs_clarification":
+                            True,
                     },
                 })
 
+                log_ws_message(
+                    message_id,
+                    message_started,
+                    "clarification",
+                    reason="empty_query",
+                )
+
                 continue
+
+            # =============================================
+            # RATE LIMIT
+            # =============================================
+
             try:
                 await rate_limiter.check(
                     session_id=session_id,
@@ -224,155 +402,231 @@ async def websocket_chat(
                     "type": "error",
                     "data": {
                         "code": 429,
-                        "message":
-                            "Bạn gửi yêu cầu quá nhanh. "
-                            "Vui lòng thử lại sau.",
-                        "scope": exc.scope,
+                        "message": (
+                            "Bạn gửi yêu cầu "
+                            "quá nhanh. "
+                            "Vui lòng thử lại sau."
+                        ),
+                        "scope":
+                            exc.scope,
                         "retry_after":
                             exc.retry_after,
                     },
                 })
 
-                continue
-            try:
-                async with queue_manager.session_scope(
-                        session_id
-                ):
+                log_ws_message(
+                    message_id,
+                    message_started,
+                    "rate_limited",
+                    scope=exc.scope,
+                )
 
-                    # Chỉ giữ semaphore trong lúc xử lý AI.
-                    async with queue_manager.execution_slot():
+                continue
+
+            # =============================================
+            # QUEUE + AI
+            # =============================================
+
+            try:
+                async with (
+                    queue_manager.session_scope(
+                        session_id
+                    )
+                ):
+                    # Chỉ giữ semaphore
+                    # trong lúc xử lý AI.
+                    async with (
+                        queue_manager.execution_slot()
+                    ):
                         request_type = (
-                            queue_manager.classify_request(
+                            queue_manager
+                            .classify_request(
                                 query
                             )
                         )
 
                         print(
-                            f"[WS QUEUE] "
+                            "[WS QUEUE] "
                             f"session={session_id} "
-                            f"type={request_type} START"
+                            f"type={request_type} "
+                            "START"
                         )
 
-                        # Truyền session_id xuống Context
+                        # =================================
+                        # CONTEXT
+                        # =================================
+
                         try:
-                            context = await get_context(
-                                session_id,
-                                query,
+                            context = (
+                                await get_context(
+                                    session_id,
+                                    query,
+                                )
                             )
 
                         except ValueError as exc:
                             print(
-                                f"[WS] get_context error for "
-                                f"session={session_id}: {exc}"
+                                "[WS] "
+                                "get_context error "
+                                f"for session="
+                                f"{session_id}: "
+                                f"{exc}"
                             )
 
                             await websocket.send_json({
                                 "type": "error",
                                 "data": {
                                     "message": (
-                                        "Phiên làm việc không hợp lệ. "
-                                        "Vui lòng tải lại trang."
+                                        "Phiên làm việc "
+                                        "không hợp lệ. "
+                                        "Vui lòng tải "
+                                        "lại trang."
                                     ),
                                 },
                             })
 
+                            log_ws_message(
+                                message_id,
+                                message_started,
+                                "context_error",
+                            )
+
                             continue
 
-                        # Gọi AI
-                        result = await generate_answer(
-                            query=query,
-                            session_id=session_id,
-                            context=context,
-                            domain=domain,
+                        # =================================
+                        # AI
+                        # =================================
+
+                        result = (
+                            await generate_answer(
+                                query=query,
+                                session_id=(
+                                    session_id
+                                ),
+                                context=context,
+                                domain=domain,
+                            )
                         )
 
                     # =====================================
-                    # Từ đây semaphore đã được release.
-                    # Chỉ còn gửi dữ liệu về client.
+                    # Semaphore đã được release từ đây.
+                    # Chỉ gửi dữ liệu về client.
                     # =====================================
 
-                    # =========================
+                    # =====================================
                     # 1. CLARIFICATION
-                    # =========================
-                    if result["needs_clarification"]:
+                    # =====================================
+
+                    if result[
+                        "needs_clarification"
+                    ]:
                         await websocket.send_json({
-                            "type": "clarification",
+                            "type":
+                                "clarification",
                             "data": {
                                 "question":
                                     result[
                                         "clarification_question"
-                                    ]
+                                    ],
                             },
                         })
 
                         await websocket.send_json({
                             "type": "done",
                             "data": {
-                                "needs_clarification": True,
+                                "needs_clarification":
+                                    True,
                             },
                         })
 
                         print(
-                            f"[WS QUEUE] "
-                            f"session={session_id} DONE"
+                            "[WS QUEUE] "
+                            f"session={session_id} "
+                            "DONE"
                         )
 
                         asyncio.create_task(
                             update_memory(
-                                session_id=session_id,
+                                session_id=(
+                                    session_id
+                                ),
                                 query=query,
-                                final_result=result,
+                                final_result=(
+                                    result
+                                ),
                             )
                         )
 
                         print(
-                            f"[MEMORY] "
+                            "[MEMORY] "
                             f"session={session_id} "
-                            f"update scheduled"
+                            "update scheduled"
+                        )
+
+                        log_ws_message(
+                            message_id,
+                            message_started,
+                            "clarification",
                         )
 
                         continue
 
-                    # =========================
+                    # =====================================
                     # 2. EVIDENCE
-                    # =========================
+                    # =====================================
+
                     evidence_data = {
                         "evidence_list":
-                            result["evidence_list"]
+                            result[
+                                "evidence_list"
+                            ]
                     }
 
                     await websocket.send_json(
                         jsonable_encoder({
-                            "type": "evidence",
-                            "data": evidence_data,
+                            "type":
+                                "evidence",
+                            "data":
+                                evidence_data,
                         })
                     )
 
-                    # =========================
+                    # =====================================
                     # 3. CHUNK
-                    # =========================
-                    # Tạm thời vẫn là streaming giả.
+                    # =====================================
+                    #
+                    # Tạm thời vẫn streaming giả.
                     # Sau khi B cung cấp
                     # answer_question_stream()
                     # thì mới nối streaming thật.
-                    for word in result["answer"].split():
+                    # =====================================
+
+                    for word in (
+                        result["answer"].split()
+                    ):
                         await websocket.send_json({
                             "type": "chunk",
                             "data": {
-                                "text": word + " ",
+                                "text":
+                                    word + " ",
                             },
                         })
 
-                        await asyncio.sleep(0.05)
+                        await asyncio.sleep(
+                            0.05
+                        )
 
-                    # =========================
+                    # =====================================
                     # 4. DONE
-                    # =========================
+                    # =====================================
+
                     done_data = {
                         "answer":
                             result["answer"],
                         "evidence_list":
-                            result["evidence_list"],
+                            result[
+                                "evidence_list"
+                            ],
                         "needs_clarification":
                             False,
                     }
@@ -384,24 +638,40 @@ async def websocket_chat(
                         })
                     )
 
-                    print(
-                        f"[WS QUEUE] "
-                        f"session={session_id} DONE"
+                    # Chỉ log OK sau khi client
+                    # đã nhận event done.
+                    log_ws_message(
+                        message_id,
+                        message_started,
+                        "ok",
                     )
 
+                    print(
+                        "[WS QUEUE] "
+                        f"session={session_id} "
+                        "DONE"
+                    )
+
+                    # Update memory chạy nền.
                     asyncio.create_task(
                         update_memory(
-                            session_id=session_id,
+                            session_id=(
+                                session_id
+                            ),
                             query=query,
                             final_result=result,
                         )
                     )
 
                     print(
-                        f"[MEMORY] "
+                        "[MEMORY] "
                         f"session={session_id} "
-                        f"update scheduled"
+                        "update scheduled"
                     )
+
+            # =============================================
+            # QUEUE FULL
+            # =============================================
 
             except QueueFullError:
                 await websocket.send_json({
@@ -409,11 +679,22 @@ async def websocket_chat(
                     "data": {
                         "code": 429,
                         "message": (
-                            "Hệ thống đang quá tải. "
+                            "Hệ thống đang "
+                            "quá tải. "
                             "Vui lòng thử lại sau."
                         ),
                     },
                 })
+
+                log_ws_message(
+                    message_id,
+                    message_started,
+                    "queue_full",
+                )
+
+            # =============================================
+            # QUEUE TIMEOUT
+            # =============================================
 
             except QueueTimeoutError:
                 await websocket.send_json({
@@ -426,9 +707,25 @@ async def websocket_chat(
                         ),
                     },
                 })
+
+                log_ws_message(
+                    message_id,
+                    message_started,
+                    "queue_timeout",
+                )
+
+    # =====================================================
+    # DISCONNECT
+    # =====================================================
+
     except WebSocketDisconnect:
         print(
-            f"[WS] "
+            "[WS] "
             f"session={session_id} "
-            f"DISCONNECTED"
+            "DISCONNECTED"
+        )
+
+        log_event(
+            "ws_disconnected",
+            connection_id=connection_id,
         )
