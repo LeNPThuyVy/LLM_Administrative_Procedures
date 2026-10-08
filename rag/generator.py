@@ -86,12 +86,17 @@ def generate_answer_3b(prompt: str) -> str:
 
 def stream_generate_via_server(prompt: str, port: int):
     if not prompt or not prompt.strip():
-        yield ""
         return
 
     url = f"{_SERVER_HOST}:{port}{_CHAT_PATH}"
+
     payload = json.dumps({
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
         "temperature": 0.3,
         "repeat_penalty": 1.1,
         "max_tokens": my_config.MAX_NEW_TOKENS,
@@ -101,30 +106,60 @@ def stream_generate_via_server(prompt: str, port: int):
     req = Request(
         url,
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream",
+        },
         method="POST",
     )
 
     try:
         with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
-            for line in resp:
-                line = line.decode('utf-8').strip()
+            for raw_line in resp:
+                line = raw_line.decode(
+                    "utf-8",
+                    errors="ignore",
+                ).strip()
+
                 if not line:
                     continue
-                if line.startswith("data:"):
-                    data_str = line[5:].strip()
-                    if data_str == "[DONE]":
-                        break
-                    try:
-                        data = json.loads(data_str)
-                        content = data.get("choices", [{}])[0].get("delta", {}).get("content")
-                        if content:
-                            yield content
-                    except (KeyError, json.JSONDecodeError):
+
+                if not line.startswith("data:"):
+                    continue
+
+                data_str = line[5:].strip()
+
+                if data_str == "[DONE]":
+                    break
+
+                try:
+                    data = json.loads(data_str)
+
+                    choices = data.get("choices") or []
+                    if not choices:
                         continue
+
+                    delta = choices[0].get("delta") or {}
+                    content = delta.get("content")
+
+                    if content:
+                        yield content
+
+                except (
+                    KeyError,
+                    json.JSONDecodeError,
+                ):
+                    continue
+
     except (URLError, OSError) as exc:
-        raise LLMUnavailableError(f"llama-server at port {port} is not available: {exc}")
+        raise LLMUnavailableError(
+            f"llama-server at port {port} "
+            f"is not available: {exc}"
+        )
 
 
 def stream_answer_3b(prompt: str):
-    yield from stream_generate_via_server(prompt, _SERVER_PORT_3B)
+    yield from stream_generate_via_server(
+        prompt,
+        _SERVER_PORT_3B,
+    )
