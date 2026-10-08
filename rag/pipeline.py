@@ -363,8 +363,19 @@ def answer_query(
     )
 
     # 5. Final Answer Generation
+    from rag.generator import LLMUnavailableError
     try:
         generated_answer = generator(prompt)
+    except LLMUnavailableError as exc:
+        print(f"GENERATOR ERROR: {exc}")
+        return AnswerResponse(
+            answer="Hệ thống đang bận, vui lòng thử lại sau ít phút.",
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+            domain=domain,
+            mode=effective_mode,
+        )
     except Exception as exc:
         print("GENERATOR ERROR:", repr(exc))
         generated_answer = ""
@@ -401,11 +412,14 @@ def answer_query(
             domain=domain,
             mode=effective_mode,
         )
-        generated_answer = apply_output_guard(
+        
+    generated_answer = apply_output_guard(
         generated_answer,
         effective_mode,
         runtime.disclaimer,
+        allowed_text=" ".join(ev.content or "" for ev in evidence_candidates),
     )
+    
     return AnswerResponse(
         answer=generated_answer,
         claims=verified_claims,

@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field, fields
+from functools import lru_cache
 from domains.domain_loader import DomainConfig, load_domain_config
 
 @dataclass
@@ -17,11 +18,8 @@ class DomainRuntime:
     allowed_tools: list[str]
     entity_keywords: list[str]
 
-def get_domain_runtime(domain_id: str | None = None) -> DomainRuntime:
-    if not domain_id:
-        from my_config import DEFAULT_DOMAIN_ID
-        domain_id = DEFAULT_DOMAIN_ID
-        
+@lru_cache(maxsize=None)
+def _build_runtime(domain_id: str) -> DomainRuntime:
     config = load_domain_config(domain_id)
     
     return DomainRuntime(
@@ -39,3 +37,9 @@ def get_domain_runtime(domain_id: str | None = None) -> DomainRuntime:
         allowed_tools=config.allowed_tools,
         entity_keywords=config.entity_keywords,
     )
+
+def get_domain_runtime(domain_id: str | None = None) -> DomainRuntime:
+    if not domain_id:
+        from my_config import DEFAULT_DOMAIN
+        domain_id = DEFAULT_DOMAIN
+    return _build_runtime(domain_id)

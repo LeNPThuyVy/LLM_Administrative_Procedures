@@ -148,6 +148,11 @@ QUY TẮC:
   clarification_question là một câu hỏi làm rõ ngắn gọn bằng tiếng Việt.
 - Không đánh dấu cần làm rõ chỉ vì câu hỏi ngắn. Hãy dựa trên
   thông tin thực tế trong query, history và procedure hint.
+- ĐẶC BIỆT LƯU Ý: Nếu câu hỏi hiện tại là một câu hỏi mở đầu hoặc chung chung
+  (ví dụ: "chào", "mình muốn hỏi thủ tục", "cho mình hỏi"), và không có
+  dấu hiệu nào cho thấy người dùng đang hỏi tiếp (follow-up) về thủ tục cũ,
+  bạn BẮT BUỘC phải đặt needs_clarification = true và hỏi lại người dùng.
+  KHÔNG tự động nối thủ tục cũ vào câu hỏi nếu người dùng không hỏi về nó.
 - Chỉ trả về JSON hợp lệ.
 - Không trả markdown.
 - Không giải thích ngoài JSON.
@@ -326,47 +331,6 @@ def _get_active_procedure(history: dict, procedure_hint: list, domain: str | Non
     return ""
 
 
-def _resolve_followup_rule_based(
-    query: str,
-    active_procedure: str,
-    domain: str | None = None,
-) -> str | None:
-    """
-    GĐ3 mục 10: Rule-based follow-up resolution.
-
-    Nếu query hiện tại KHÔNG chứa keyword thủ tục cụ thể
-    (ví dụ: "lệ phí thì sao?", "nộp ở đâu?", "mất bao lâu?"),
-    ghép tên thủ tục đang active vào để tạo resolved_query độc lập.
-
-    Trả về resolved_query mới, hoặc None nếu không cần.
-    """
-    if not active_procedure:
-        return None
-
-    # Nếu query đã có keyword thủ tục → không cần resolve
-    if _has_specific_procedure_keyword(query, domain=domain):
-        return None
-
-    # Lấy tên thủ tục ngắn gọn từ active_procedure
-    # (active_procedure có thể là tên đầy đủ hoặc nội dung tin nhắn)
-    proc_name = active_procedure
-    # Nếu active_procedure là một câu dài (tin nhắn user), rút gọn
-    if len(proc_name) > 80:
-        # Thử tìm keyword thủ tục trong chuỗi đó
-        from domains.runtime import get_domain_runtime
-        runtime = get_domain_runtime(domain)
-        for kw in runtime.entity_keywords:
-            if kw.lower() in proc_name.lower():
-                proc_name = kw
-                break
-        else:
-            proc_name = proc_name[:60] + "..."
-
-    resolved = f"{query} (liên quan đến: {proc_name})"
-    print(f"[synthesizer] Rule-based resolve_followup: '{query}' → '{resolved}'")
-    return resolved
-
-
 def synthesizer(
     query: str,
     history: dict[str, Any],
@@ -423,19 +387,11 @@ def synthesizer(
         )
 
     # -----------------------------------------------------------------
-    # GĐ3 mục 10: Rule-based follow-up resolution
-    # Nếu query không có keyword thủ tục nhưng history đã có thủ tục active
-    # → ghép tên thủ tục vào resolved_query mà không cần gọi LLM.
+    # GĐ3 mục 10: (ĐÃ XOÁ BỎ) Rule-based follow-up resolution.
+    # Nhường hoàn toàn cho LLM quyết định việc có phải follow-up hay không.
     # -----------------------------------------------------------------
     active_procedure = _get_active_procedure(history, procedure_hint, domain=domain)
-    resolved_via_rule = _resolve_followup_rule_based(query, active_procedure, domain=domain)
-    if resolved_via_rule:
-        return ConsolidatedQuery(
-            resolved_query=resolved_via_rule,
-            original_query=query,
-            needs_clarification=False,
-            clarification_question=None,
-        )
+
 
     # -----------------------------------------------------------------
     # Normal path: call LLM synthesizer
@@ -446,12 +402,12 @@ def synthesizer(
         procedure_hint=procedure_hint,
     )
 
-    raw_output = generator(prompt)
-
     try:
+        from rag.generator import LLMUnavailableError
+        raw_output = generator(prompt)
         parsed_output = _parse_json_output(raw_output)
         return _validate_consolidated_query(parsed_output)
-    except ValueError as exc:
+    except (ValueError, LLMUnavailableError) as exc:
         # GĐ3 mục 11: khi parse lỗi, ghép thủ tục active vào fallback
         # thay vì dùng nguyên câu gốc (dễ gây nhầm trong multi-turn)
         print(f"[synthesizer] Fallback do lỗi parse: {exc}")

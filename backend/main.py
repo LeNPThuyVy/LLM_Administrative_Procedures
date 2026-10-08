@@ -21,13 +21,62 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
 
+import subprocess
+import socket
+import time
+from contextlib import asynccontextmanager
+import my_config
+
 from backend.api.sessions import router as sessions_router
 from backend.api.socket import router as socket_router
 from backend.api.chat import router as chat_router
 
+llama_process = None
+
+def is_port_in_use(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('127.0.0.1', port)) == 0
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global llama_process
+    port = 8080
+    if not is_port_in_use(port):
+        print(f"Bắt đầu khởi động llama-server tại port {port}...")
+        cmd = [
+            "llama-server", 
+            "-m", str(my_config.MODEL_3B_PATH), 
+            "--port", str(port), 
+            "--ctx-size", "4096"
+        ]
+        llama_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT
+        )
+        
+        for _ in range(30):
+            if is_port_in_use(port):
+                print("Llama-server đã sẵn sàng!")
+                break
+            time.sleep(1)
+        else:
+            print("CẢNH BÁO: Không thể khởi động llama-server.")
+    else:
+        print(f"Port {port} đang được sử dụng. Bỏ qua khởi động llama-server.")
+
+    yield
+
+    if llama_process:
+        print("Đang tắt llama-server...")
+        llama_process.terminate()
+        llama_process.wait(timeout=5)
+        print("Đã dọn dẹp llama-server.")
+
 app = FastAPI(
     title="RAG Backend API",
     version="1.0.0",
+    lifespan=lifespan
 )
 
 # --- REST / WebSocket routes ---

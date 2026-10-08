@@ -249,6 +249,9 @@ data/.ingestion_versions.json
 #ignore tests_tang1 folder
 tests_tang1/
 
+#ignore tests_tang2 folder
+tests_tang2/
+
 docs/*test*.md
 
 task/
