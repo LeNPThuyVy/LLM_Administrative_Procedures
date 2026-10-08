@@ -17,6 +17,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentAssistantMsgBody = null;
     let currentEvidenceMap = {};
 
+    // 0. New Chat
+    const btnNewChat = document.getElementById('btn-new-chat');
+    if (btnNewChat) {
+        btnNewChat.addEventListener('click', () => {
+            // Clear session cookie and reload
+            document.cookie = 'session_id=; Max-Age=0; path=/';
+            window.location.reload();
+        });
+    }
+
     // 1. Theme toggle
     themeToggle.addEventListener('click', () => {
         const isDark = htmlEl.getAttribute('data-theme') === 'dark';

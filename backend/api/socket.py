@@ -158,6 +158,17 @@ async def websocket_chat(
 
             domain = payload.get("domain", None)
 
+            from domains import is_valid_domain
+            if not is_valid_domain(domain):
+                await websocket.send_json({
+                    "type": "error",
+                    "data": {
+                        "code": 400,
+                        "message": "Domain không hợp lệ",
+                    }
+                })
+                continue
+
             # Query rỗng
             if not query:
                 await websocket.send_json({

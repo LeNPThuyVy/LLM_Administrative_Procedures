@@ -8,8 +8,14 @@ torch
 transformers
 sqlalchemy
 asyncpg
+fastapi
+uvicorn[standard]
+pyyaml
+httpx
+mcp
+pytest
+pytest-asyncio
 
-psycopg2-binarypython
 qdrant-client
 FlagEmbedding
 

@@ -12,8 +12,10 @@ from rag.rerank import rerank
 from rag.retrieval import retrieve, retrieve_two_step
 from rag.synthesizer import synthesizer
 from rag.verification import verify_answer
-
-
+from domains.runtime import get_domain_runtime
+from guardrails.risk import classify_risk, resolve_mode
+from guardrails.input import validate_input, mask_sensitive_for_log
+from guardrails.output import apply_output_guard
 FALLBACK_TEXT = (
     "Thông tin trong tài liệu được cung cấp "
     "chưa đủ để trả lời câu hỏi này."
@@ -180,8 +182,24 @@ def answer_query(
         query = _extract_text(query)
     elif not isinstance(query, str):
         query = str(query) if query is not None else ""
+    input_guard = validate_input(query)
 
+    if not input_guard.allowed:
+        print(
+            "[guardrail] Blocked input: "
+            f"{input_guard.reason} | "
+            f"{mask_sensitive_for_log(query)}"
+        )
+
+        return AnswerResponse(
+            answer="Yêu cầu này không thể được xử lý vì vi phạm quy tắc an toàn.",
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+            domain=domain,
+        )
     if not query or not query.strip():
+        
         return AnswerResponse(
             answer="",
             claims=[],
@@ -192,7 +210,15 @@ def answer_query(
 
     if context is None:
         context = {}
+    # Layer 2 - Domain runtime + risk classifier
+    runtime = get_domain_runtime(domain)
+    domain = runtime.domain_id
 
+    risk_result = classify_risk(query)
+    effective_mode = resolve_mode(
+        runtime.mode,
+        risk_result,
+    )
     # ---------------------------------------------------------
     # GĐ1 fix — Out-of-scope location detection (mục 5)
     # Chỉ kiểm tra tin nhắn user HIỆN TẠI, không quét history.
@@ -278,20 +304,33 @@ def answer_query(
     # Issue #1 — Relevance threshold gate.
     # If the best retrieval score is below MIN_RETRIEVAL_SCORE, skip
     # generation entirely and return FALLBACK_TEXT to avoid hallucination.
-    from domains.runtime import get_domain_runtime
-    runtime = get_domain_runtime(domain)
     top_score = retrieved_chunks[0].retrieval_score
-    if top_score < runtime.min_retrieval_score:
+
+    # Layer 2:
+    # Strict bắt buộc evidence đủ mạnh.
+    # Friendly không bị chặn bởi retrieval threshold.
+    if (
+        effective_mode == "strict"
+        and top_score < runtime.min_retrieval_score
+    ):
         print(
-            f"[pipeline] Top-1 score {top_score:.3f} < "
-            f"MIN_RETRIEVAL_SCORE {runtime.min_retrieval_score} → FALLBACK"
+            f"[pipeline] Strict mode: Top-1 score "
+            f"{top_score:.3f} < "
+            f"{runtime.min_retrieval_score:.3f} -> NO EVIDENCE"
         )
+
+        answer = runtime.no_evidence_message or FALLBACK_TEXT
+
+        if runtime.disclaimer:
+            answer = f"{answer}\n\n{runtime.disclaimer}"
+
         return AnswerResponse(
-            answer=FALLBACK_TEXT,
+            answer=answer,
             claims=[],
             needs_clarification=False,
             clarification_question=None,
             domain=domain,
+            mode=effective_mode,
         )
 
     # 2. Rerank
@@ -300,13 +339,19 @@ def answer_query(
     # 3. Build evidence
     evidence_candidates = build_evidence_candidates(ranked_chunks)
 
-    if not evidence_candidates:
+    if not evidence_candidates and effective_mode == "strict":
+        answer = runtime.no_evidence_message or FALLBACK_TEXT
+
+        if runtime.disclaimer:
+            answer = f"{answer}\n\n{runtime.disclaimer}"
+
         return AnswerResponse(
-            answer=FALLBACK_TEXT,
+            answer=answer,
             claims=[],
             needs_clarification=False,
             clarification_question=None,
             domain=domain,
+            mode=effective_mode,
         )
 
     # 4. Prompt Builder
@@ -318,8 +363,19 @@ def answer_query(
     )
 
     # 5. Final Answer Generation
+    from rag.generator import LLMUnavailableError
     try:
         generated_answer = generator(prompt)
+    except LLMUnavailableError as exc:
+        print(f"GENERATOR ERROR: {exc}")
+        return AnswerResponse(
+            answer="Hệ thống đang bận, vui lòng thử lại sau ít phút.",
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+            domain=domain,
+            mode=effective_mode,
+        )
     except Exception as exc:
         print("GENERATOR ERROR:", repr(exc))
         generated_answer = ""
@@ -341,15 +397,34 @@ def answer_query(
         verification_results=verification_results,
         evidence_candidates=evidence_candidates,
     )
+    # Strict: answer phải có claim đã được evidence support.
+    if effective_mode == "strict" and not verified_claims:
+        answer = runtime.no_evidence_message or FALLBACK_TEXT
 
-    from domains.runtime import get_domain_runtime
-    runtime = get_domain_runtime(domain)
+        if runtime.disclaimer:
+            answer = f"{answer}\n\n{runtime.disclaimer}"
 
+        return AnswerResponse(
+            answer=answer,
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+            domain=domain,
+            mode=effective_mode,
+        )
+        
+    generated_answer = apply_output_guard(
+        generated_answer,
+        effective_mode,
+        runtime.disclaimer,
+        allowed_text=" ".join(ev.content or "" for ev in evidence_candidates),
+    )
+    
     return AnswerResponse(
         answer=generated_answer,
         claims=verified_claims,
         needs_clarification=False,
         clarification_question=None,
         domain=domain,
-        mode=runtime.mode,
+        mode=effective_mode,
     )

@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from backend.schemas.chat import ChatRequest
@@ -9,7 +9,7 @@ from backend.services.context_service import get_context, update_memory
 from backend.services.ai_service import generate_answer
 from backend.services.queue_service import queue_manager
 
-from domains import list_domains
+from domains import list_domains, is_valid_domain
 
 router = APIRouter()
 
@@ -20,6 +20,11 @@ async def get_domains():
 
 @router.post("/api/chat")
 async def chat(request: ChatRequest):
+    if not is_valid_domain(request.domain):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Domain không hợp lệ: {request.domain}"
+        )
 
     async def event_stream():
 
