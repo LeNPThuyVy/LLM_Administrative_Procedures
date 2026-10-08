@@ -1,7 +1,10 @@
 import asyncio
 import json
-
-from fastapi import APIRouter, HTTPException
+from backend.services.rate_limit_service import (
+    rate_limiter,
+    RateLimitExceeded,
+)
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from backend.schemas.chat import ChatRequest
@@ -28,13 +31,42 @@ async def get_domains():
 
 
 @router.post("/api/chat")
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    http_request: Request,
+):
     if not is_valid_domain(request.domain):
         raise HTTPException(
             status_code=400,
             detail=f"Domain không hợp lệ: {request.domain}",
         )
+    client_ip = (
+        http_request.client.host
+        if http_request.client
+        else "unknown"
+    )
 
+    try:
+        await rate_limiter.check(
+            session_id=request.session_id,
+            ip_address=client_ip,
+        )
+
+    except RateLimitExceeded as exc:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "code": 429,
+                "message":
+                    "Bạn gửi yêu cầu quá nhanh. "
+                    "Vui lòng thử lại sau.",
+                "scope": exc.scope,
+                "retry_after": exc.retry_after,
+            },
+            headers={
+                "Retry-After": str(exc.retry_after),
+            },
+        )
     async def event_stream():
         try:
             async with queue_manager.session_scope(

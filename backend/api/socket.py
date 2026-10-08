@@ -1,7 +1,10 @@
 import asyncio
 import uuid
 from sqlalchemy import select
-
+from backend.services.rate_limit_service import (
+    rate_limiter,
+    RateLimitExceeded,
+)
 from context.database import AsyncSessionLocal
 from context.models import User, ChatSession
 from fastapi import (
@@ -138,7 +141,11 @@ async def websocket_chat(
         return
 
     await websocket.accept()
-
+    client_ip = (
+        websocket.client.host
+        if websocket.client
+        else "unknown"
+    )
     print(
         f"[WS] session={session_id} CONNECTED"
     )
@@ -191,7 +198,27 @@ async def websocket_chat(
                 })
 
                 continue
+            try:
+                await rate_limiter.check(
+                    session_id=session_id,
+                    ip_address=client_ip,
+                )
 
+            except RateLimitExceeded as exc:
+                await websocket.send_json({
+                    "type": "error",
+                    "data": {
+                        "code": 429,
+                        "message":
+                            "Bạn gửi yêu cầu quá nhanh. "
+                            "Vui lòng thử lại sau.",
+                        "scope": exc.scope,
+                        "retry_after":
+                            exc.retry_after,
+                    },
+                })
+
+                continue
             try:
                 async with queue_manager.session_scope(
                         session_id
