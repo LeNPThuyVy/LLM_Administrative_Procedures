@@ -127,6 +127,68 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
         }
+        else if (type === 'plan') {
+            statusText.textContent = 'Đã tìm thấy các thủ tục...';
+            if (currentAssistantMsgBody) {
+                // If this is the first chunk, replace placeholder text
+                if (currentAssistantMsgBody.innerHTML === '<span class="pulse-dot"></span>') {
+                    currentAssistantMsgBody.innerHTML = '';
+                }
+                
+                let planHtml = `<div class="plan-card" style="margin-bottom: 12px; padding: 12px; background: var(--bg-surface-subtle); border-radius: var(--radius-md); border-left: 4px solid var(--primary);">`;
+                planHtml += `<div style="font-weight: 600; margin-bottom: 8px;">Hệ thống đang xử lý các thủ tục:</div>`;
+                planHtml += `<ul style="margin: 0; padding-left: 20px;">`;
+                
+                if (data.found && data.found.length > 0) {
+                    data.found.forEach(t => {
+                        planHtml += `<li style="color: var(--primary);">✅ ${escapeHtml(t)}</li>`;
+                    });
+                }
+                if (data.missing && data.missing.length > 0) {
+                    data.missing.forEach(t => {
+                        planHtml += `<li style="color: #b91c1c;">❌ ${escapeHtml(t)} (Không tìm thấy)</li>`;
+                    });
+                }
+                planHtml += `</ul>`;
+                if (data.truncated) {
+                    planHtml += `<div style="margin-top: 8px; font-size: 13px; color: #b91c1c;">(Đã giới hạn tối đa 8 thủ tục)</div>`;
+                }
+                planHtml += `</div>`;
+                
+                currentAssistantMsgBody.innerHTML += planHtml;
+                scrollToBottom();
+            }
+        }
+        else if (type === 'section') {
+            statusText.textContent = 'Đang trình bày thủ tục...';
+            if (currentAssistantMsgBody) {
+                let sectionHtml = `<div class="section-card" style="margin-bottom: 16px;">`;
+                sectionHtml += `<h4 style="margin: 0 0 8px 0; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">${escapeHtml(data.title || '')}</h4>`;
+                
+                let textHtml = parseMarkdownChunk(data.text || '', true);
+                // Replace citations with buttons
+                textHtml = textHtml.replace(/\[(EC_\d+)\]/g, (match, p1) => {
+                    return `<button class="citation-chip" onclick="showEvidence('${p1}')">${p1.replace('EC_', '')}</button>`;
+                });
+                
+                sectionHtml += `<div style="color: var(--text-secondary);">${textHtml}</div>`;
+                sectionHtml += `</div>`;
+                
+                currentAssistantMsgBody.innerHTML += sectionHtml;
+                
+                // Add evidence
+                if (data.evidence_list && data.evidence_list.length > 0) {
+                    data.evidence_list.forEach(claim => {
+                        if (claim.citations) {
+                            claim.citations.forEach(cit => {
+                                currentEvidenceMap[cit.evidence_id] = cit;
+                            });
+                        }
+                    });
+                }
+                scrollToBottom();
+            }
+        }
         else if (type === 'chunk') {
             if (currentAssistantMsgBody) {
                 // If this is the first chunk, replace placeholder text

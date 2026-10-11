@@ -45,3 +45,5 @@ TEMPERATURE = 0.0
 TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+MULTI_INTENT_ENABLED = os.getenv("MULTI_INTENT_ENABLED", "False").lower() == "true"

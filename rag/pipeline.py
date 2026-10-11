@@ -1,4 +1,5 @@
 import re
+import time
 from collections.abc import Callable
 
 import my_config as cfg
@@ -182,7 +183,10 @@ def answer_query(
         query = _extract_text(query)
     elif not isinstance(query, str):
         query = str(query) if query is not None else ""
+
+    t0_input = time.time()
     input_guard = validate_input(query)
+    print(f"[time] input_guard = {time.time() - t0_input:.2f}s")
 
     if not input_guard.allowed:
         print(
@@ -214,11 +218,13 @@ def answer_query(
     runtime = get_domain_runtime(domain)
     domain = runtime.domain_id
 
+    t0_risk = time.time()
     risk_result = classify_risk(query)
     effective_mode = resolve_mode(
         runtime.mode,
         risk_result,
     )
+    print(f"[time] risk = {time.time() - t0_risk:.2f}s")
     # ---------------------------------------------------------
     # GĐ1 fix — Out-of-scope location detection (mục 5)
     # Chỉ kiểm tra tin nhắn user HIỆN TẠI, không quét history.
@@ -239,10 +245,56 @@ def answer_query(
         )
 
     # ---------------------------------------------------------
-    # Multi-agent preprocessing
+    # Multi-intent branching
     # ---------------------------------------------------------
+    if getattr(cfg, "MULTI_INTENT_ENABLED", False):
+        from rag.multi.detector import detect_sub_queries
+        sub_queries, truncated = detect_sub_queries(query, context, domain)
+        if len(sub_queries) >= 2:
+            from rag.multi.resolver import resolve_all
+            from rag.multi.section import build_section_template
+            
+            sub_results = resolve_all(sub_queries, context, domain)
+            
+            sections = []
+            answer_parts = []
+            claims = []
+            evidence_start_index = 1
+            for res in sub_results:
+                sec = build_section_template(res, evidence_start_index=evidence_start_index)
+                sections.append(sec)
+                
+                # Advance start_index by the number of chunks actually used (or total returned)
+                # Actually, dummy_claims count is how many EC we matched, but let's just add len(res.chunks)
+                evidence_start_index += len(res.chunks)
+                
+                # Ghép text
+                if sec.status == "FOUND":
+                    answer_parts.append(f"### {sec.title}\n{sec.text}")
+                else:
+                    answer_parts.append(f"### {sec.title}\n{sec.text}")
+                    
+                claims.extend(sec.claims)
+                
+            final_answer = "\n\n".join(answer_parts)
+            if truncated:
+                final_answer += "\n\n(Lưu ý: Bạn đã hỏi quá nhiều thủ tục, hệ thống chỉ trả lời 8 thủ tục đầu tiên)."
+                
+            return AnswerResponse(
+                answer=final_answer,
+                claims=claims,
+                needs_clarification=False,
+                clarification_question=None,
+                domain=domain,
+                mode=effective_mode,
+                sections=sections,
+                truncated=truncated
+            )
 
-    # 1. Read conversation history.
+    # ---------------------------------------------------------
+    # Multi-agent preprocessing (Single-intent)
+    # ---------------------------------------------------------
+    t0_hist = time.time()
     history = history_reader(context)
 
     # 2. Retrieve lightweight procedure/topic hints.
@@ -251,8 +303,10 @@ def answer_query(
         context=context,
         top_k=2,
     )
+    print(f"[time] history/procedure_reader = {time.time() - t0_hist:.2f}s")
 
     # 3. Synthesize the query using history + procedure hints (uses 1.5B model).
+    t0_synth = time.time()
     consolidated = synthesizer(
         query=query,
         history=history,
@@ -260,6 +314,7 @@ def answer_query(
         generator=synthesizer_generator,
         domain=domain,
     )
+    print(f"[time] synthesizer = {time.time() - t0_synth:.2f}s")
 
     # ---------------------------------------------------------
     # Clarification branch
@@ -283,11 +338,13 @@ def answer_query(
     # 1. GĐ2: Two-step retrieval để tránh nhầm thủ tục
     # retrieve_two_step trả [] khi query mơ hồ + top scores sát nhau
     # → pipeline sẽ trả clarification question
+    t0_retrieve = time.time()
     retrieved_chunks = retrieve_two_step(
         query=consolidated.resolved_query,
         context=context,
         domain=domain,
     )
+    print(f"[time] retrieve_two_step = {time.time() - t0_retrieve:.2f}s")
 
     if not retrieved_chunks:
         return AnswerResponse(
@@ -355,15 +412,18 @@ def answer_query(
         )
 
     # 4. Prompt Builder
+    t0_prompt = time.time()
     prompt = build_prompt(
         query=consolidated.resolved_query,
         evidence_candidates=evidence_candidates,
         context=context,
         domain=domain,
     )
+    print(f"[time] prompt_build = {time.time() - t0_prompt:.2f}s")
 
     # 5. Final Answer Generation
     from rag.generator import LLMUnavailableError
+    t0_gen = time.time()
     try:
         generated_answer = generator(prompt)
     except LLMUnavailableError as exc:
@@ -379,6 +439,7 @@ def answer_query(
     except Exception as exc:
         print("GENERATOR ERROR:", repr(exc))
         generated_answer = ""
+    print(f"[time] generate = {time.time() - t0_gen:.2f}s")
 
     # 6. Fallback if useless answer
     if _is_useless_answer(generated_answer):
@@ -387,10 +448,12 @@ def answer_query(
         generated_answer = _answer_from_evidence(evidence_candidates, field_types)
 
     # 7. Verification
+    t0_ver = time.time()
     verification_results = verify_answer(
         generated_answer=generated_answer,
         evidence_candidates=evidence_candidates,
     )
+    print(f"[time] verify = {time.time() - t0_ver:.2f}s")
 
     # 8. Mapper
     verified_claims = map_verification_results(
@@ -413,12 +476,14 @@ def answer_query(
             mode=effective_mode,
         )
         
+    t0_out = time.time()
     generated_answer = apply_output_guard(
         generated_answer,
         effective_mode,
         runtime.disclaimer,
         allowed_text=" ".join(ev.content or "" for ev in evidence_candidates),
     )
+    print(f"[time] output_guard = {time.time() - t0_out:.2f}s")
     
     return AnswerResponse(
         answer=generated_answer,
