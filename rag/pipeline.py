@@ -115,8 +115,72 @@ def _answer_from_evidence(evidence_candidates, field_types: list[str] = None):
             
     if parts:
         return "\n\n".join(parts)
-        
+
     return FALLBACK_TEXT
+
+
+_PIPELINE_ANSWER_CACHE: dict[tuple, AnswerResponse] = {}
+_MAX_ANSWER_CACHE_SIZE = 500
+
+def _get_cache_key(query: str, context: dict | None, domain: str | None, session_id: str | None = None) -> tuple:
+    q_norm = (query or "").strip().lower()
+    proc = ""
+    if context:
+        sc = context.get("structured_context") or context.get("long_term_memory") or {}
+        if isinstance(sc, dict):
+            proc = str(sc.get("procedure_name", "")).strip().lower()
+    return (session_id or "global", q_norm, proc, domain or "default")
+
+
+def _try_template_fast_path(query: str, evidence_candidates, field_types: list[str]) -> str | None:
+    """
+    Bước 3A Template Fast Path:
+    Khi query chỉ hỏi đúng 1 field (fee, time, method, docs) và đã có field chunk tương ứng,
+    kết xuất câu trả lời chuẩn trực tiếp, bỏ qua LLM sinh token để giảm độ trễ từ ~3s về <0.1s.
+    """
+    if not field_types or len(field_types) != 1 or not evidence_candidates:
+        return None
+
+    ftype = field_types[0]
+    field_to_chunk_suffix = {
+        "fee": "_fee",
+        "time": "_time",
+        "method": "_method",
+        "docs": "_docs",
+    }
+    suffix = field_to_chunk_suffix.get(ftype)
+    if not suffix:
+        return None
+
+    target_ev = next((ev for ev in evidence_candidates if ev.chunk_id and ev.chunk_id.endswith(suffix)), None)
+    if not target_ev:
+        return None
+
+    content = (target_ev.content or "").strip()
+    if not content:
+        return None
+
+    lines = [l.strip() for l in content.split("\n") if l.strip()]
+    title = ""
+    field_lines = []
+    capture = False
+    for line in lines:
+        if line.startswith("Tên thủ tục:"):
+            title = line.replace("Tên thủ tục:", "").strip()
+        elif ":" in line and not capture:
+            field_lines.append(line)
+            capture = True
+        elif capture:
+            field_lines.append(line)
+
+    if not field_lines:
+        return None
+
+    cid = target_ev.candidate_id
+    info_body = "\n".join(field_lines)
+    if title:
+        return f"Về {title}, thông tin chi tiết như sau:\n\n{info_body} [{cid}]"
+    return f"{info_body} [{cid}]"
 
 
 def _is_useless_answer(answer: str) -> bool:
@@ -173,11 +237,12 @@ def answer_query(
     domain: str | None = None,
     generator: Callable[[str], str] = generate_answer_3b,
     synthesizer_generator: Callable[[str], str] = generate_answer_1_5b,
+    on_token: Callable[[str], None] | None = None,
 ) -> AnswerResponse:
     """
     Run the complete AI Core / RAG pipeline.
     """
-    _ = session_id
+    # session_id is used for cache key partitioning
 
     if isinstance(query, (list, dict)):
         query = _extract_text(query)
@@ -214,6 +279,16 @@ def answer_query(
 
     if context is None:
         context = {}
+
+    # Bước 3B: Pipeline Answer Cache hit check
+    cache_key = _get_cache_key(query, context, domain, session_id=session_id)
+    if cache_key in _PIPELINE_ANSWER_CACHE:
+        cached_resp = _PIPELINE_ANSWER_CACHE[cache_key]
+        print(f"[pipeline] Cache hit for query='{query[:40]}' (proc='{cache_key[1]}')")
+        if on_token is not None and cached_resp.answer:
+            on_token(cached_resp.answer)
+        return cached_resp
+
     # Layer 2 - Domain runtime + risk classifier
     runtime = get_domain_runtime(domain)
     domain = runtime.domain_id
@@ -297,11 +372,13 @@ def answer_query(
     t0_hist = time.time()
     history = history_reader(context)
 
-    # 2. Retrieve lightweight procedure/topic hints.
+    # 2. Retrieve lightweight procedure/topic hints (và cache raw chunks).
+    initial_chunks = []
     procedure_hint = procedure_reader(
         query=query,
         context=context,
         top_k=2,
+        raw_results_out=initial_chunks,
     )
     print(f"[time] history/procedure_reader = {time.time() - t0_hist:.2f}s")
 
@@ -336,13 +413,14 @@ def answer_query(
     # ---------------------------------------------------------
 
     # 1. GĐ2: Two-step retrieval để tránh nhầm thủ tục
-    # retrieve_two_step trả [] khi query mơ hồ + top scores sát nhau
-    # → pipeline sẽ trả clarification question
+    # Tái sử dụng initial_chunks nếu resolved_query giống hệt query gốc
     t0_retrieve = time.time()
+    raw_to_use = initial_chunks if (consolidated.resolved_query.strip().lower() == query.strip().lower()) else None
     retrieved_chunks = retrieve_two_step(
         query=consolidated.resolved_query,
         context=context,
         domain=domain,
+        raw_results=raw_to_use,
     )
     print(f"[time] retrieve_two_step = {time.time() - t0_retrieve:.2f}s")
 
@@ -422,24 +500,41 @@ def answer_query(
     print(f"[time] prompt_build = {time.time() - t0_prompt:.2f}s")
 
     # 5. Final Answer Generation
-    from rag.generator import LLMUnavailableError
-    t0_gen = time.time()
-    try:
-        generated_answer = generator(prompt)
-    except LLMUnavailableError as exc:
-        print(f"GENERATOR ERROR: {exc}")
-        return AnswerResponse(
-            answer="Hệ thống đang bận, vui lòng thử lại sau ít phút.",
-            claims=[],
-            needs_clarification=False,
-            clarification_question=None,
-            domain=domain,
-            mode=effective_mode,
-        )
-    except Exception as exc:
-        print("GENERATOR ERROR:", repr(exc))
-        generated_answer = ""
-    print(f"[time] generate = {time.time() - t0_gen:.2f}s")
+    from rag.prompt_builder import _detect_field_types
+    detected_fields = _detect_field_types(consolidated.resolved_query)
+
+    fast_answer = _try_template_fast_path(consolidated.resolved_query, evidence_candidates, detected_fields)
+    if fast_answer:
+        print(f"[pipeline] Fast Path: rendered answer directly from field evidence ({detected_fields}).")
+        generated_answer = fast_answer
+        if on_token is not None:
+            on_token(fast_answer)
+    else:
+        from rag.generator import LLMUnavailableError, stream_answer_3b
+        t0_gen = time.time()
+        try:
+            if on_token is not None:
+                token_list = []
+                for tok in stream_answer_3b(prompt):
+                    token_list.append(tok)
+                    on_token(tok)
+                generated_answer = "".join(token_list)
+            else:
+                generated_answer = generator(prompt)
+        except LLMUnavailableError as exc:
+            print(f"GENERATOR ERROR: {exc}")
+            return AnswerResponse(
+                answer="Hệ thống đang bận, vui lòng thử lại sau ít phút.",
+                claims=[],
+                needs_clarification=False,
+                clarification_question=None,
+                domain=domain,
+                mode=effective_mode,
+            )
+        except Exception as exc:
+            print("GENERATOR ERROR:", repr(exc))
+            generated_answer = ""
+        print(f"[time] generate = {time.time() - t0_gen:.2f}s")
 
     # 6. Fallback if useless answer
     if _is_useless_answer(generated_answer):
@@ -485,7 +580,7 @@ def answer_query(
     )
     print(f"[time] output_guard = {time.time() - t0_out:.2f}s")
     
-    return AnswerResponse(
+    final_response = AnswerResponse(
         answer=generated_answer,
         claims=verified_claims,
         needs_clarification=False,
@@ -493,3 +588,9 @@ def answer_query(
         domain=domain,
         mode=effective_mode,
     )
+
+    if len(_PIPELINE_ANSWER_CACHE) >= _MAX_ANSWER_CACHE_SIZE:
+        _PIPELINE_ANSWER_CACHE.pop(next(iter(_PIPELINE_ANSWER_CACHE)))
+    _PIPELINE_ANSWER_CACHE[cache_key] = final_response
+
+    return final_response

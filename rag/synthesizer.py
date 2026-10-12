@@ -98,7 +98,12 @@ def _format_procedure_hint(
     return "\n".join(hint_parts)
 
 
-_PRONOUNS = {"nó", "vậy", "thế", "cái đó", "việc đó", "còn", "như vậy", "thì sao", "đây", "đó", "này", "ấy"}
+_PRONOUNS = {
+    "nó", "vậy", "thế", "cái đó", "việc đó", "còn", "như vậy", "thì sao",
+    "đây", "đó", "này", "ấy", "chưa", "nếu", "mà", "ủa", "sao", "thế thì",
+    "vậy thì", "ai", "bao nhiêu", "ở đâu", "mấy ngày", "mất bao lâu",
+    "thì làm sao", "thì phải làm sao"
+}
 
 def _is_faithful(
     resolved_query: str,
@@ -178,6 +183,29 @@ CÂU HỎI HIỆN TẠI: xin chào
     "original_query": "xin chào",
     "needs_clarification": true,
     "clarification_question": "Chào bạn, bạn muốn hỏi về thủ tục hành chính nào?"
+}}
+
+Ví dụ 4:
+LỊCH SỬ: Không có lịch sử hội thoại.
+GỢI Ý: Gợi ý 1: Thủ tục đăng ký khai sinh
+CÂU HỎI HIỆN TẠI: kiểu mình mới đẻ con ấy thì giờ mình phải làm gì
+ĐÁP ÁN JSON:
+{{
+    "resolved_query": "mới sinh con thì làm thủ tục đăng ký khai sinh như thế nào?",
+    "original_query": "kiểu mình mới đẻ con ấy thì giờ mình phải làm gì",
+    "needs_clarification": false,
+    "clarification_question": null
+}}
+
+Ví dụ 5:
+LỊCH SỬ: user: thủ tục giấy khai sinh
+CÂU HỎI HIỆN TẠI: ủa mà mình chưa đăng kí kết hôn á thì phải làm sao?
+ĐÁP ÁN JSON:
+{{
+    "resolved_query": "chưa đăng ký kết hôn thì đăng ký khai sinh cho con như thế nào?",
+    "original_query": "ủa mà mình chưa đăng kí kết hôn á thì phải làm sao?",
+    "needs_clarification": false,
+    "clarification_question": null
 }}
 
 CÂU HỎI HIỆN TẠI:
@@ -292,7 +320,7 @@ def _validate_consolidated_query(
 def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: str | None = None) -> bool:
     """
     Return True if the query contains at least one keyword that maps to a
-    known procedure in the dataset (procedures.json titles).
+    known procedure in the dataset (procedures.json titles or aliases).
 
     This is a deterministic guard — the LLM is NOT consulted here.
 
@@ -304,7 +332,16 @@ def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: st
     keywords = runtime.entity_keywords
 
     combined = (query + " " + (extra_text or "")).lower()
-    return any(kw.lower() in combined for kw in keywords)
+    if any(kw.lower() in combined for kw in keywords):
+        return True
+
+    from rag.retrieval import _get_alias_catalog
+    catalog = _get_alias_catalog()
+    for doc_id, aliases in catalog.items():
+        if any(a in combined for a in aliases if a):
+            return True
+
+    return False
 
 
 def _get_active_procedure(history: dict, procedure_hint: list, domain: str | None = None) -> str:
@@ -382,16 +419,19 @@ def synthesizer(
     history_text_for_kw = " ".join(user_kw_texts)
 
     # -----------------------------------------------------------------
-    # Rule-based clarification override (Issue #3)
+    # Rule-based clarification override (Bước 2A: Kết hợp Retrieval Hints)
     # -----------------------------------------------------------------
-    if not _has_specific_procedure_keyword(query, history_text_for_kw, domain=domain):
+    has_keyword = _has_specific_procedure_keyword(query, history_text_for_kw, domain=domain)
+    has_hint = bool(procedure_hint and len(procedure_hint) > 0)
+
+    if not has_keyword and not has_hint:
         clarification_q = (
             "Bạn muốn hỏi về thủ tục hành chính nào? "
             "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
         )
         print(
-            "[synthesizer] Rule-based override: no procedure keyword in "
-            "query+history → needs_clarification=True"
+            "[synthesizer] Rule-based override: no procedure keyword and no valid hints "
+            "→ needs_clarification=True"
         )
         return ConsolidatedQuery(
             resolved_query=query,
@@ -406,7 +446,9 @@ def synthesizer(
     query_lower = query.lower()
     has_pronoun = any(re.search(r'\b' + p + r'\b', query_lower) for p in _PRONOUNS)
     
-    if not has_pronoun and _has_specific_procedure_keyword(query, domain=domain):
+    # Chỉ bypass khi chính câu hiện tại (query) có từ khóa thủ tục rõ ràng
+    has_query_kw = _has_specific_procedure_keyword(query, domain=domain)
+    if not has_pronoun and has_query_kw:
         print("[synthesizer] Query is clear (no pronouns, has keyword) -> bypass LLM.")
         return ConsolidatedQuery(
             resolved_query=query,
@@ -415,11 +457,30 @@ def synthesizer(
             clarification_question=None,
         )
 
-    # -----------------------------------------------------------------
-    # GĐ3 mục 10: (ĐÃ XOÁ BỎ) Rule-based follow-up resolution.
-    # Nhường hoàn toàn cho LLM quyết định việc có phải follow-up hay không.
-    # -----------------------------------------------------------------
+    # Turn 1: Không có lịch sử hội thoại, nếu đã có keyword thủ tục/alias thì query độc lập, bypass LLM
+    if not recent_messages and has_query_kw:
+        print("[synthesizer] Turn 1 with procedure keyword -> bypass LLM.")
+        return ConsolidatedQuery(
+            resolved_query=query,
+            original_query=query,
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
     active_procedure = _get_active_procedure(history, procedure_hint, domain=domain)
+
+    # Bước 3A Fast Path: Nếu câu hỏi hỏi về field/hồ sơ/lệ phí và đã có thủ tục active, ghép nhanh
+    from rag.prompt_builder import _detect_field_types
+    detected_fields = _detect_field_types(query)
+    if detected_fields and active_procedure and not has_query_kw:
+        resolved = f"{query} (liên quan đến: {active_procedure})"
+        print(f"[synthesizer] Fast follow-up field resolution: {resolved}")
+        return ConsolidatedQuery(
+            resolved_query=resolved,
+            original_query=query,
+            needs_clarification=False,
+            clarification_question=None,
+        )
 
 
     # -----------------------------------------------------------------

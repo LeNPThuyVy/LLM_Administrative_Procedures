@@ -77,12 +77,21 @@ def generate_answer(
 
 
 def generate_answer_1_5b(prompt: str, temperature: float | None = 0.3, json_mode: bool = False) -> str:
-    return generate_answer(
-        prompt,
-        server_port=_SERVER_PORT_1_5B,
-        temperature=temperature,
-        json_mode=json_mode,
-    )
+    try:
+        return generate_answer(
+            prompt,
+            server_port=_SERVER_PORT_1_5B,
+            temperature=temperature,
+            json_mode=json_mode,
+        )
+    except LLMUnavailableError:
+        # Tự động fallback sang port 8080 nếu server 1.5B chưa khởi động
+        return generate_answer(
+            prompt,
+            server_port=_SERVER_PORT_3B,
+            temperature=temperature,
+            json_mode=json_mode,
+        )
 
 
 def generate_answer_3b(prompt: str) -> str:

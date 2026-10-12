@@ -24,3 +24,4 @@ class ProcedureDocument(BaseModel):
     notes: Optional[str] = None
     source_url: Optional[str] = None
     content: Optional[str] = None
+    aliases: list[str] = []

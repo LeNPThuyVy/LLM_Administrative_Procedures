@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from backend.schemas.chat import ChatRequest
 from backend.services.context_service import get_context, update_memory
-from backend.services.ai_service import generate_answer
+from backend.services.ai_service import generate_answer, generate_answer_stream
 from backend.services.queue_service import queue_manager
 
 from domains import list_domains, is_valid_domain
@@ -100,26 +100,34 @@ async def chat(request: ChatRequest):
                         print(f"[QUEUE] session={request.session_id} DONE (Multi)")
                         return
 
-                result = await generate_answer(
-                    query=request.query,
-                    session_id=request.session_id,
-                    context=context,
-                    domain=request.domain
-                )
+                result = None
+                async with queue_manager.semaphore:
+                    async for event_type, payload in generate_answer_stream(
+                        query=request.query,
+                        session_id=request.session_id,
+                        context=context,
+                        domain=request.domain
+                    ):
+                        if event_type == "chunk":
+                            yield (
+                                "event: chunk\n"
+                                f"data: {json.dumps({'text': payload}, ensure_ascii=False)}\n\n"
+                            )
+                        elif event_type == "final":
+                            result = payload
+
+                if not result:
+                    return
 
                 # Trường hợp cần clarification
                 if result["needs_clarification"]:
-
                     data = {
-                        "question":
-                            result["clarification_question"]
+                        "question": result["clarification_question"]
                     }
-
                     yield (
                         "event: clarification\n"
                         f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
                     )
-
                     yield (
                         "event: done\n"
                         f"data: {json.dumps({'needs_clarification': True}, ensure_ascii=False)}\n\n"
@@ -139,43 +147,26 @@ async def chat(request: ChatRequest):
                         print(f"[time] update_memory = {time.time() - t0:.2f}s")
 
                     asyncio.create_task(_timed_update())
-
                     print(
-                        f"[MEMORY] session={request.session_id} "
-                        f"update scheduled"
+                        f"[MEMORY] session={request.session_id} update scheduled"
                     )
-
                     return
 
-                # Evidence
+                # Evidence (gửi sau hoặc trước khi stream)
                 evidence_data = {
-                    "evidence_list":
-                        result["evidence_list"]
+                    "evidence_list": result["evidence_list"]
                 }
-
                 yield (
                     "event: evidence\n"
                     f"data: {json.dumps(evidence_data, ensure_ascii=False)}\n\n"
                 )
 
-                # Stream answer
-                for word in result["answer"].split():
-
-                    yield (
-                        "event: chunk\n"
-                        f"data: {json.dumps({'text': word + ' '}, ensure_ascii=False)}\n\n"
-                    )
-
-                    await asyncio.sleep(0.05)
-
                 # Done
                 done_data = {
                     "answer": result["answer"],
-                    "evidence_list":
-                        result["evidence_list"],
+                    "evidence_list": result["evidence_list"],
                     "needs_clarification": False
                 }
-
                 yield (
                     "event: done\n"
                     f"data: {json.dumps(done_data, ensure_ascii=False)}\n\n"
@@ -194,13 +185,7 @@ async def chat(request: ChatRequest):
                     )
                     print(f"[time] update_memory = {time.time() - t0:.2f}s")
 
-                # Update memory chạy nền, không block client
                 asyncio.create_task(_timed_update_done())
-
-                print(
-                    f"[MEMORY] session={request.session_id} "
-                    f"update scheduled"
-                )
 
     return StreamingResponse(
         event_stream(),

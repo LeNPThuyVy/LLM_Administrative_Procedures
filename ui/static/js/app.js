@@ -11,19 +11,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const charCounter = document.getElementById('char-counter');
     const themeToggle = document.getElementById('theme-toggle');
     const htmlEl = document.documentElement;
+    const historyList = document.getElementById('history-list');
 
     // State
     let isWaiting = false;
     let currentAssistantMsgBody = null;
     let currentEvidenceMap = {};
+    let safetyTimeoutTimer = null;
 
     // 0. New Chat
     const btnNewChat = document.getElementById('btn-new-chat');
     if (btnNewChat) {
-        btnNewChat.addEventListener('click', () => {
-            // Clear session cookie and reload
-            document.cookie = 'session_id=; Max-Age=0; path=/';
-            window.location.reload();
+        btnNewChat.addEventListener('click', async () => {
+            await startNewSession();
         });
     }
 
@@ -45,18 +45,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 3. Bootstrap and connect WS
+    // 3. Bootstrap, connect WS & load history
     const sessionId = await api.bootstrapSession();
     if (sessionId) {
+        const sessionEl = document.getElementById('current-session-id');
+        if (sessionEl) sessionEl.textContent = sessionId.substring(0, 8) + '...';
         api.connectWebSocket(handleWsMessage, handleWsError, handleWsClose);
+        
+        await Promise.all([
+            loadAndRenderMessages(sessionId),
+            loadAndRenderHistory(sessionId),
+        ]);
     } else {
         showToast("Không thể tạo phiên làm việc", true);
     }
 
-    // 4. Input handling
-    userInput.addEventListener('input', () => {
-        charCounter.textContent = `${userInput.value.length}/1000`;
-        btnSendMsg.disabled = userInput.value.trim().length === 0;
+    // 4. Input handling - đa sự kiện để tương thích tốt với bộ gõ tiếng Việt (Unikey/EVKey)
+    function updateInputState() {
+        const len = userInput.value.length;
+        charCounter.textContent = `${len}/1000`;
+        btnSendMsg.disabled = isWaiting || userInput.value.trim().length === 0;
+    }
+
+    ['input', 'change', 'keyup', 'paste'].forEach(evt => {
+        userInput.addEventListener(evt, updateInputState);
     });
 
     userInput.addEventListener('keydown', (e) => {
@@ -66,39 +78,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    btnSendMsg.addEventListener('click', sendMessage);
+    btnSendMsg.addEventListener('click', () => {
+        sendMessage();
+    });
 
     btnStopStream.addEventListener('click', () => {
-        // Mock stop behavior
-        isWaiting = false;
-        statusContainer.style.display = 'none';
-        userInput.disabled = false;
-        btnSendMsg.disabled = false;
+        resetWaitingState();
         if (currentAssistantMsgBody && !currentAssistantMsgBody.innerHTML.trim()) {
             currentAssistantMsgBody.innerHTML = "<em>[Đã dừng tạo câu trả lời]</em>";
         }
+        showToast("Đã dừng câu trả lời");
     });
 
-    function sendMessage() {
-        if (isWaiting) return;
+    function resetWaitingState() {
+        isWaiting = false;
+        if (safetyTimeoutTimer) {
+            clearTimeout(safetyTimeoutTimer);
+            safetyTimeoutTimer = null;
+        }
+        statusContainer.style.display = 'none';
+        userInput.disabled = false;
+        updateInputState();
+    }
+
+    async function sendMessage() {
+        if (isWaiting) {
+            showToast("Hệ thống đang xử lý câu hỏi trước, bạn có thể bấm [Dừng] nếu muốn hủy.", false);
+            return;
+        }
+
         const text = userInput.value.trim();
         if (!text) return;
 
+        btnSendMsg.disabled = true;
+        statusText.textContent = 'Đang kết nối & xử lý...';
+        statusContainer.style.display = 'block';
+
         const domain = domainSelect.value;
-        const sent = api.sendMessage(text, domain);
+        const sent = await api.sendMessage(text, domain);
+
         if (sent) {
             if (welcomeView) welcomeView.style.display = 'none';
             appendUserMessage(text);
             userInput.value = '';
             charCounter.textContent = '0/1000';
-            btnSendMsg.disabled = true;
             
             isWaiting = true;
             statusText.textContent = 'Đang xử lý...';
-            statusContainer.style.display = 'block';
             
-            // Prepare assistant bubble
             currentAssistantMsgBody = appendAssistantMessagePlaceholder();
+
+            // Safety timeout: tự động mở khóa sau 45s nếu server gặp sự cố không trả done
+            if (safetyTimeoutTimer) clearTimeout(safetyTimeoutTimer);
+            safetyTimeoutTimer = setTimeout(() => {
+                if (isWaiting) {
+                    console.warn("[TIMEOUT] Safety timeout triggered after 45s.");
+                    resetWaitingState();
+                    showToast("Thời gian phản hồi quá lâu. Đã mở lại khung chat.", true);
+                }
+            }, 45000);
+        } else {
+            resetWaitingState();
+            showToast("Không thể gửi tin nhắn. Máy chủ đang kết nối lại, vui lòng thử lại sau giây lát...", true);
         }
     }
 
@@ -108,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = payload.data || {};
 
         if (type === 'connected') {
-            console.log("Connected with session:", data.session_id);
+            console.log("[WS] Session confirmed connected:", data.session_id);
         }
         else if (type === 'clarification') {
             statusText.textContent = 'Cần làm rõ...';
@@ -118,7 +159,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         else if (type === 'evidence') {
             statusText.textContent = 'Đang viết câu trả lời...';
-            // Save evidence list for later citation clicking
             if (data.evidence_list && data.evidence_list.length > 0) {
                 data.evidence_list.forEach(claim => {
                     claim.citations.forEach(cit => {
@@ -130,7 +170,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (type === 'plan') {
             statusText.textContent = 'Đã tìm thấy các thủ tục...';
             if (currentAssistantMsgBody) {
-                // If this is the first chunk, replace placeholder text
                 if (currentAssistantMsgBody.innerHTML === '<span class="pulse-dot"></span>') {
                     currentAssistantMsgBody.innerHTML = '';
                 }
@@ -166,7 +205,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sectionHtml += `<h4 style="margin: 0 0 8px 0; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">${escapeHtml(data.title || '')}</h4>`;
                 
                 let textHtml = parseMarkdownChunk(data.text || '', true);
-                // Replace citations with buttons
                 textHtml = textHtml.replace(/\[(EC_\d+)\]/g, (match, p1) => {
                     return `<button class="citation-chip" onclick="showEvidence('${p1}')">${p1.replace('EC_', '')}</button>`;
                 });
@@ -176,7 +214,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 currentAssistantMsgBody.innerHTML += sectionHtml;
                 
-                // Add evidence
                 if (data.evidence_list && data.evidence_list.length > 0) {
                     data.evidence_list.forEach(claim => {
                         if (claim.citations) {
@@ -191,23 +228,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         else if (type === 'chunk') {
             if (currentAssistantMsgBody) {
-                // If this is the first chunk, replace placeholder text
                 if (currentAssistantMsgBody.innerHTML === '<span class="pulse-dot"></span>') {
                     currentAssistantMsgBody.innerHTML = '';
                 }
-                
-                // Append text and parse markdown roughly
                 currentAssistantMsgBody.innerHTML += parseMarkdownChunk(data.text);
                 scrollToBottom();
             }
         }
         else if (type === 'done') {
-            isWaiting = false;
-            statusContainer.style.display = 'none';
-            btnSendMsg.disabled = false;
+            resetWaitingState();
             
             if (data.answer && currentAssistantMsgBody) {
-                // Replace citations with buttons
                 let html = parseMarkdownChunk(data.answer, true);
                 html = html.replace(/\[(EC_\d+)\]/g, (match, p1) => {
                     return `<button class="citation-chip" onclick="showEvidence('${p1}')">${p1.replace('EC_', '')}</button>`;
@@ -225,24 +256,174 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             scrollToBottom();
+
+            // Cập nhật lại sidebar sau khi backend lưu xong tin nhắn vào DB
+            if (api.sessionId) {
+                setTimeout(() => {
+                    loadAndRenderHistory(api.sessionId);
+                }, 800);
+            }
         }
         else if (type === 'error') {
-            showToast(data.message || "Đã xảy ra lỗi", true);
-            isWaiting = false;
-            statusContainer.style.display = 'none';
-            btnSendMsg.disabled = false;
+            showToast(data.message || "Đã xảy ra lỗi khi xử lý câu hỏi", true);
+            resetWaitingState();
         }
     }
 
     function handleWsError(err) {
-        showToast("Lỗi kết nối máy chủ", true);
+        console.warn("[WS] Connection error:", err);
     }
     
     function handleWsClose() {
-        showToast("Đã mất kết nối", true);
-        isWaiting = false;
-        statusContainer.style.display = 'none';
-        btnSendMsg.disabled = false;
+        console.warn("[WS] Connection closed. Auto-reconnect will trigger.");
+        resetWaitingState();
+    }
+
+    // --- Session & History Management ---
+    async function loadAndRenderHistory(activeSessionId) {
+        if (!historyList) return;
+        const sessions = await api.loadSessions();
+        historyList.innerHTML = '';
+
+        if (!sessions || sessions.length === 0) {
+            historyList.innerHTML = '<div class="history-empty-hint">Chưa có lịch sử hội thoại</div>';
+            return;
+        }
+
+        sessions.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'history-item' + (s.id === activeSessionId ? ' active' : '');
+            item.dataset.sessionId = s.id;
+            item.innerHTML = `
+                <span class="history-item-icon">💬</span>
+                <div class="history-item-content">
+                    <div class="history-item-title" title="${escapeHtml(s.title)}">${escapeHtml(s.title)}</div>
+                    <div class="history-item-time">${formatTimeAgo(s.created_at)}</div>
+                </div>
+                <button class="history-item-delete" title="Xóa cuộc trò chuyện" aria-label="Xóa">&times;</button>
+            `;
+
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.history-item-delete')) return;
+                if (s.id !== api.sessionId) {
+                    switchToSession(s.id);
+                }
+            });
+
+            const deleteBtn = item.querySelector('.history-item-delete');
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!confirm(`Xóa cuộc trò chuyện "${s.title}"?`)) return;
+                const success = await api.deleteSession(s.id);
+                if (success) {
+                    if (s.id === api.sessionId) {
+                        await startNewSession();
+                    } else {
+                        await loadAndRenderHistory(api.sessionId);
+                    }
+                    showToast("Đã xóa cuộc trò chuyện");
+                } else {
+                    showToast("Không thể xóa cuộc trò chuyện", true);
+                }
+            });
+
+            historyList.appendChild(item);
+        });
+    }
+
+    function clearMessagesOnly() {
+        if (messagesList) {
+            messagesList.querySelectorAll('.msg-wrapper').forEach(el => el.remove());
+        }
+    }
+
+    async function loadAndRenderMessages(sessionId) {
+        const data = await api.loadSessionMessages(sessionId);
+        clearMessagesOnly();
+        currentEvidenceMap = {};
+
+        if (data && data.messages && data.messages.length > 0) {
+            if (welcomeView) welcomeView.style.display = 'none';
+            data.messages.forEach(msg => {
+                if (msg.role === 'user') {
+                    appendUserMessage(msg.content);
+                } else if (msg.role === 'assistant') {
+                    if (msg.citations && Array.isArray(msg.citations)) {
+                        msg.citations.forEach(claim => {
+                            if (claim.citations) {
+                                claim.citations.forEach(cit => {
+                                    currentEvidenceMap[cit.evidence_id] = cit;
+                                });
+                            }
+                        });
+                    }
+                    let html = parseMarkdownChunk(msg.content, true);
+                    html = html.replace(/\[(EC_\d+)\]/g, (match, p1) => {
+                        return `<button class="citation-chip" onclick="showEvidence('${p1}')">${p1.replace('EC_', '')}</button>`;
+                    });
+                    appendAssistantMessage(html);
+                }
+            });
+            scrollToBottom();
+        } else {
+            if (welcomeView) welcomeView.style.display = 'block';
+        }
+    }
+
+    async function switchToSession(sessionId) {
+        if (isWaiting) {
+            showToast("Vui lòng đợi câu trả lời hoàn tất trước khi chuyển phiên", true);
+            return;
+        }
+        api.disconnect();
+        const ok = await api.switchSession(sessionId);
+        if (ok) {
+            const sessionEl = document.getElementById('current-session-id');
+            if (sessionEl) sessionEl.textContent = sessionId.substring(0, 8) + '...';
+            api.connectWebSocket(handleWsMessage, handleWsError, handleWsClose);
+            await loadAndRenderMessages(sessionId);
+            await loadAndRenderHistory(sessionId);
+        } else {
+            showToast("Không thể chuyển sang phiên này", true);
+        }
+    }
+
+    async function startNewSession() {
+        if (isWaiting) {
+            showToast("Vui lòng đợi câu trả lời hoàn tất", true);
+            return;
+        }
+        api.disconnect();
+        const newSession = await api.createNewSession();
+        if (newSession) {
+            const sessionEl = document.getElementById('current-session-id');
+            if (sessionEl) sessionEl.textContent = newSession.session_id.substring(0, 8) + '...';
+            api.connectWebSocket(handleWsMessage, handleWsError, handleWsClose);
+            clearMessagesOnly();
+            if (welcomeView) welcomeView.style.display = 'block';
+            await loadAndRenderHistory(newSession.session_id);
+        } else {
+            showToast("Không thể tạo phiên mới", true);
+        }
+    }
+
+    function formatTimeAgo(isoString) {
+        if (!isoString) return '';
+        try {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffSec = Math.floor((now - date) / 1000);
+            if (diffSec < 60) return 'Vừa xong';
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin} phút trước`;
+            const diffHour = Math.floor(diffMin / 60);
+            if (diffHour < 24) return `${diffHour} giờ trước`;
+            const diffDay = Math.floor(diffHour / 24);
+            if (diffDay < 7) return `${diffDay} ngày trước`;
+            return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+        } catch (e) {
+            return '';
+        }
     }
 
     // --- UI Helpers ---
@@ -252,6 +433,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
         messagesList.appendChild(div);
         scrollToBottom();
+    }
+
+    function appendAssistantMessage(htmlContent) {
+        const div = document.createElement('div');
+        div.className = 'msg-wrapper ai';
+        div.innerHTML = `
+            <div style="font-size: 24px; margin-top:4px;">🤖</div>
+            <div class="msg-bubble ai-content">${htmlContent}</div>
+        `;
+        messagesList.appendChild(div);
+        scrollToBottom();
+        return div.querySelector('.ai-content');
     }
 
     function appendAssistantMessagePlaceholder() {
@@ -272,24 +465,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function showToast(msg, isError=false) {
         const toast = document.getElementById('toast-banner');
+        if (!toast) return;
         toast.textContent = msg;
         toast.style.background = isError ? '#b91c1c' : '#1e293b';
         toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 3000);
+        setTimeout(() => toast.style.display = 'none', 3500);
     }
 
-    // Simple markdown parsing
     function parseMarkdownChunk(text, final=false) {
-        // If marked is available, use it on final text
         if (final && window.marked) {
             return window.marked.parse(text);
         }
-        // Fallback simple parsing for streaming
         return escapeHtml(text).replace(/\n/g, '<br>');
     }
 
     function escapeHtml(unsafe) {
-        return unsafe
+        return (unsafe || '')
              .replace(/&/g, "&amp;")
              .replace(/</g, "&lt;")
              .replace(/>/g, "&gt;")
@@ -300,18 +491,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Evidence Panel
     const evidencePanel = document.getElementById('evidence-panel');
     const evidenceContent = document.getElementById('evidence-content');
-    document.getElementById('btn-close-evidence').addEventListener('click', () => {
-        evidencePanel.classList.remove('open');
-    });
+    const btnCloseEvidence = document.getElementById('btn-close-evidence');
+    if (btnCloseEvidence && evidencePanel) {
+        btnCloseEvidence.addEventListener('click', () => {
+            evidencePanel.classList.remove('open');
+        });
+    }
 
     window.showEvidence = function(evidenceId) {
         const evidence = currentEvidenceMap[evidenceId];
-        if (!evidence) return;
+        if (!evidence || !evidenceContent || !evidencePanel) return;
         
         evidenceContent.innerHTML = `
             <div style="background:var(--bg-surface-subtle); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
-                <div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:4px;">[${evidenceId}] ${evidence.title}</div>
-                <div style="font-size:14px; margin-bottom:8px;">Document ID: ${evidence.document_id}</div>
+                <div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:4px;">[${evidenceId}] ${escapeHtml(evidence.title || '')}</div>
+                <div style="font-size:14px; margin-bottom:8px;">Document ID: ${escapeHtml(evidence.document_id || '')}</div>
                 ${evidence.source_url ? `<a href="${evidence.source_url}" target="_blank" style="font-size:13px; color:var(--primary);">🔗 Mở liên kết gốc</a>` : ''}
             </div>
         `;

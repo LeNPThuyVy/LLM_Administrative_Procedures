@@ -111,6 +111,35 @@ def _check_number_conflict(claim: str, evidence_content: str) -> bool:
     return len(missing_nums) > 0
 
 
+def _has_negation_conflict(claim: str, evidence_content: str) -> bool:
+    """Detect if claim asserts requirement while evidence negates it."""
+    claim_lower = claim.lower().strip()
+    ev_lower = evidence_content.lower()
+
+    # Pattern: affirmative requirement statement in claim (cần X, phải X, yêu cầu X, etc.)
+    affirmative_triggers = re.findall(
+        r'(?:cần|phải|yêu cầu|bắt buộc|cần nộp|cần xuất trình|cần có)\s+(.{4,60}?)(?:[,;.!\n]|$)',
+        claim_lower,
+    )
+    for phrase in affirmative_triggers:
+        phrase = phrase.strip()
+        if not phrase or len(phrase) < 4:
+            continue
+        negation_prefixes = [
+            "không cần ",
+            "không phải ",
+            "không cần nộp ",
+            "miễn ",
+            "không yêu cầu ",
+            "không bắt buộc ",
+        ]
+        for neg in negation_prefixes:
+            if (neg + phrase) in ev_lower or (neg + phrase[:20]) in ev_lower:
+                return True
+
+    return False
+
+
 def verify_answer(
     generated_answer: str,
     evidence_candidates: list[EvidenceCandidate],
@@ -152,17 +181,22 @@ def verify_answer(
                     best_score = score
                     best_evidence_id = evidence.candidate_id
 
-        # Number & Quantity Verification Layer
+        # Number & Quantity and Negation Verification Layer
         has_num_conflict = False
+        has_neg_conflict = False
         if best_evidence_id and best_evidence_id in evidence_map:
             target_evidence = evidence_map[best_evidence_id]
             has_num_conflict = _check_number_conflict(claim, target_evidence.content)
+            has_neg_conflict = _has_negation_conflict(claim, target_evidence.content)
 
-        if has_num_conflict:
+        if has_num_conflict or has_neg_conflict:
             status = "unsupported"
-            reason = (
-                "Số liệu, chi phí hoặc thời hạn trong câu không khớp với bằng chứng."
-            )
+            if has_neg_conflict:
+                reason = "Nội dung khẳng định trong câu trái ngược với thông tin phủ định trong bằng chứng (ví dụ: cần/không cần)."
+            else:
+                reason = (
+                    "Số liệu, chi phí hoặc thời hạn trong câu không khớp với bằng chứng."
+                )
             evidence_ids = []
         elif best_score >= 0.35:
             status = "supported"

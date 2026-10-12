@@ -511,6 +511,7 @@ def build_prompt(
 
 QUY TẮC:
 1. Diễn đạt rõ ràng dễ hiểu, QUAN TRỌNG LÀ PHẢI BÁM SÁT BẰNG CHỨNG ĐƯỢC CUNG CẤP, KHÔNG ĐƯA Ý KIẾN HAY KIẾN THỨC RIÊNG VÀO CÂU TRẢ LỜI  .
+1b. ĐẶC BIỆT CHÚ Ý TÍNH PHỦ ĐỊNH: Nếu bằng chứng ghi 'KHÔNG CẦN', 'KHÔNG PHẢI NỘP', 'MIỄN' giấy tờ/thủ tục nào, tuyệt đối KHÔNG được viết thành 'cần' hay 'phải nộp'. Phải giữ nguyên nghĩa phủ định/miễn trừ theo bằng chứng.
 2. Giữ nguyên chính xác: số tiền, thời hạn, tên giấy tờ, tên cơ quan.
 3. Nếu người dùng hỏi nhiều ý (multi-intent: vừa hỏi giấy tờ, vừa hỏi thời gian hay lệ phí), hãy trả lời đầy đủ từng ý theo cấu trúc rõ ràng.
 4. Ý nào bằng chứng không đề cập → nói rõ "chưa có thông tin về phần này". KHÔNG tự suy đoán.

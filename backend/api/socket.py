@@ -17,7 +17,10 @@ from backend.services.context_service import (
     get_context,
     update_memory,
 )
-from backend.services.ai_service import generate_answer
+from backend.services.ai_service import (
+    generate_answer,
+    generate_answer_stream,
+)
 from backend.services.queue_service import queue_manager
 
 
@@ -27,9 +30,11 @@ router = APIRouter(
 
 COOKIE_NAME = "session_id"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 ngày
+USER_COOKIE_NAME = "user_id"
+USER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 ngày
 
 
-async def ensure_anonymous_session(session_id: str):
+async def ensure_anonymous_session(session_id: str, user_id: str | None = None) -> tuple[str, str]:
     async with AsyncSessionLocal() as db:
         session_uuid = uuid.UUID(session_id)
 
@@ -42,19 +47,32 @@ async def ensure_anonymous_session(session_id: str):
         existing_session = result.scalar_one_or_none()
 
         if existing_session is not None:
-            return
+            return str(existing_session.id), str(existing_session.user_id)
 
-        anonymous_user = User(
-            name=None,
-            email=None,
-        )
+        # Kiểm tra user_id nếu có
+        user = None
+        if user_id:
+            try:
+                user_uuid = uuid.UUID(user_id)
+                user_result = await db.execute(
+                    select(User).where(User.id == user_uuid)
+                )
+                user = user_result.scalar_one_or_none()
+            except ValueError:
+                user = None
 
-        db.add(anonymous_user)
-        await db.flush()
+        if user is None:
+            user = User(
+                id=uuid.UUID(user_id) if user_id else uuid.uuid4(),
+                name=None,
+                email=None,
+            )
+            db.add(user)
+            await db.flush()
 
         chat_session = ChatSession(
             id=session_uuid,
-            user_id=anonymous_user.id,
+            user_id=user.id,
         )
 
         db.add(chat_session)
@@ -62,8 +80,9 @@ async def ensure_anonymous_session(session_id: str):
 
         print(
             f"[SESSION] anonymous session created: "
-            f"{session_id}"
+            f"{session_id} for user: {user.id}"
         )
+        return str(chat_session.id), str(user.id)
 
 
 @router.get("/api/session/bootstrap")
@@ -72,9 +91,27 @@ async def bootstrap_session(
     response: Response,
 ):
     """
-    Tạo anonymous session_id nếu browser chưa có cookie.
-    Nếu đã có thì giữ nguyên session_id cũ.
+    Tạo anonymous session_id và persistent user_id nếu browser chưa có cookie.
+    Nếu đã có thì giữ nguyên.
     """
+
+    user_id = request.cookies.get(USER_COOKIE_NAME)
+    if user_id:
+        try:
+            uuid.UUID(user_id)
+        except ValueError:
+            user_id = None
+
+    if not user_id:
+        user_id = str(uuid.uuid4())
+        response.set_cookie(
+            key=USER_COOKIE_NAME,
+            value=user_id,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=USER_COOKIE_MAX_AGE,
+        )
 
     session_id = request.cookies.get(COOKIE_NAME)
 
@@ -100,12 +137,35 @@ async def bootstrap_session(
     else:
         created = False
 
-    await ensure_anonymous_session(session_id)
+    await ensure_anonymous_session(session_id, user_id=user_id)
 
     return {
         "session_id": session_id,
+        "user_id": user_id,
         "created": created,
     }
+
+
+# ==============================================================================
+# [DEV/TEST ONLY] Reset cookie endpoint - Có thể xóa khối này khi không cần nữa
+# ==============================================================================
+@router.api_route("/api/session/reset", methods=["GET", "POST"])
+async def reset_session(response: Response):
+    """Xóa cookie session_id và user_id để tạo mới hoàn toàn (dùng cho testing)."""
+    response.delete_cookie(
+        key=COOKIE_NAME,
+        path="/",
+        httponly=True,
+        samesite="lax",
+    )
+    response.delete_cookie(
+        key=USER_COOKIE_NAME,
+        path="/",
+        httponly=True,
+        samesite="lax",
+    )
+    return {"status": "ok", "message": "Cookie đã được xóa"}
+# ==============================================================================
 
 
 @router.websocket("/ws/chat")
@@ -235,19 +295,55 @@ async def websocket_chat(
                         })
                         continue
 
-                    # Gọi AI giống chat.py
-                    result = await generate_answer(
-                        query=query,
-                        session_id=session_id,
-                        context=context,
-                        domain=domain,
-                    )
+                    result = None
+                    try:
+                        async with queue_manager.semaphore:
+                            async for event_type, payload in generate_answer_stream(
+                                query=query,
+                                session_id=session_id,
+                                context=context,
+                                domain=domain,
+                            ):
+                                if event_type == "chunk":
+                                    await websocket.send_json({
+                                        "type": "chunk",
+                                        "data": {"text": payload},
+                                    })
+                                elif event_type == "final":
+                                    result = payload
+                    except Exception as gen_exc:
+                        print(f"[WS GENERATE ERROR] session={session_id}: {gen_exc}")
+                        await websocket.send_json({
+                            "type": "error",
+                            "data": {
+                                "message": "Hệ thống đang bận hoặc gặp lỗi xử lý. Bạn vui lòng thử lại sau ít giây.",
+                            },
+                        })
+                        await websocket.send_json({
+                            "type": "done",
+                            "data": {
+                                "answer": "Hệ thống đang bận hoặc gặp sự cố tạm thời. Bạn vui lòng thử gửi lại câu hỏi.",
+                                "evidence_list": [],
+                                "needs_clarification": False,
+                            },
+                        })
+                        continue
+
+                    if not result:
+                        await websocket.send_json({
+                            "type": "done",
+                            "data": {
+                                "answer": "Chưa nhận được câu trả lời từ hệ thống. Bạn vui lòng thử lại.",
+                                "evidence_list": [],
+                                "needs_clarification": False,
+                            },
+                        })
+                        continue
 
                     # =========================
                     # 1. CLARIFICATION
                     # =========================
                     if result["needs_clarification"]:
-
                         await websocket.send_json({
                             "type": "clarification",
                             "data": {
@@ -304,22 +400,7 @@ async def websocket_chat(
                     )
 
                     # =========================
-                    # 3. CHUNK
-                    # =========================
-                    for word in (
-                        result["answer"].split()
-                    ):
-                        await websocket.send_json({
-                            "type": "chunk",
-                            "data": {
-                                "text": word + " ",
-                            },
-                        })
-
-                        await asyncio.sleep(0.05)
-
-                    # =========================
-                    # 4. DONE
+                    # 3. DONE
                     # =========================
                     done_data = {
                         "answer":

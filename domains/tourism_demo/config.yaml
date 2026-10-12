@@ -1,5 +1,5 @@
-id: tourism_demo
-name: Khám phá Du lịch Việt Nam
+domain_id: tourism_demo
+domain_name: Khám phá Du lịch Việt Nam
 description: Trợ lý tư vấn các địa điểm du lịch, tour, và kinh nghiệm du lịch tại Việt Nam.
 
 mode: friendly

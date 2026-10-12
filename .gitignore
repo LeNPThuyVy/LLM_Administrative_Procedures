@@ -258,3 +258,5 @@ tests_multi/
 docs/*test*.md
 
 task/
+Architecture_system.md
+
