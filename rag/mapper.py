@@ -29,6 +29,8 @@ class AnswerResponse:
     clarification_question: str | None = None
     domain: str | None = None
     mode: str | None = None
+    sections: list | None = None
+    truncated: bool = False
     tool_calls: list = field(default_factory=list)
 
 

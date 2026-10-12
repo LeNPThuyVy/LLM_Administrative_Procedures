@@ -24,6 +24,7 @@ from pathlib import Path
 import subprocess
 import socket
 import time
+import asyncio
 from contextlib import asynccontextmanager
 import my_config
 
@@ -37,9 +38,35 @@ def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('127.0.0.1', port)) == 0
 
+async def _warmup_background():
+    # Preload Database tables
+    try:
+        from context.init_db import init_db
+        await init_db()
+        print("[startup] Đã khởi tạo cấu trúc Database thành công.")
+    except Exception as e:
+        print(f"[startup] Cảnh báo lỗi init_db: {e}")
+
+    # Preload Embedding Model, Vector Store, và Alias Catalog
+    try:
+        from rag.retrieval import load_embedding_model, load_vector_store, _get_alias_catalog
+        print("[startup] Đang nạp embedding model vào bộ nhớ...")
+        await asyncio.to_thread(load_embedding_model)
+        print("[startup] Đang kết nối Qdrant vector store...")
+        await asyncio.to_thread(load_vector_store)
+        print("[startup] Đang nạp danh mục alias...")
+        await asyncio.to_thread(_get_alias_catalog)
+        print("[startup] Hoàn tất nạp tài nguyên RAG.")
+    except Exception as e:
+        print(f"[startup] Cảnh báo lỗi nạp tài nguyên RAG: {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global llama_process
+
+    # Khởi động tác vụ preload ngầm để không chặn server FastAPI mở port
+    asyncio.create_task(_warmup_background())
+
     port = 8080
     if not is_port_in_use(port):
         print(f"Bắt đầu khởi động llama-server tại port {port}...")
@@ -47,7 +74,8 @@ async def lifespan(app: FastAPI):
             "llama-server", 
             "-m", str(my_config.MODEL_3B_PATH), 
             "--port", str(port), 
-            "--ctx-size", "4096"
+            "--ctx-size", "4096",
+            "--parallel", "2"
         ]
         llama_process = subprocess.Popen(
             cmd,

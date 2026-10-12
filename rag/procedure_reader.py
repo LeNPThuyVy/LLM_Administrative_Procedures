@@ -13,6 +13,7 @@ def procedure_reader(
     query: str,
     context: dict | None,
     top_k: int = 2,
+    raw_results_out: list[RetrievedChunk] | None = None,
 ) -> list[RetrievedChunk]:
     """
     Retrieve a small number of chunks as procedure/topic hints
@@ -22,15 +23,19 @@ def procedure_reader(
     indicating no clear procedure match — synthesizer should then ask
     for clarification (Issue #2).
     """
+    fetch_k = max(top_k, 15) if raw_results_out is not None else top_k
     chunks = retrieve(
         query=query,
         context=context,
-        top_k=top_k,
+        top_k=fetch_k,
     )
+
+    if raw_results_out is not None:
+        raw_results_out.extend(chunks)
 
     # Filter out chunks that fall below the relevance threshold.
     filtered = [
-        chunk for chunk in chunks
+        chunk for chunk in chunks[:top_k]
         if chunk.retrieval_score >= cfg.MIN_RETRIEVAL_SCORE
     ]
 

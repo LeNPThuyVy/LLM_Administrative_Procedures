@@ -108,11 +108,24 @@ def _get_qdrant_client() -> QdrantClient:
     return _qdrant_client
 
 
+_QUERY_EMBEDDING_CACHE: dict[str, list[float]] = {}
+_MAX_EMBEDDING_CACHE_SIZE = 1000
+
 def encode_query(query: str) -> list[float]:
-    """Encode query string into 1024-dim BGE-M3 dense vector."""
+    """Encode query string into 1024-dim BGE-M3 dense vector with LRU cache."""
+    clean_q = (query or "").strip().lower()
+    if not clean_q:
+        return []
+    if clean_q in _QUERY_EMBEDDING_CACHE:
+        return _QUERY_EMBEDDING_CACHE[clean_q]
+
     model = _get_embedding_model()
     vec = model.encode(query, normalize_embeddings=True)
-    return vec.tolist() if hasattr(vec, "tolist") else list(vec)
+    res = vec.tolist() if hasattr(vec, "tolist") else list(vec)
+    if len(_QUERY_EMBEDDING_CACHE) >= _MAX_EMBEDDING_CACHE_SIZE:
+        _QUERY_EMBEDDING_CACHE.pop(next(iter(_QUERY_EMBEDDING_CACHE)))
+    _QUERY_EMBEDDING_CACHE[clean_q] = res
+    return res
 
 
 # =========================================================
@@ -341,13 +354,81 @@ def _calculate_keyword_bonus(
         )
     )
 
-    # Title match is more important.
-    bonus = (
-        title_overlap * 0.30
-        + content_overlap * 0.03
-    )
+    # Title match is more important, unless negated by 'chưa'/'không'
+    is_neg = _is_negated_phrase(title, query)
+    if is_neg:
+        bonus = content_overlap * 0.03
+    else:
+        bonus = (
+            title_overlap * 0.30
+            + content_overlap * 0.03
+        )
 
     return bonus
+
+
+def _is_negated_phrase(phrase: str, text: str) -> bool:
+    """Check if a phrase or procedure alias is negated by 'chưa', 'không', etc."""
+    if not phrase or not text:
+        return False
+    phrase_clean = phrase.strip().lower()
+    text_clean = text.strip().lower()
+    if phrase_clean.startswith("chưa") or phrase_clean.startswith("không"):
+        return False
+    pattern = r"(chưa|không|chẳng|chưa từng)\s+(đăng ký\s+|làm\s+|xin\s+)?" + re.escape(phrase_clean)
+    return bool(re.search(pattern, text_clean))
+
+
+_ALIAS_CATALOG: dict[str, list[str]] | None = None
+
+def _get_alias_catalog() -> dict[str, list[str]]:
+    global _ALIAS_CATALOG
+    if _ALIAS_CATALOG is None:
+        _ALIAS_CATALOG = {}
+        try:
+            import json
+            proc_path = cfg.BASE_DIR / "data" / "procedures.json"
+            if proc_path.exists():
+                procs = json.loads(proc_path.read_text(encoding="utf-8"))
+                for p in procs:
+                    did = p.get("document_id")
+                    aliases = p.get("aliases", [])
+                    if did and aliases:
+                        _ALIAS_CATALOG[did] = [a.lower().strip() for a in aliases if a]
+        except Exception as e:
+            print(f"[retrieval] Could not load alias catalog: {e}")
+    return _ALIAS_CATALOG
+
+
+def _calculate_alias_bonus(
+    query: str,
+    doc_id: str,
+    metadata: dict
+) -> float:
+    """
+    Check if query matches any alias of this procedure.
+    Exact phrase match gets strong bonus (+0.45).
+    """
+    catalog = _get_alias_catalog()
+    aliases = metadata.get("aliases") or catalog.get(doc_id, [])
+    if not aliases:
+        return 0.0
+
+    q_lower = query.lower()
+    for alias in aliases:
+        if not alias:
+            continue
+        if _is_negated_phrase(alias, q_lower):
+            continue
+        if alias in q_lower:
+            return 0.45
+        alias_words = _normalize_words(alias)
+        q_words = _normalize_words(query)
+        if alias_words and alias_words.issubset(q_words):
+            return 0.35
+        elif len(alias_words.intersection(q_words)) >= 2:
+            return 0.20
+    return 0.0
 
 
 def _calculate_context_bonus(
@@ -446,14 +527,7 @@ def retrieve(
     client = _get_qdrant_client()
     from domains.runtime import get_domain_runtime
     collection_name = get_domain_runtime(domain).collection_name
-
-    try:
-        count_res = client.count(collection_name=collection_name)
-        collection_count = count_res.count if hasattr(count_res, "count") else 1000
-    except Exception:
-        collection_count = 1000
-
-    candidate_count = min(max(top_k * 5, 10), max(collection_count, 1))
+    candidate_count = max(top_k * 5, 15)
 
     if candidate_count <= 0:
         return []
@@ -493,13 +567,26 @@ def retrieve(
             content=content,
         )
 
+        alias_bonus = _calculate_alias_bonus(
+            query=query,
+            doc_id=document_id,
+            metadata=payload,
+        )
+
         context_bonus = _calculate_context_bonus(
             structured_context=structured_context,
             metadata=payload,
             content=content,
         )
 
-        final_score = vector_score + keyword_bonus + context_bonus
+        negation_penalty = 0.0
+        q_lower = query.lower()
+        if _is_negated_phrase("kết hôn", q_lower) and document_id in ("PROC_004", "PROC_006"):
+            negation_penalty = 1.50
+        elif any(_is_negated_phrase(a, q_lower) for a in (payload.get("aliases") or [])):
+            negation_penalty = 0.60
+
+        final_score = vector_score + keyword_bonus + alias_bonus + context_bonus - negation_penalty
 
         retrieved_chunks.append(
             RetrievedChunk(
@@ -525,16 +612,28 @@ def _is_ambiguous_query(query: str, domain: str | None = None) -> bool:
     Phát hiện query mơ hồ — không có từ khóa thủ tục cụ thể.
     Dùng để quyết định có hỏi làm rõ không.
     """
-    words = query.strip().split()
-    if len(words) <= 4:
+    q_lower = query.strip().lower()
+    if not q_lower:
         return True
 
     from domains.runtime import get_domain_runtime
     runtime = get_domain_runtime(domain)
     specific_markers = runtime.entity_keywords
-    
-    q_lower = query.lower()
-    return not any(m.lower() in q_lower for m in specific_markers)
+
+    if any(m.lower() in q_lower for m in specific_markers):
+        return False
+
+    catalog = _get_alias_catalog()
+    for doc_id, aliases in catalog.items():
+        if any(a in q_lower for a in aliases if a):
+            return False
+
+    vague_phrases = ["xin chào", "chào bạn", "hello", "hi", "tôi muốn hỏi", "tôi có câu hỏi", "hỏi về thủ tục"]
+    if any(q_lower == v or q_lower == v + " ạ" for v in vague_phrases):
+        return True
+
+    words = q_lower.split()
+    return len(words) <= 4
 
 
 def retrieve_two_step(
@@ -542,6 +641,7 @@ def retrieve_two_step(
     context: dict | None = None,
     top_k: int = cfg.DEFAULT_TOP_K,
     domain: str | None = None,
+    raw_results: list[RetrievedChunk] | None = None,
 ) -> list[RetrievedChunk]:
     """
     GĐ2 mục 7: Retrieval hai bước để tránh nhầm thủ tục trên Qdrant.
@@ -550,7 +650,8 @@ def retrieve_two_step(
         return []
 
     # ---- Bước 1: xác định document_id ----
-    raw_results = retrieve(query=query, context=context, top_k=top_k * 3, domain=domain)
+    if raw_results is None:
+        raw_results = retrieve(query=query, context=context, top_k=top_k * 3, domain=domain)
 
     if not raw_results:
         return []
@@ -582,6 +683,9 @@ def retrieve_two_step(
 
     # Lấy top document_id từ _general hoặc bất kỳ chunk nào
     doc_scores: dict[str, float] = {}
+    catalog = _get_alias_catalog()
+    q_lower = query.lower()
+
     for chunk in raw_results:
         doc_id = chunk.document_id
         # Chunk _general được ưu tiên hơn
@@ -590,22 +694,42 @@ def retrieve_two_step(
         if doc_id not in doc_scores or score > doc_scores[doc_id]:
             doc_scores[doc_id] = score
 
-    # document_id tốt nhất
+    # Bonus nếu match alias trực tiếp với query
+    for doc_id in doc_scores:
+        doc_aliases = catalog.get(doc_id, [])
+        for a in doc_aliases:
+            if a and a in q_lower:
+                if _is_negated_phrase(a, q_lower):
+                    doc_scores[doc_id] -= 0.60
+                    break
+                else:
+                    doc_scores[doc_id] += 0.50
+                    break
+
+    # Phạt các thủ tục kết hôn khi từ khóa kết hôn bị phủ định (ví dụ: chưa đăng ký kết hôn)
+    if _is_negated_phrase("kết hôn", q_lower):
+        for doc_id in list(doc_scores.keys()):
+            if doc_id in ("PROC_004", "PROC_006"):
+                doc_scores[doc_id] -= 1.50
+
+    structured_context = _get_structured_context(context)
+    active_procedure = str(structured_context.get("procedure_name", "")).strip()
+
+    # Bước 2B: Thay thế việc ép ghi đè bằng điểm thưởng mềm (Soft Boost) cho active_procedure
+    if active_procedure:
+        active_lower = active_procedure.lower()
+        for doc_id in doc_scores:
+            is_active_match = any(
+                active_lower in str(c.metadata.get("title", "")).lower()
+                or active_lower == c.document_id.lower()
+                for c in raw_results if c.document_id == doc_id
+            )
+            if is_active_match:
+                doc_scores[doc_id] += 0.15
+
+    # document_id tốt nhất sau khi tính điểm
     best_doc_id = max(doc_scores, key=lambda d: doc_scores[d])
     best_score = doc_scores[best_doc_id]
-
-    # Nếu doc_id rõ ràng (score cao vượt trội hoặc context đã có)
-    structured_context = _get_structured_context(context)
-    active_procedure = structured_context.get("procedure_name", "")
-
-    # Nếu context đã có thủ tục đang active, ưu tiên nó
-    if active_procedure:
-        for chunk in raw_results:
-            if active_procedure.lower() in (
-                chunk.metadata.get("title", "") + chunk.content
-            ).lower():
-                best_doc_id = chunk.document_id
-                break
 
     print(f"[retrieval] Two-step: best_doc_id={best_doc_id} score={best_score:.3f}")
 

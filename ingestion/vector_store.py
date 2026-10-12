@@ -36,7 +36,7 @@ class QdrantVectorStore:
         self.client = QdrantClient(
             url=url,
             api_key=api_key,
-            timeout=60,
+            timeout=120,
         )
 
     def ensure_collection(self) -> None:
@@ -94,7 +94,7 @@ class QdrantVectorStore:
         self,
         chunks: list,
         embeddings: list[list[float]],
-        batch_size: int = 50,
+        batch_size: int = 20,
     ) -> int:
         if len(chunks) != len(embeddings):
             raise ValueError("chunks và embeddings phải có cùng số lượng")
@@ -123,7 +123,7 @@ class QdrantVectorStore:
         for start in range(0, len(points), batch_size):
             batch = points[start:start + batch_size]
 
-            for attempt in range(1, 4):
+            for attempt in range(1, 5):
                 try:
                     self.client.upsert(
                         collection_name=self.config.collection_name,
@@ -132,10 +132,11 @@ class QdrantVectorStore:
                     )
                     total += len(batch)
                     break
-                except Exception:
-                    if attempt == 3:
+                except Exception as e:
+                    print(f"[qdrant] Batch {start//batch_size + 1} attempt {attempt} failed ({e}), retrying in {attempt * 2}s...", flush=True)
+                    if attempt == 4:
                         raise
-                    time.sleep(attempt)
+                    time.sleep(attempt * 2)
 
         return total
 

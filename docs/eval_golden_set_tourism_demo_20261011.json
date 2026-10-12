@@ -1,0 +1,254 @@
+{
+  "timestamp": "2026-10-11T23:26:02.739234",
+  "domain": "tourism_demo",
+  "total": 15,
+  "in_scope_total": 15,
+  "out_scope_total": 0,
+  "retrieval_at_1": 100.0,
+  "retrieval_at_3": 100.0,
+  "retrieval_at_5": 100.0,
+  "mrr": 1.0,
+  "out_scope_rejection_acc": null,
+  "details": [
+    {
+      "id": "GS_TOUR_001",
+      "type": "in_scope",
+      "question": "Giá vé tham quan Vịnh Hạ Long tuyến 1 là bao nhiêu?",
+      "expected_document_id": "TD001",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD001",
+        "TD009",
+        "TD006"
+      ],
+      "top_score": 1.5736437299999997,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_002",
+      "type": "in_scope",
+      "question": "Vé tham quan khu phố cổ Hội An bao nhiêu tiền?",
+      "expected_document_id": "TD002",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD002",
+        "TD011",
+        "TD009"
+      ],
+      "top_score": 1.9046162999999998,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_003",
+      "type": "in_scope",
+      "question": "Chợ Bến Thành nằm ở đâu và mở cửa lúc mấy giờ?",
+      "expected_document_id": "TD003",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD003",
+        "TD010",
+        "TD008"
+      ],
+      "top_score": 1.6160337999999999,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_004",
+      "type": "in_scope",
+      "question": "Vé cáp treo Bà Nà Hills cho người lớn là bao nhiêu?",
+      "expected_document_id": "TD004",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD004",
+        "TD006",
+        "TD002"
+      ],
+      "top_score": 1.6320728499999997,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_005",
+      "type": "in_scope",
+      "question": "Giá vé vào tham quan Đền Ngọc Sơn ở Hồ Gươm là bao nhiêu?",
+      "expected_document_id": "TD005",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD005",
+        "TD014",
+        "TD011"
+      ],
+      "top_score": 0.8629656,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_006",
+      "type": "in_scope",
+      "question": "VinWonders Nha Trang có những hoạt động vui chơi giải trí gì nổi bật?",
+      "expected_document_id": "TD006",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD006",
+        "TD010",
+        "TD001"
+      ],
+      "top_score": 1.6789353399999998,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_007",
+      "type": "in_scope",
+      "question": "Địa chỉ của Thung lũng Tình Yêu ở Đà Lạt là ở đâu?",
+      "expected_document_id": "TD007",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD007",
+        "TD015",
+        "TD014"
+      ],
+      "top_score": 1.9285250399999998,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_008",
+      "type": "in_scope",
+      "question": "Giá vé tham quan Đại Nội ở Cố đô Huế là bao nhiêu?",
+      "expected_document_id": "TD008",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD008",
+        "TD002",
+        "TD011"
+      ],
+      "top_score": 1.5840082400000002,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_009",
+      "type": "in_scope",
+      "question": "Giá vé đi đò tham quan Tràng An Ninh Bình là bao nhiêu tiền một người?",
+      "expected_document_id": "TD009",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD009",
+        "TD002",
+        "TD005"
+      ],
+      "top_score": 1.17185295,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_010",
+      "type": "in_scope",
+      "question": "Chợ Nổi Cái Răng Cần Thơ họp lúc mấy giờ sáng?",
+      "expected_document_id": "TD010",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD010",
+        "TD003",
+        "TD012"
+      ],
+      "top_score": 2.0151854,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_011",
+      "type": "in_scope",
+      "question": "Măng Đen thuộc tỉnh nào và có món đặc sản gì?",
+      "expected_document_id": "TD011",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD011",
+        "TD003",
+        "TD014"
+      ],
+      "top_score": 1.2281693599999999,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_012",
+      "type": "in_scope",
+      "question": "Khu Grand World Phú Quốc United Center mở cửa lúc mấy giờ?",
+      "expected_document_id": "TD012",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD012",
+        "TD011",
+        "TD010"
+      ],
+      "top_score": 2.0532582,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_013",
+      "type": "in_scope",
+      "question": "Thời điểm đẹp nhất trong năm để đi ngắm lúa chín ở Mù Cang Chải là khi nào?",
+      "expected_document_id": "TD013",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD013",
+        "TD004",
+        "TD009"
+      ],
+      "top_score": 2.0377018,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_014",
+      "type": "in_scope",
+      "question": "Tour thám hiểm Hang Sơn Đoòng mất bao nhiêu ngày và chi phí khoảng bao nhiêu?",
+      "expected_document_id": "TD014",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD014",
+        "TD015",
+        "TD001"
+      ],
+      "top_score": 1.66791226,
+      "r1": true,
+      "r5": true
+    },
+    {
+      "id": "GS_TOUR_015",
+      "type": "in_scope",
+      "question": "Giá vé tham quan Địa đạo Củ Chi đối với khách Việt Nam là bao nhiêu?",
+      "expected_document_id": "TD015",
+      "expected_field": "general",
+      "rank": 1,
+      "retrieved_top3": [
+        "TD015",
+        "TD001",
+        "TD005"
+      ],
+      "top_score": 1.8355718299999997,
+      "r1": true,
+      "r5": true
+    }
+  ]
+}

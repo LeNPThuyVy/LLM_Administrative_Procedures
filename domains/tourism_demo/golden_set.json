@@ -1,0 +1,107 @@
+[
+  {
+    "id": "GS_TOUR_001",
+    "question": "Giá vé tham quan Vịnh Hạ Long tuyến 1 là bao nhiêu?",
+    "expected_document_id": "TD001",
+    "expected_field": "general",
+    "expected_keywords": ["Vịnh Hạ Long", "290.000"]
+  },
+  {
+    "id": "GS_TOUR_002",
+    "question": "Vé tham quan khu phố cổ Hội An bao nhiêu tiền?",
+    "expected_document_id": "TD002",
+    "expected_field": "general",
+    "expected_keywords": ["Hội An", "120.000"]
+  },
+  {
+    "id": "GS_TOUR_003",
+    "question": "Chợ Bến Thành nằm ở đâu và mở cửa lúc mấy giờ?",
+    "expected_document_id": "TD003",
+    "expected_field": "general",
+    "expected_keywords": ["Chợ Bến Thành", "Lê Lợi"]
+  },
+  {
+    "id": "GS_TOUR_004",
+    "question": "Vé cáp treo Bà Nà Hills cho người lớn là bao nhiêu?",
+    "expected_document_id": "TD004",
+    "expected_field": "general",
+    "expected_keywords": ["Bà Nà Hills", "900.000"]
+  },
+  {
+    "id": "GS_TOUR_005",
+    "question": "Giá vé vào tham quan Đền Ngọc Sơn ở Hồ Gươm là bao nhiêu?",
+    "expected_document_id": "TD005",
+    "expected_field": "general",
+    "expected_keywords": ["Đền Ngọc Sơn", "30.000"]
+  },
+  {
+    "id": "GS_TOUR_006",
+    "question": "VinWonders Nha Trang có những hoạt động vui chơi giải trí gì nổi bật?",
+    "expected_document_id": "TD006",
+    "expected_field": "general",
+    "expected_keywords": ["VinWonders Nha Trang", "cáp treo"]
+  },
+  {
+    "id": "GS_TOUR_007",
+    "question": "Địa chỉ của Thung lũng Tình Yêu ở Đà Lạt là ở đâu?",
+    "expected_document_id": "TD007",
+    "expected_field": "general",
+    "expected_keywords": ["Thung lũng Tình Yêu", "Mai Anh Đào"]
+  },
+  {
+    "id": "GS_TOUR_008",
+    "question": "Giá vé tham quan Đại Nội ở Cố đô Huế là bao nhiêu?",
+    "expected_document_id": "TD008",
+    "expected_field": "general",
+    "expected_keywords": ["Cố đô Huế", "200.000"]
+  },
+  {
+    "id": "GS_TOUR_009",
+    "question": "Giá vé đi đò tham quan Tràng An Ninh Bình là bao nhiêu tiền một người?",
+    "expected_document_id": "TD009",
+    "expected_field": "general",
+    "expected_keywords": ["Tràng An", "250.000"]
+  },
+  {
+    "id": "GS_TOUR_010",
+    "question": "Chợ Nổi Cái Răng Cần Thơ họp lúc mấy giờ sáng?",
+    "expected_document_id": "TD010",
+    "expected_field": "general",
+    "expected_keywords": ["Chợ Nổi Cái Răng", "05:00"]
+  },
+  {
+    "id": "GS_TOUR_011",
+    "question": "Măng Đen thuộc tỉnh nào và có món đặc sản gì?",
+    "expected_document_id": "TD011",
+    "expected_field": "general",
+    "expected_keywords": ["Măng Đen", "Kon Tum", "gà nướng"]
+  },
+  {
+    "id": "GS_TOUR_012",
+    "question": "Khu Grand World Phú Quốc United Center mở cửa lúc mấy giờ?",
+    "expected_document_id": "TD012",
+    "expected_field": "general",
+    "expected_keywords": ["Phú Quốc United Center", "24/7"]
+  },
+  {
+    "id": "GS_TOUR_013",
+    "question": "Thời điểm đẹp nhất trong năm để đi ngắm lúa chín ở Mù Cang Chải là khi nào?",
+    "expected_document_id": "TD013",
+    "expected_field": "general",
+    "expected_keywords": ["Mù Cang Chải", "tháng 9"]
+  },
+  {
+    "id": "GS_TOUR_014",
+    "question": "Tour thám hiểm Hang Sơn Đoòng mất bao nhiêu ngày và chi phí khoảng bao nhiêu?",
+    "expected_document_id": "TD014",
+    "expected_field": "general",
+    "expected_keywords": ["Hang Sơn Đoòng", "3.000 USD"]
+  },
+  {
+    "id": "GS_TOUR_015",
+    "question": "Giá vé tham quan Địa đạo Củ Chi đối với khách Việt Nam là bao nhiêu?",
+    "expected_document_id": "TD015",
+    "expected_field": "general",
+    "expected_keywords": ["Địa đạo Củ Chi", "35.000"]
+  }
+]

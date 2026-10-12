@@ -29,6 +29,17 @@ class QueueManager:
             "các bước"
         ]
 
+        import my_config as cfg
+        if getattr(cfg, "MULTI_INTENT_ENABLED", False):
+            try:
+                from rag.multi.detector import detect_sub_queries
+                # We don't have domain and context here easily, but we can pass dummy values
+                sub_queries, _ = detect_sub_queries(query, {}, cfg.DEFAULT_DOMAIN)
+                if len(sub_queries) >= 2:
+                    return "multi_step"
+            except Exception:
+                pass
+                
         if any(keyword in query_lower for keyword in tool_keywords):
             return "tool"
 

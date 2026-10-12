@@ -252,6 +252,11 @@ tests_tang1/
 #ignore tests_tang2 folder
 tests_tang2/
 
+#ignore tests_multi folder
+tests_multi/
+
 docs/*test*.md
 
 task/
+Architecture_system.md
+

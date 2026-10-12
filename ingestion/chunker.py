@@ -45,8 +45,14 @@ class FieldChunker:
                 "source_url",
                 "",
             ) or "",
+            "aliases": getattr(
+                document,
+                "aliases",
+                [],
+            ) or [],
         }
 
+        aliases_list = base_metadata["aliases"]
         chunks: list[Chunk] = []
 
         for field_name in self.config.chunk_fields:
@@ -72,6 +78,9 @@ class FieldChunker:
 
                 if not text:
                     continue
+
+                if aliases_list:
+                    text += f"\nTừ khóa và tình huống liên quan: {', '.join(aliases_list)}"
 
                 chunk_id = f"{doc_id}{suffix}"
 

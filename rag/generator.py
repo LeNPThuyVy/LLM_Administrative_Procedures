@@ -22,18 +22,22 @@ _CHAT_PATH = "/v1/chat/completions"
 class LLMUnavailableError(RuntimeError):
     pass
 
-def _generate_via_server(prompt: str, port: int) -> str | None:
+def _generate_via_server(prompt: str, port: int, temperature: float | None = 0.3, json_mode: bool = False) -> str | None:
     if not prompt or not prompt.strip():
         return ""
 
     url = f"{_SERVER_HOST}:{port}{_CHAT_PATH}"
-    payload = json.dumps({
+    payload_dict = {
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.3,
+        "temperature": temperature if temperature is not None else 0.3,
         "repeat_penalty": 1.1,
         "max_tokens": my_config.MAX_NEW_TOKENS,
         "stream": False,
-    }).encode("utf-8")
+    }
+    if json_mode:
+        payload_dict["response_format"] = {"type": "json_object"}
+
+    payload = json.dumps(payload_dict).encode("utf-8")
 
     req = Request(
         url,
@@ -56,11 +60,13 @@ def generate_answer(
     prompt: str,
     model_path: Path | None = None,
     server_port: int = _SERVER_PORT_3B,
+    temperature: float | None = 0.3,
+    json_mode: bool = False,
 ) -> str:
     if not prompt or not prompt.strip():
         return ""
 
-    answer = _generate_via_server(prompt, server_port)
+    answer = _generate_via_server(prompt, server_port, temperature, json_mode)
     if answer is not None:
         return answer if answer else (
             "Thông tin trong tài liệu được cung cấp "
@@ -70,11 +76,22 @@ def generate_answer(
     raise LLMUnavailableError(f"llama-server at port {server_port} is not available.")
 
 
-def generate_answer_1_5b(prompt: str) -> str:
-    return generate_answer(
-        prompt,
-        server_port=_SERVER_PORT_1_5B,
-    )
+def generate_answer_1_5b(prompt: str, temperature: float | None = 0.3, json_mode: bool = False) -> str:
+    try:
+        return generate_answer(
+            prompt,
+            server_port=_SERVER_PORT_1_5B,
+            temperature=temperature,
+            json_mode=json_mode,
+        )
+    except LLMUnavailableError:
+        # Tự động fallback sang port 8080 nếu server 1.5B chưa khởi động
+        return generate_answer(
+            prompt,
+            server_port=_SERVER_PORT_3B,
+            temperature=temperature,
+            json_mode=json_mode,
+        )
 
 
 def generate_answer_3b(prompt: str) -> str:
