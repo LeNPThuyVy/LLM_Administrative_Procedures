@@ -7,17 +7,17 @@
 ## 1. Kết quả Độ chính xác (Accuracy)
 
 - **Tổng số ca kiểm thử**: 27
-- **Số ca đạt (Pass)**: 27 (100.0%)
-- **Số ca thất bại (Fail)**: 0 (0.0%)
+- **Số ca đạt (Pass)**: 26 (96.3%)
+- **Số ca thất bại (Fail)**: 1 (3.7%)
 
 ## 2. Kết quả Độ trễ (Latency)
 
 | Chỉ số | Thời gian (FAST MODE (MOCK LLM GENERATOR)) |
 |---|---|
-| **Trung bình (Avg)** | 3.37s |
-| **p50 (Median)** | 1.22s |
-| **p90** | 10.24s |
-| **p95** | 10.33s |
+| **Trung bình (Avg)** | 2.42s |
+| **p50 (Median)** | 0.73s |
+| **p90** | 5.34s |
+| **p95** | 5.41s |
 
 ---
 *Ghi chú: Benchmark đánh giá toàn diện pipeline sau tối ưu BGE-M3 LRU Cache, Two-step Soft Boost, Fast Path và Alias Matching.*

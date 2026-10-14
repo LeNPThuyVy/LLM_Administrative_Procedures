@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-10-11T23:50:25.659062",
+  "timestamp": "2026-10-13T23:16:05.537121",
   "domain": "administrative_procedures",
   "total": 100,
   "in_scope_total": 95,
   "out_scope_total": 5,
   "retrieval_at_1": 89.47368421052632,
-  "retrieval_at_3": 91.57894736842105,
+  "retrieval_at_3": 92.63157894736842,
   "retrieval_at_5": 96.84210526315789,
-  "mrr": 0.9173684210526316,
+  "mrr": 0.9142105263157896,
   "out_scope_rejection_acc": 20.0,
   "details": [
     {
@@ -22,7 +22,7 @@
         "PROC_001",
         "PROC_001"
       ],
-      "top_score": 2.7149220499999998,
+      "top_score": 3.1839794,
       "r1": true,
       "r5": true
     },
@@ -38,7 +38,7 @@
         "PROC_001",
         "PROC_001"
       ],
-      "top_score": 2.73065494,
+      "top_score": 3.18065494,
       "r1": true,
       "r5": true
     },
@@ -54,7 +54,7 @@
         "PROC_002",
         "PROC_002"
       ],
-      "top_score": 2.0585974,
+      "top_score": 2.5085974,
       "r1": true,
       "r5": true
     },
@@ -70,7 +70,7 @@
         "PROC_002",
         "PROC_002"
       ],
-      "top_score": 2.14881856,
+      "top_score": 2.59881856,
       "r1": true,
       "r5": true
     },
@@ -86,7 +86,7 @@
         "PROC_003",
         "PROC_003"
       ],
-      "top_score": 2.11646507,
+      "top_score": 2.5664649500000003,
       "r1": true,
       "r5": true
     },
@@ -100,9 +100,9 @@
       "retrieved_top3": [
         "PROC_003",
         "PROC_003",
-        "PROC_024"
+        "PROC_003"
       ],
-      "top_score": 1.3741740999999998,
+      "top_score": 1.5741740999999998,
       "r1": true,
       "r5": true
     },
@@ -116,9 +116,9 @@
       "retrieved_top3": [
         "PROC_004",
         "PROC_004",
-        "PROC_006"
+        "PROC_004"
       ],
-      "top_score": 2.0779386,
+      "top_score": 2.52793856,
       "r1": true,
       "r5": true
     },
@@ -131,10 +131,10 @@
       "rank": 1,
       "retrieved_top3": [
         "PROC_004",
-        "PROC_006",
+        "PROC_004",
         "PROC_004"
       ],
-      "top_score": 2.0968061,
+      "top_score": 2.5468061,
       "r1": true,
       "r5": true
     },
@@ -150,7 +150,7 @@
         "PROC_005",
         "PROC_005"
       ],
-      "top_score": 2.0968529699999996,
+      "top_score": 2.5468529699999998,
       "r1": true,
       "r5": true
     },
@@ -166,7 +166,7 @@
         "PROC_005",
         "PROC_005"
       ],
-      "top_score": 2.1026433,
+      "top_score": 2.55264326,
       "r1": true,
       "r5": true
     },
@@ -182,7 +182,7 @@
         "PROC_006",
         "PROC_006"
       ],
-      "top_score": 2.7396778,
+      "top_score": 3.1896778,
       "r1": true,
       "r5": true
     },
@@ -198,7 +198,7 @@
         "PROC_006",
         "PROC_006"
       ],
-      "top_score": 2.17013744,
+      "top_score": 2.37013744,
       "r1": true,
       "r5": true
     },
@@ -214,7 +214,7 @@
         "PROC_007",
         "PROC_007"
       ],
-      "top_score": 2.0859544,
+      "top_score": 2.5359544,
       "r1": true,
       "r5": true
     },
@@ -230,7 +230,7 @@
         "PROC_020",
         "PROC_020"
       ],
-      "top_score": 3.0199855,
+      "top_score": 3.4732737,
       "r1": true,
       "r5": true
     },
@@ -243,10 +243,10 @@
       "rank": 1,
       "retrieved_top3": [
         "PROC_020",
-        "PROC_021",
+        "PROC_020",
         "PROC_020"
       ],
-      "top_score": 2.6921168399999997,
+      "top_score": 3.14211684,
       "r1": true,
       "r5": true
     },
@@ -262,7 +262,7 @@
         "PROC_021",
         "PROC_021"
       ],
-      "top_score": 4.06431096,
+      "top_score": 4.431038699999999,
       "r1": true,
       "r5": true
     },
@@ -278,7 +278,7 @@
         "PROC_021",
         "PROC_021"
       ],
-      "top_score": 4.395332,
+      "top_score": 4.74706245,
       "r1": true,
       "r5": true
     },
@@ -294,7 +294,7 @@
         "PROC_023",
         "PROC_023"
       ],
-      "top_score": 2.7528113999999997,
+      "top_score": 2.9528114,
       "r1": true,
       "r5": true
     },
@@ -310,7 +310,7 @@
         "PROC_023",
         "PROC_023"
       ],
-      "top_score": 2.7355546,
+      "top_score": 2.9355546,
       "r1": true,
       "r5": true
     },
@@ -324,9 +324,9 @@
       "retrieved_top3": [
         "PROC_027",
         "PROC_027",
-        "PROC_025"
+        "PROC_027"
       ],
-      "top_score": 2.0288035,
+      "top_score": 2.47880365,
       "r1": true,
       "r5": true
     },
@@ -345,7 +345,7 @@
         "PROC_025",
         "PROC_027"
       ],
-      "top_score": 2.1236955,
+      "top_score": 2.5881191,
       "r1": true,
       "r5": true
     },
@@ -361,7 +361,7 @@
         "PROC_026",
         "PROC_030"
       ],
-      "top_score": 2.0742915999999996,
+      "top_score": 2.5242915999999997,
       "r1": true,
       "r5": true
     },
@@ -377,7 +377,7 @@
         "PROC_026",
         "PROC_026"
       ],
-      "top_score": 2.1105087399999998,
+      "top_score": 2.5505634,
       "r1": true,
       "r5": true
     },
@@ -393,7 +393,7 @@
         "PROC_032",
         "PROC_032"
       ],
-      "top_score": 4.3513353,
+      "top_score": 4.701335299999999,
       "r1": true,
       "r5": true
     },
@@ -409,7 +409,7 @@
         "PROC_032",
         "PROC_032"
       ],
-      "top_score": 4.41161436,
+      "top_score": 4.761614359999999,
       "r1": true,
       "r5": true
     },
@@ -425,7 +425,7 @@
         "PROC_033",
         "PROC_033"
       ],
-      "top_score": 1.7872975,
+      "top_score": 2.23729757,
       "r1": true,
       "r5": true
     },
@@ -441,7 +441,7 @@
         "PROC_034",
         "PROC_034"
       ],
-      "top_score": 2.7511991,
+      "top_score": 3.20119887,
       "r1": true,
       "r5": true
     },
@@ -457,7 +457,7 @@
         "PROC_034",
         "PROC_034"
       ],
-      "top_score": 2.8468797999999995,
+      "top_score": 3.30125486,
       "r1": true,
       "r5": true
     },
@@ -473,7 +473,7 @@
         "PROC_031",
         "PROC_031"
       ],
-      "top_score": 4.3717863,
+      "top_score": 4.7217863,
       "r1": true,
       "r5": true
     },
@@ -489,7 +489,7 @@
         "PROC_030",
         "PROC_030"
       ],
-      "top_score": 2.203607,
+      "top_score": 2.653607,
       "r1": true,
       "r5": true
     },
@@ -505,7 +505,7 @@
         "PROC_020",
         "PROC_020"
       ],
-      "top_score": 3.3522589299999996,
+      "top_score": 3.80225893,
       "r1": true,
       "r5": true
     },
@@ -521,7 +521,7 @@
         "PROC_023",
         "PROC_023"
       ],
-      "top_score": 2.775006,
+      "top_score": 3.22500604,
       "r1": true,
       "r5": true
     },
@@ -537,7 +537,7 @@
         "PROC_023",
         "PROC_023"
       ],
-      "top_score": 3.16882815,
+      "top_score": 3.36882815,
       "r1": true,
       "r5": true
     },
@@ -556,7 +556,7 @@
         "PROC_016",
         "PROC_016"
       ],
-      "top_score": 3.4711054999999997,
+      "top_score": 3.8291488,
       "r1": true,
       "r5": true
     },
@@ -570,9 +570,9 @@
       "retrieved_top3": [
         "PROC_010",
         "PROC_010",
-        "PROC_010"
+        "PROC_016"
       ],
-      "top_score": 3.17928916,
+      "top_score": 3.5292891600000003,
       "r1": true,
       "r5": true
     },
@@ -588,7 +588,7 @@
         "PROC_011",
         "PROC_011"
       ],
-      "top_score": 4.09269797,
+      "top_score": 4.54269797,
       "r1": true,
       "r5": true
     },
@@ -604,7 +604,7 @@
         "PROC_011",
         "PROC_011"
       ],
-      "top_score": 3.4423117,
+      "top_score": 3.8923117,
       "r1": true,
       "r5": true
     },
@@ -620,7 +620,7 @@
         "PROC_012",
         "PROC_012"
       ],
-      "top_score": 3.06108904,
+      "top_score": 3.5110890400000003,
       "r1": true,
       "r5": true
     },
@@ -636,7 +636,7 @@
         "PROC_012",
         "PROC_012"
       ],
-      "top_score": 3.1724680999999997,
+      "top_score": 3.6224681,
       "r1": true,
       "r5": true
     },
@@ -652,7 +652,7 @@
         "PROC_013",
         "PROC_013"
       ],
-      "top_score": 3.4835387,
+      "top_score": 3.8335387,
       "r1": true,
       "r5": true
     },
@@ -668,7 +668,7 @@
         "PROC_013",
         "PROC_013"
       ],
-      "top_score": 3.20841947,
+      "top_score": 3.65841947,
       "r1": true,
       "r5": true
     },
@@ -681,10 +681,10 @@
       "rank": 1,
       "retrieved_top3": [
         "PROC_014",
-        "PROC_019",
+        "PROC_014",
         "PROC_019"
       ],
-      "top_score": 3.4714726299999996,
+      "top_score": 3.92147263,
       "r1": true,
       "r5": true
     },
@@ -700,7 +700,7 @@
         "PROC_011",
         "PROC_011"
       ],
-      "top_score": 3.4511259,
+      "top_score": 3.9011259000000003,
       "r1": true,
       "r5": true
     },
@@ -716,7 +716,7 @@
         "PROC_016",
         "PROC_016"
       ],
-      "top_score": 3.4374099499999997,
+      "top_score": 3.7986891999999997,
       "r1": true,
       "r5": true
     },
@@ -732,7 +732,7 @@
         "PROC_017",
         "PROC_017"
       ],
-      "top_score": 4.7547789,
+      "top_score": 5.1047788999999995,
       "r1": true,
       "r5": true
     },
@@ -748,7 +748,7 @@
         "PROC_017",
         "PROC_017"
       ],
-      "top_score": 3.9006897499999997,
+      "top_score": 4.35068975,
       "r1": true,
       "r5": true
     },
@@ -764,7 +764,7 @@
         "PROC_018",
         "PROC_018"
       ],
-      "top_score": 3.1372554,
+      "top_score": 3.5872554,
       "r1": true,
       "r5": true
     },
@@ -780,7 +780,7 @@
         "PROC_018",
         "PROC_018"
       ],
-      "top_score": 3.1474967,
+      "top_score": 3.5974967,
       "r1": true,
       "r5": true
     },
@@ -790,14 +790,14 @@
       "question": "Thủ tục hưởng trợ cấp một lần khi người có công từ trần cần chuẩn bị gì?",
       "expected_document_id": "PROC_019",
       "expected_field": "required_documents",
-      "rank": 1,
+      "rank": 3,
       "retrieved_top3": [
-        "PROC_019",
-        "PROC_019",
-        "PROC_014"
+        "PROC_014",
+        "PROC_014",
+        "PROC_019"
       ],
-      "top_score": 3.4477281,
-      "r1": true,
+      "top_score": 3.8800848,
+      "r1": false,
       "r5": true
     },
     {
@@ -812,7 +812,7 @@
         "PROC_022",
         "PROC_022"
       ],
-      "top_score": 2.3298045,
+      "top_score": 2.6973875,
       "r1": true,
       "r5": true
     },
@@ -828,7 +828,7 @@
         "PROC_022",
         "PROC_022"
       ],
-      "top_score": 3.4337755,
+      "top_score": 3.6337755,
       "r1": true,
       "r5": true
     },
@@ -844,7 +844,7 @@
         "PROC_024",
         "PROC_024"
       ],
-      "top_score": 4.7283447999999995,
+      "top_score": 5.1783449,
       "r1": true,
       "r5": true
     },
@@ -860,7 +860,7 @@
         "PROC_024",
         "PROC_024"
       ],
-      "top_score": 3.0820938,
+      "top_score": 3.5320938,
       "r1": true,
       "r5": true
     },
@@ -877,9 +877,9 @@
       "retrieved_top3": [
         "PROC_027",
         "PROC_027",
-        "PROC_025"
+        "PROC_027"
       ],
-      "top_score": 2.1428045,
+      "top_score": 2.6065458,
       "r1": true,
       "r5": true
     },
@@ -895,7 +895,7 @@
         "PROC_028",
         "PROC_028"
       ],
-      "top_score": 5.3857497500000004,
+      "top_score": 5.73574975,
       "r1": true,
       "r5": true
     },
@@ -911,7 +911,7 @@
         "PROC_028",
         "PROC_028"
       ],
-      "top_score": 3.5286983,
+      "top_score": 3.8786983,
       "r1": true,
       "r5": true
     },
@@ -927,7 +927,7 @@
         "PROC_029",
         "PROC_029"
       ],
-      "top_score": 2.4428251,
+      "top_score": 2.7928251,
       "r1": true,
       "r5": true
     },
@@ -943,7 +943,7 @@
         "PROC_029",
         "PROC_029"
       ],
-      "top_score": 2.48831736,
+      "top_score": 2.83831736,
       "r1": true,
       "r5": true
     },
@@ -959,7 +959,7 @@
         "PROC_029",
         "PROC_029"
       ],
-      "top_score": 1.78122314,
+      "top_score": 2.23122314,
       "r1": true,
       "r5": true
     },
@@ -975,7 +975,7 @@
         "PROC_035",
         "PROC_035"
       ],
-      "top_score": 2.7577089999999997,
+      "top_score": 3.2077088,
       "r1": true,
       "r5": true
     },
@@ -991,7 +991,7 @@
         "PROC_035",
         "PROC_035"
       ],
-      "top_score": 2.8875085999999994,
+      "top_score": 3.3375085999999996,
       "r1": true,
       "r5": true
     },
@@ -1007,7 +1007,7 @@
         "PROC_036",
         "PROC_036"
       ],
-      "top_score": 3.0556261,
+      "top_score": 3.5479483000000003,
       "r1": true,
       "r5": true
     },
@@ -1023,7 +1023,7 @@
         "PROC_036",
         "PROC_036"
       ],
-      "top_score": 3.10838496,
+      "top_score": 3.55838496,
       "r1": true,
       "r5": true
     },
@@ -1039,7 +1039,7 @@
         "PROC_037",
         "PROC_036"
       ],
-      "top_score": 2.5004948000000002,
+      "top_score": 2.7004948000000004,
       "r1": true,
       "r5": true
     },
@@ -1055,7 +1055,7 @@
         "PROC_037",
         "PROC_037"
       ],
-      "top_score": 3.7536522999999997,
+      "top_score": 4.2036523,
       "r1": true,
       "r5": true
     },
@@ -1074,7 +1074,7 @@
         "PROC_038",
         "PROC_038"
       ],
-      "top_score": 2.7193303,
+      "top_score": 2.9193303000000004,
       "r1": true,
       "r5": true
     },
@@ -1090,7 +1090,7 @@
         "PROC_038",
         "PROC_038"
       ],
-      "top_score": 3.3737362999999996,
+      "top_score": 3.8254462,
       "r1": true,
       "r5": true
     },
@@ -1106,7 +1106,7 @@
         "PROC_038",
         "PROC_038"
       ],
-      "top_score": 3.12948027,
+      "top_score": 3.5794802700000004,
       "r1": true,
       "r5": true
     },
@@ -1122,7 +1122,7 @@
         "PROC_039",
         "PROC_039"
       ],
-      "top_score": 3.0067150600000003,
+      "top_score": 3.461996,
       "r1": true,
       "r5": true
     },
@@ -1138,7 +1138,7 @@
         "PROC_039",
         "PROC_039"
       ],
-      "top_score": 3.24879595,
+      "top_score": 3.69879595,
       "r1": true,
       "r5": true
     },
@@ -1154,7 +1154,7 @@
         "PROC_040",
         "PROC_040"
       ],
-      "top_score": 3.0364792300000003,
+      "top_score": 3.2999587,
       "r1": true,
       "r5": true
     },
@@ -1170,7 +1170,7 @@
         "PROC_040",
         "PROC_040"
       ],
-      "top_score": 3.7974636999999998,
+      "top_score": 4.2474637,
       "r1": true,
       "r5": true
     },
@@ -1186,7 +1186,7 @@
         "PROC_041",
         "PROC_041"
       ],
-      "top_score": 2.726018,
+      "top_score": 3.1760180499999997,
       "r1": true,
       "r5": true
     },
@@ -1202,7 +1202,7 @@
         "PROC_041",
         "PROC_041"
       ],
-      "top_score": 2.4387549,
+      "top_score": 2.8887549000000003,
       "r1": true,
       "r5": true
     },
@@ -1218,7 +1218,7 @@
         "PROC_042",
         "PROC_042"
       ],
-      "top_score": 2.18783635,
+      "top_score": 2.38783635,
       "r1": true,
       "r5": true
     },
@@ -1234,7 +1234,7 @@
         "PROC_042",
         "PROC_042"
       ],
-      "top_score": 2.49275147,
+      "top_score": 2.69275147,
       "r1": true,
       "r5": true
     },
@@ -1250,7 +1250,7 @@
         "PROC_042",
         "PROC_042"
       ],
-      "top_score": 3.5096446,
+      "top_score": 3.8596446,
       "r1": true,
       "r5": true
     },
@@ -1266,7 +1266,7 @@
         "PROC_031",
         "PROC_031"
       ],
-      "top_score": 0.39789209999999997,
+      "top_score": 0.41318765,
       "r1": true,
       "r5": true
     },
@@ -1282,23 +1282,23 @@
         "PROC_002",
         "PROC_002"
       ],
-      "top_score": 1.0623334,
+      "top_score": 1.26620673,
       "r1": true,
       "r5": true
     },
     {
       "id": "GS_080",
       "type": "in_scope",
-      "question": "xin giay xac nhan tinh trang hon nhan doc than can giay to gi?",
+      "question": "thu tuc xin cap giay xac nhan tinh trang hon nhan can nhung giay to gi?",
       "expected_document_id": "PROC_001",
       "expected_field": "required_documents",
       "rank": 0,
       "retrieved_top3": [
         "PROC_006",
-        "PROC_006",
-        "PROC_023"
+        "PROC_004",
+        "PROC_006"
       ],
-      "top_score": 0.4466189,
+      "top_score": 0.4659179,
       "r1": false,
       "r5": false
     },
@@ -1314,7 +1314,7 @@
         "PROC_002",
         "PROC_003"
       ],
-      "top_score": 0.64522846,
+      "top_score": 0.65518148,
       "r1": true,
       "r5": true
     },
@@ -1328,9 +1328,9 @@
       "retrieved_top3": [
         "PROC_033",
         "PROC_033",
-        "PROC_006"
+        "PROC_025"
       ],
-      "top_score": 0.40537769999999995,
+      "top_score": 0.41083738000000003,
       "r1": true,
       "r5": true
     },
@@ -1343,30 +1343,30 @@
         "PROC_025"
       ],
       "expected_field": "fee",
-      "rank": 4,
+      "rank": 3,
       "retrieved_top3": [
         "PROC_037",
         "PROC_037",
-        "PROC_018"
+        "PROC_025"
       ],
-      "top_score": 0.664167,
+      "top_score": 0.6618275,
       "r1": false,
       "r5": true
     },
     {
       "id": "GS_084",
       "type": "in_scope",
-      "question": "thu tuc chuyen truong thcs cho con can ho so gi?",
+      "question": "thu tuc chuyen truong hoc sinh thcs can ho so gi?",
       "expected_document_id": "PROC_029",
       "expected_field": "required_documents",
-      "rank": 2,
+      "rank": 1,
       "retrieved_top3": [
-        "PROC_005",
+        "PROC_029",
         "PROC_029",
         "PROC_029"
       ],
-      "top_score": 0.7612632699999999,
-      "r1": false,
+      "top_score": 1.11646825,
+      "r1": true,
       "r5": true
     },
     {
@@ -1375,13 +1375,13 @@
       "question": "thoi gian giai quyet cap lai giay chung nhan ho kinh doanh?",
       "expected_document_id": "PROC_040",
       "expected_field": "processing_time",
-      "rank": 4,
+      "rank": 5,
       "retrieved_top3": [
         "PROC_038",
-        "PROC_039",
-        "PROC_036"
+        "PROC_036",
+        "PROC_039"
       ],
-      "top_score": 1.1723486799999998,
+      "top_score": 1.3852454299999999,
       "r1": false,
       "r5": true
     },
@@ -1395,9 +1395,9 @@
       "retrieved_top3": [
         "PROC_023",
         "PROC_023",
-        "PROC_023"
+        "PROC_004"
       ],
-      "top_score": 0.35486847,
+      "top_score": 0.35746035,
       "r1": false,
       "r5": true
     },
@@ -1409,11 +1409,11 @@
       "expected_field": "submission_method",
       "rank": 0,
       "retrieved_top3": [
+        "PROC_016",
         "PROC_018",
-        "PROC_023",
-        "PROC_006"
+        "PROC_036"
       ],
-      "top_score": 0.4335814,
+      "top_score": 0.43715274,
       "r1": false,
       "r5": false
     },
@@ -1426,26 +1426,26 @@
       "rank": 0,
       "retrieved_top3": [
         "PROC_042",
-        "PROC_042",
+        "PROC_037",
         "PROC_037"
       ],
-      "top_score": 0.36550970000000005,
+      "top_score": 0.3655096,
       "r1": false,
       "r5": false
     },
     {
       "id": "GS_089",
       "type": "in_scope",
-      "question": "chung thuc chu ky co lay ngay trong ngay duoc khong?",
+      "question": "chung thuc chu ky tren giay to co lay ngay trong ngay duoc khong?",
       "expected_document_id": "PROC_042",
       "expected_field": "processing_time",
-      "rank": 2,
+      "rank": 4,
       "retrieved_top3": [
+        "PROC_004",
         "PROC_031",
-        "PROC_042",
         "PROC_031"
       ],
-      "top_score": 0.38445148,
+      "top_score": 0.42778083,
       "r1": false,
       "r5": true
     },
@@ -1461,7 +1461,7 @@
         "PROC_006",
         "PROC_006"
       ],
-      "top_score": 2.03967074,
+      "top_score": 2.2503585,
       "r1": true,
       "r5": true
     },
@@ -1477,7 +1477,7 @@
         "PROC_036",
         "PROC_036"
       ],
-      "top_score": 2.27567475,
+      "top_score": 2.5017810000000003,
       "r1": true,
       "r5": true
     },
@@ -1496,7 +1496,7 @@
         "PROC_033",
         "PROC_035"
       ],
-      "top_score": 1.28277207,
+      "top_score": 1.48277177,
       "r1": false,
       "r5": true
     },
@@ -1506,11 +1506,11 @@
       "question": "thời zan giải quyết khai sih cho bé mất mấy ngày?",
       "expected_document_id": "PROC_002",
       "expected_field": "processing_time",
-      "rank": 4,
+      "rank": 3,
       "retrieved_top3": [
         "PROC_024",
         "PROC_011",
-        "PROC_022"
+        "PROC_002"
       ],
       "top_score": 1.2074459,
       "r1": false,
@@ -1528,7 +1528,7 @@
         "PROC_033",
         "PROC_033"
       ],
-      "top_score": 1.60743906,
+      "top_score": 2.0959667,
       "r1": true,
       "r5": true
     },
@@ -1544,7 +1544,7 @@
         "PROC_042",
         "PROC_042"
       ],
-      "top_score": 1.8834520599999998,
+      "top_score": 2.0785773,
       "r1": true,
       "r5": true
     },
@@ -1562,7 +1562,7 @@
       "type": "out_of_scope",
       "question": "Làm thế nào để đăng ký kinh doanh dịch vụ hàng không vũ trụ?",
       "expected_document_id": null,
-      "top_score": 1.8657411,
+      "top_score": 2.1111385,
       "rejected": false,
       "min_score_threshold": 0.5
     },
@@ -1580,7 +1580,7 @@
       "type": "out_of_scope",
       "question": "Giá xăng Ron 95 hôm nay tăng hay giảm bao nhiêu tiền một lít?",
       "expected_document_id": null,
-      "top_score": 0.42452836,
+      "top_score": 0.41722476,
       "rejected": true,
       "min_score_threshold": 0.5
     },
@@ -1589,7 +1589,7 @@
       "type": "out_of_scope",
       "question": "Cho tôi hỏi về quy định thủ tục hành chính của nhà nước",
       "expected_document_id": null,
-      "top_score": 0.9846725000000001,
+      "top_score": 1.0622808,
       "rejected": false,
       "min_score_threshold": 0.5
     }

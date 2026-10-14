@@ -101,20 +101,19 @@ async def chat(request: ChatRequest):
                         return
 
                 result = None
-                async with queue_manager.semaphore:
-                    async for event_type, payload in generate_answer_stream(
-                        query=request.query,
-                        session_id=request.session_id,
-                        context=context,
-                        domain=request.domain
-                    ):
-                        if event_type == "chunk":
-                            yield (
-                                "event: chunk\n"
-                                f"data: {json.dumps({'text': payload}, ensure_ascii=False)}\n\n"
-                            )
-                        elif event_type == "final":
-                            result = payload
+                async for event_type, payload in generate_answer_stream(
+                    query=request.query,
+                    session_id=request.session_id,
+                    context=context,
+                    domain=request.domain
+                ):
+                    if event_type == "chunk":
+                        yield (
+                            "event: chunk\n"
+                            f"data: {json.dumps({'text': payload}, ensure_ascii=False)}\n\n"
+                        )
+                    elif event_type == "final":
+                        result = payload
 
                 if not result:
                     return

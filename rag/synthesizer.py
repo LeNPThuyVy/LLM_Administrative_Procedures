@@ -46,13 +46,19 @@ def _format_history(history: dict[str, Any]) -> str:
         return "Không có lịch sử hội thoại."
 
     recent_messages = history.get("recent_messages", [])
+    if isinstance(recent_messages, list) and len(recent_messages) > 4:
+        recent_messages = recent_messages[-4:]
+
     conversation_summary = history.get("conversation_summary", "")
 
     parts: list[str] = []
 
     if conversation_summary:
+        sum_text = _extract_text(conversation_summary)
+        if len(sum_text) > 300:
+            sum_text = sum_text[:300] + "..."
         parts.append(
-            f"Tóm tắt hội thoại:\n{conversation_summary}"
+            f"Tóm tắt hội thoại:\n{sum_text}"
         )
 
     if recent_messages:
@@ -62,9 +68,15 @@ def _format_history(history: dict[str, Any]) -> str:
             if isinstance(message, dict):
                 role = message.get("role", "")
                 content = _extract_text(message.get("content", ""))
+                if role == "assistant" and len(content) > 150:
+                    content = content[:150] + "..."
                 message_lines.append(f"{role}: {content}")
             elif isinstance(message, (list, tuple)) and len(message) == 2:
-                message_lines.append(f"user: {_extract_text(message[0])}\nassistant: {_extract_text(message[1])}")
+                user_text = _extract_text(message[0])
+                assistant_text = _extract_text(message[1])
+                if len(assistant_text) > 150:
+                    assistant_text = assistant_text[:150] + "..."
+                message_lines.append(f"user: {user_text}\nassistant: {assistant_text}")
 
         if message_lines:
             parts.append(
@@ -469,18 +481,41 @@ def synthesizer(
 
     active_procedure = _get_active_procedure(history, procedure_hint, domain=domain)
 
-    # Bước 3A Fast Path: Nếu câu hỏi hỏi về field/hồ sơ/lệ phí và đã có thủ tục active, ghép nhanh
-    from rag.prompt_builder import _detect_field_types
-    detected_fields = _detect_field_types(query)
-    if detected_fields and active_procedure and not has_query_kw:
-        resolved = f"{query} (liên quan đến: {active_procedure})"
-        print(f"[synthesizer] Fast follow-up field resolution: {resolved}")
-        return ConsolidatedQuery(
-            resolved_query=resolved,
-            original_query=query,
-            needs_clarification=False,
-            clarification_question=None,
-        )
+    # SYNTHESIZER_MODE check: 'rule' or 'off' bypasses LLM call completely
+    import my_config as cfg
+    synth_mode = getattr(cfg, "SYNTHESIZER_MODE", "llm")
+    if generator is generate_answer_1_5b:
+        if synth_mode in ("rule", "off") and active_procedure:
+            resolved = f"{query} (liên quan đến: {active_procedure})"
+            print(f"[synthesizer] Fast rule/off bypass (mode='{synth_mode}'): {resolved}")
+            return ConsolidatedQuery(
+                resolved_query=resolved,
+                original_query=query,
+                needs_clarification=False,
+                clarification_question=None,
+            )
+        elif synth_mode == "off":
+            print(f"[synthesizer] Fast off bypass: {query}")
+            return ConsolidatedQuery(
+                resolved_query=query,
+                original_query=query,
+                needs_clarification=False,
+                clarification_question=None,
+            )
+
+    # Bước 3A Fast Path: Nếu câu hỏi hỏi về field/hồ sơ/lệ phí và đã có thủ tục active, ghép nhanh (chỉ khi dùng production generator)
+    if generator is generate_answer_1_5b:
+        from rag.prompt_builder import _detect_field_types
+        detected_fields = _detect_field_types(query)
+        if detected_fields and active_procedure and not has_query_kw:
+            resolved = f"{query} (liên quan đến: {active_procedure})"
+            print(f"[synthesizer] Fast follow-up field resolution: {resolved}")
+            return ConsolidatedQuery(
+                resolved_query=resolved,
+                original_query=query,
+                needs_clarification=False,
+                clarification_question=None,
+            )
 
 
     # -----------------------------------------------------------------
