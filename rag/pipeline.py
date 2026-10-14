@@ -249,6 +249,17 @@ def answer_query(
     elif not isinstance(query, str):
         query = str(query) if query is not None else ""
 
+    t_start_pipeline = time.time()
+    t_first_token = None
+
+    def wrapped_on_token(tok: str):
+        nonlocal t_first_token
+        if t_first_token is None:
+            t_first_token = time.time()
+            print(f"[time] OVERALL TTFT = {t_first_token - t_start_pipeline:.2f}s")
+        if on_token is not None:
+            on_token(tok)
+
     t0_input = time.time()
     input_guard = validate_input(query)
     print(f"[time] input_guard = {time.time() - t0_input:.2f}s")
@@ -285,8 +296,8 @@ def answer_query(
     if cache_key in _PIPELINE_ANSWER_CACHE:
         cached_resp = _PIPELINE_ANSWER_CACHE[cache_key]
         print(f"[pipeline] Cache hit for query='{query[:40]}' (proc='{cache_key[1]}')")
-        if on_token is not None and cached_resp.answer:
-            on_token(cached_resp.answer)
+        if cached_resp.answer:
+            wrapped_on_token(cached_resp.answer)
         return cached_resp
 
     # Layer 2 - Domain runtime + risk classifier
@@ -503,12 +514,13 @@ def answer_query(
     from rag.prompt_builder import _detect_field_types
     detected_fields = _detect_field_types(consolidated.resolved_query)
 
-    fast_answer = _try_template_fast_path(consolidated.resolved_query, evidence_candidates, detected_fields)
+    fast_answer = None
+    if generator is generate_answer_3b:
+        fast_answer = _try_template_fast_path(consolidated.resolved_query, evidence_candidates, detected_fields)
     if fast_answer:
         print(f"[pipeline] Fast Path: rendered answer directly from field evidence ({detected_fields}).")
         generated_answer = fast_answer
-        if on_token is not None:
-            on_token(fast_answer)
+        wrapped_on_token(fast_answer)
     else:
         from rag.generator import LLMUnavailableError, stream_answer_3b
         t0_gen = time.time()
@@ -517,7 +529,7 @@ def answer_query(
                 token_list = []
                 for tok in stream_answer_3b(prompt):
                     token_list.append(tok)
-                    on_token(tok)
+                    wrapped_on_token(tok)
                 generated_answer = "".join(token_list)
             else:
                 generated_answer = generator(prompt)
@@ -593,4 +605,5 @@ def answer_query(
         _PIPELINE_ANSWER_CACHE.pop(next(iter(_PIPELINE_ANSWER_CACHE)))
     _PIPELINE_ANSWER_CACHE[cache_key] = final_response
 
+    print(f"[time] total_pipeline = {time.time() - t_start_pipeline:.2f}s")
     return final_response

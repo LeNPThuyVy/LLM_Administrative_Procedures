@@ -297,20 +297,19 @@ async def websocket_chat(
 
                     result = None
                     try:
-                        async with queue_manager.semaphore:
-                            async for event_type, payload in generate_answer_stream(
-                                query=query,
-                                session_id=session_id,
-                                context=context,
-                                domain=domain,
-                            ):
-                                if event_type == "chunk":
-                                    await websocket.send_json({
-                                        "type": "chunk",
-                                        "data": {"text": payload},
-                                    })
-                                elif event_type == "final":
-                                    result = payload
+                        async for event_type, payload in generate_answer_stream(
+                            query=query,
+                            session_id=session_id,
+                            context=context,
+                            domain=domain,
+                        ):
+                            if event_type == "chunk":
+                                await websocket.send_json({
+                                    "type": "chunk",
+                                    "data": {"text": payload},
+                                })
+                            elif event_type == "final":
+                                result = payload
                     except Exception as gen_exc:
                         print(f"[WS GENERATE ERROR] session={session_id}: {gen_exc}")
                         await websocket.send_json({

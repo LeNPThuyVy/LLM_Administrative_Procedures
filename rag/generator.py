@@ -6,6 +6,7 @@ Giai đoạn 0: Xóa fallback subprocess, báo lỗi thân thiện khi server kh
 """
 
 import json
+import time
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -32,6 +33,7 @@ def _generate_via_server(prompt: str, port: int, temperature: float | None = 0.3
         "temperature": temperature if temperature is not None else 0.3,
         "repeat_penalty": 1.1,
         "max_tokens": my_config.MAX_NEW_TOKENS,
+        "cache_prompt": True,
         "stream": False,
     }
     if json_mode:
@@ -46,13 +48,13 @@ def _generate_via_server(prompt: str, port: int, temperature: float | None = 0.3
         method="POST",
     )
 
+    t0 = time.time()
     try:
         with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            return (
-                data["choices"][0]["message"]["content"]
-                .strip()
-            )
+            content = data["choices"][0]["message"]["content"].strip()
+            print(f"[generator] non-stream port={port} chars={len(prompt)} took={time.time()-t0:.2f}s out_chars={len(content)}")
+            return content
     except (URLError, OSError, KeyError, json.JSONDecodeError):
         return None
 
@@ -112,6 +114,7 @@ def stream_generate_via_server(prompt: str, port: int):
         "temperature": 0.3,
         "repeat_penalty": 1.1,
         "max_tokens": my_config.MAX_NEW_TOKENS,
+        "cache_prompt": True,
         "stream": True,
     }).encode("utf-8")
 
@@ -121,6 +124,11 @@ def stream_generate_via_server(prompt: str, port: int):
         headers={"Content-Type": "application/json"},
         method="POST",
     )
+
+    t_start = time.time()
+    first_token_received = False
+    tokens_count = 0
+    t_first_tok = None
 
     try:
         with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
@@ -136,9 +144,18 @@ def stream_generate_via_server(prompt: str, port: int):
                         data = json.loads(data_str)
                         content = data.get("choices", [{}])[0].get("delta", {}).get("content")
                         if content:
+                            tokens_count += 1
+                            if not first_token_received:
+                                first_token_received = True
+                                t_first_tok = time.time()
+                                print(f"[generator] TTFT port={port} = {t_first_tok - t_start:.2f}s (prompt_chars={len(prompt)})")
                             yield content
                     except (KeyError, json.JSONDecodeError):
                         continue
+        if t_first_tok is not None and tokens_count > 0:
+            decode_time = time.time() - t_first_tok
+            speed = tokens_count / max(0.001, decode_time)
+            print(f"[generator] Decoded {tokens_count} tokens in {decode_time:.2f}s ({speed:.2f} tok/s, total={time.time() - t_start:.2f}s)")
     except (URLError, OSError) as exc:
         raise LLMUnavailableError(f"llama-server at port {port} is not available: {exc}")
 

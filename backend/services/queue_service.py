@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+import my_config as cfg
 
 
 class QueueManager:
@@ -49,4 +50,4 @@ class QueueManager:
         return "simple"
 
 
-queue_manager = QueueManager(max_concurrency=3)
+queue_manager = QueueManager(max_concurrency=max(2, getattr(cfg, "LLAMA_PARALLEL", 1)))
