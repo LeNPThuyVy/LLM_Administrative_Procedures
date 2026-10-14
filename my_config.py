@@ -31,11 +31,21 @@ MODEL_3B_PATH = Path(BASE_DIR / "model" / "Qwen2.5-3B-Instruct-Q4_K_M.gguf")
 # Default model path for RAG final answer generation
 MODEL_PATH = MODEL_3B_PATH
 
+# Llama-server performance optimization configuration
+LLAMA_THREADS = int(os.getenv("LLAMA_THREADS", "4"))          # Optimized for 4 physical cores
+LLAMA_PARALLEL = int(os.getenv("LLAMA_PARALLEL", "1"))        # 1 slot avoids CPU context-switch contention
+LLAMA_CTX_SIZE = int(os.getenv("LLAMA_CTX_SIZE", "4096"))
+LLAMA_BATCH_SIZE = int(os.getenv("LLAMA_BATCH_SIZE", "512"))
+LLAMA_UBATCH_SIZE = int(os.getenv("LLAMA_UBATCH_SIZE", "512"))
+
+# Synthesizer optimization mode: 'rule' (default, bypass LLM with active procedure), 'llm', 'off'
+SYNTHESIZER_MODE = os.getenv("SYNTHESIZER_MODE", "rule").lower()
+
 MIN_RETRIEVAL_SCORE = 0.50
 
 SUPPORTED_LOCATIONS = {
     "hồ chí minh", "hcm", "tp hcm", "tp.hcm", "thành phố hồ chí minh",
-    "sài gòn", "saigon", "sg",
+    "sài gòn", "saigon", "sg",""
 }
 
 # MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
@@ -45,3 +55,5 @@ TEMPERATURE = 0.0
 TOP_P = 0.9
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+MULTI_INTENT_ENABLED = os.getenv("MULTI_INTENT_ENABLED", "False").lower() == "true"

@@ -1,6 +1,6 @@
 import asyncio
 import re
-
+import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -32,19 +32,16 @@ from rag.retrieval import retrieve, retrieve_two_step
 from rag.synthesizer import synthesizer
 from rag.verification import verify_answer
 
-
 FALLBACK_TEXT = (
     "Thông tin trong tài liệu được cung cấp "
     "chưa đủ để trả lời câu hỏi này."
 )
-
 
 # Returned when user references a location outside the HCMC dataset (Issue #7).
 LOCATION_NOT_SUPPORTED_TEXT = (
     "Hiện tại hệ thống chỉ hỗ trợ thông tin thủ tục hành chính tại "
     "Thành phố Hồ Chí Minh. Địa điểm bạn hỏi chưa có trong cơ sở dữ liệu."
 )
-
 
 # Vietnamese location terms that are definitely NOT HCMC.
 # Keep this list to cases clearly outside the dataset.
@@ -55,7 +52,6 @@ _NON_HCMC_PATTERNS = re.compile(
     r"hải dương|nam định|ninh bình)\b",
     re.IGNORECASE | re.UNICODE,
 )
-
 
 def _extract_text(val: object) -> str:
     """Safely extract string text from string, list, or dict message content."""
@@ -84,7 +80,6 @@ def _extract_text(val: object) -> str:
 
     return str(val) if val is not None else ""
 
-
 def _detect_unsupported_location(text: str) -> bool:
     """
     Return True if text contains a Vietnamese location that is
@@ -97,15 +92,12 @@ def _detect_unsupported_location(text: str) -> bool:
         _NON_HCMC_PATTERNS.search(text)
     )
 
-
 def _answer_from_evidence(
     evidence_candidates,
     field_types: list[str] | None = None,
 ):
-    """
-    Nếu LLM không tạo được câu trả lời hữu ích,
-    dùng trực tiếp evidence tốt nhất có chứa thông tin cần tìm.
-    """
+    """Nếu LLM không tạo được câu trả lời hữu ích,
+    dùng trực tiếp evidence tốt nhất có chứa thông tin cần tìm."""
     if not evidence_candidates:
         return FALLBACK_TEXT
 
@@ -139,10 +131,7 @@ def _answer_from_evidence(
     general_docs = {
         ev.document_id
         for ev in evidence_candidates
-        if (
-            ev.chunk_id
-            and ev.chunk_id.endswith("_general")
-        )
+        if (ev.chunk_id and ev.chunk_id.endswith("_general"))
     }
 
     for ev in evidence_candidates:
@@ -150,10 +139,7 @@ def _answer_from_evidence(
         # bỏ qua các chunk con.
         if (
             ev.document_id in general_docs
-            and not (
-                ev.chunk_id
-                and ev.chunk_id.endswith("_general")
-            )
+            and not (ev.chunk_id and ev.chunk_id.endswith("_general"))
         ):
             continue
 
@@ -164,7 +150,7 @@ def _answer_from_evidence(
 
         # Xử lý dòng Tên thủ tục để tránh lặp.
         title_match = re.search(
-            r"^Tên thủ tục: (.*?)\n",
+            r"^Tên thủ tục: (.*?)\\n",
             content,
         )
 
@@ -192,21 +178,74 @@ def _answer_from_evidence(
 
     return FALLBACK_TEXT
 
+_PIPELINE_ANSWER_CACHE: dict[tuple, AnswerResponse] = {}
+_MAX_ANSWER_CACHE_SIZE = 500
+
+def _get_cache_key(query: str, context: dict | None, domain: str | None, session_id: str | None = None) -> tuple:
+    q_norm = (query or "").strip().lower()
+    proc = ""
+    if context:
+        sc = context.get("structured_context") or context.get("long_term_memory") or {}
+        if isinstance(sc, dict):
+            proc = str(sc.get("procedure_name", "")).strip().lower()
+    return (session_id or "global", q_norm, proc, domain or "default")
+
+def _try_template_fast_path(query: str, evidence_candidates, field_types: list[str]) -> str | None:
+    """Bước 3A Template Fast Path:
+    Khi query chỉ hỏi đúng 1 field (fee, time, method, docs) và đã có field chunk tương ứng,
+    kết xuất câu trả lời chuẩn trực tiếp, bỏ qua LLM sinh token để giảm độ trễ từ ~3s về <0.1s."""
+    if not field_types or len(field_types) != 1 or not evidence_candidates:
+        return None
+
+    ftype = field_types[0]
+    field_to_chunk_suffix = {
+        "fee": "_fee",
+        "time": "_time",
+        "method": "_method",
+        "docs": "_docs",
+    }
+    suffix = field_to_chunk_suffix.get(ftype)
+    if not suffix:
+        return None
+
+    target_ev = next((ev for ev in evidence_candidates if ev.chunk_id and ev.chunk_id.endswith(suffix)), None)
+    if not target_ev:
+        return None
+
+    content = (target_ev.content or "").strip()
+    if not content:
+        return None
+
+    lines = [l.strip() for l in content.split("\n") if l.strip()]
+    title = ""
+    field_lines = []
+    capture = False
+    for line in lines:
+        if line.startswith("Tên thủ tục:"):
+            title = line.replace("Tên thủ tục:", "").strip()
+        elif ":" in line and not capture:
+            field_lines.append(line)
+            capture = True
+        elif capture:
+            field_lines.append(line)
+
+    if not field_lines:
+        return None
+
+    cid = target_ev.candidate_id
+    info_body = "\n".join(field_lines)
+    if title:
+        return f"Về {title}, thông tin chi tiết như sau:\n\n{info_body} [{cid}]"
+    return f"{info_body} [{cid}]"
 
 def _is_useless_answer(answer: str) -> bool:
-    """
-    Kiểm tra câu trả lời rỗng, chỉ có citation,
-    hoặc quá ngắn.
-    """
+    """Kiểm tra câu trả lời rỗng, chỉ có citation, hoặc quá ngắn."""
     if not answer or not answer.strip():
         return True
 
     text = answer.strip()
 
-    if (
-        text.lower().strip()
-        == FALLBACK_TEXT.lower().strip()
-    ):
+    if (text.lower().strip() == FALLBACK_TEXT.lower().strip()):
         return True
 
     citation_only = re.fullmatch(
@@ -230,14 +269,12 @@ def _is_useless_answer(answer: str) -> bool:
 
     return False
 
-
 def _run_tools_sync(
     query: str,
     runtime,
     context: dict | None,
 ):
-    """
-    Gọi async MCP từ pipeline sync.
+    """Gọi async MCP từ pipeline sync.
 
     Nếu đang ở trong event loop của FastAPI/WebSocket,
     chạy coroutine trong thread riêng.
@@ -266,14 +303,10 @@ def _run_tools_sync(
             timeout=10
         )
 
-
 def _build_tool_calls(
     tool_evidence,
 ) -> list[dict]:
-    """
-    Convert MCP evidence thành metadata tool_calls
-    để backend/UI có thể trả về client.
-    """
+    """Convert MCP evidence thành metadata tool_calls để backend/UI có thể trả về client."""
     return [
         {
             "tool": ev.source.removeprefix(
@@ -293,7 +326,6 @@ def _build_tool_calls(
         )
     ]
 
-
 def answer_query(
     query: str,
     session_id: str | None = None,
@@ -301,29 +333,30 @@ def answer_query(
     domain: str | None = None,
     generator: Callable[[str], str] = generate_answer_3b,
     synthesizer_generator: Callable[[str], str] = generate_answer_1_5b,
+    on_token: Callable[[str], None] | None = None,
 ) -> AnswerResponse:
-    """
-    Run the complete AI Core / RAG pipeline.
-    """
-    _ = session_id
-
-    # ---------------------------------------------------------
+    """Run the complete AI Core / RAG pipeline."""
     # Normalize input
-    # ---------------------------------------------------------
     if isinstance(query, (list, dict)):
         query = _extract_text(query)
-
     elif not isinstance(query, str):
-        query = (
-            str(query)
-            if query is not None
-            else ""
-        )
+        query = str(query) if query is not None else ""
 
-    # ---------------------------------------------------------
     # Input guardrail
-    # ---------------------------------------------------------
+    t_start_pipeline = time.time()
+    t_first_token = None
+
+    def wrapped_on_token(tok: str):
+        nonlocal t_first_token
+        if t_first_token is None:
+            t_first_token = time.time()
+            print(f"[time] OVERALL TTFT = {t_first_token - t_start_pipeline:.2f}s")
+        if on_token is not None:
+            on_token(tok)
+
+    t0_input = time.time()
     input_guard = validate_input(query)
+    print(f"[time] input_guard = {time.time() - t0_input:.2f}s")
 
     if not input_guard.allowed:
         print(
@@ -331,7 +364,6 @@ def answer_query(
             f"{input_guard.reason} | "
             f"{mask_sensitive_for_log(query)}"
         )
-
         return AnswerResponse(
             answer=(
                 "Yêu cầu này không thể được xử lý "
@@ -358,12 +390,23 @@ def answer_query(
         context = {}
 
     # ---------------------------------------------------------
-    # Layer 2 - Domain runtime + risk classifier
+    # Bước 3B: Pipeline Answer Cache hit check
+    cache_key = _get_cache_key(query, context, domain, session_id=session_id)
+    if cache_key in _PIPELINE_ANSWER_CACHE:
+        cached_resp = _PIPELINE_ANSWER_CACHE[cache_key]
+        print(f"[pipeline] Cache hit for query='{query[:40]}' (proc='{cache_key[1]}')")
+        if cached_resp.answer:
+            wrapped_on_token(cached_resp.answer)
+        return cached_resp
+
     # ---------------------------------------------------------
+    # Layer 2 - Domain runtime + risk classifier
     runtime = get_domain_runtime(domain)
     domain = runtime.domain_id
 
+    t0_risk = time.time()
     risk_result = classify_risk(query)
+    print(f"[time] risk = {time.time() - t0_risk:.2f}s")
 
     effective_mode = resolve_mode(
         runtime.mode,
@@ -371,11 +414,7 @@ def answer_query(
     )
 
     # ---------------------------------------------------------
-    # GĐ1 fix — Out-of-scope location detection
-    #
-    # Giữ nguyên logic cũ của nhóm.
-    # Chỉ kiểm tra user message hiện tại.
-    # ---------------------------------------------------------
+    # Out-of-scope location detection
     if _detect_unsupported_location(query):
         print(
             "[pipeline] Unsupported location "
@@ -393,22 +432,64 @@ def answer_query(
         )
 
     # ---------------------------------------------------------
-    # Multi-agent preprocessing
+    # Multi-intent branching
+    if getattr(cfg, "MULTI_INTENT_ENABLED", False):
+        from rag.multi.detector import detect_sub_queries
+        sub_queries, truncated = detect_sub_queries(query, context, domain)
+        if len(sub_queries) >= 2:
+            from rag.multi.resolver import resolve_all
+            from rag.multi.section import build_section_template
+
+            sub_results = resolve_all(sub_queries, context, domain)
+
+            sections = []
+            answer_parts = []
+            claims = []
+            evidence_start_index = 1
+            for res in sub_results:
+                sec = build_section_template(res, evidence_start_index=evidence_start_index)
+                sections.append(sec)
+                evidence_start_index += len(res.chunks)
+                if sec.status == "FOUND":
+                    answer_parts.append(f"### {sec.title}\\n{sec.text}")
+                else:
+                    answer_parts.append(f"### {sec.title}\\n{sec.text}")
+                claims.extend(sec.claims)
+
+            final_answer = "\n\n".join(answer_parts)
+            if truncated:
+                final_answer += "\n\n(Lưu ý: Bạn đã hỏi quá nhiều thủ tục, hệ thống chỉ trả lời 8 thủ tục đầu tiên)."
+
+            return AnswerResponse(
+                answer=final_answer,
+                claims=claims,
+                needs_clarification=False,
+                clarification_question=None,
+                domain=domain,
+                mode=effective_mode,
+                sections=sections,
+                truncated=truncated,
+            )
+
     # ---------------------------------------------------------
+    # Multi-agent preprocessing (Single-intent)
+    t0_hist = time.time()
+    history = history_reader(context)
+    print(f"[time] history_reader = {time.time() - t0_hist:.2f}s")
 
-    # 1. Read conversation history.
-    history = history_reader(
-        context
-    )
-
-    # 2. Retrieve lightweight procedure/topic hints.
+    # ---------------------------------------------------------
+    # Retrieve lightweight procedure/topic hints (và cache raw chunks).
+    initial_chunks = []
     procedure_hint = procedure_reader(
         query=query,
         context=context,
         top_k=2,
+        raw_results_out=initial_chunks,
     )
 
-    # 3. Synthesize current query using history.
+    # ---------------------------------------------------------
+    # Synthesize the query using history + procedure hints (uses 1.5B model).
+    t0_synth = time.time()
     consolidated = synthesizer(
         query=query,
         history=history,
@@ -416,18 +497,16 @@ def answer_query(
         generator=synthesizer_generator,
         domain=domain,
     )
+    print(f"[time] synthesizer = {time.time() - t0_synth:.2f}s")
 
     # ---------------------------------------------------------
     # Clarification branch
-    # ---------------------------------------------------------
     if consolidated.needs_clarification:
         return AnswerResponse(
             answer=None,
             claims=[],
             needs_clarification=True,
-            clarification_question=(
-                consolidated.clarification_question
-            ),
+            clarification_question=consolidated.clarification_question,
             domain=domain,
             mode=effective_mode,
             tool_calls=[],
@@ -435,51 +514,39 @@ def answer_query(
 
     # ---------------------------------------------------------
     # MCP tools
-    # ---------------------------------------------------------
     tool_evidence = []
-
     try:
-        # Risk classifier có thể nâng friendly -> strict.
-        # Dùng bản copy runtime, không sửa runtime gốc.
         tool_runtime = replace(
             runtime,
             mode=effective_mode,
         )
-
         tool_evidence = _run_tools_sync(
             query=consolidated.resolved_query,
             runtime=tool_runtime,
             context=context,
         )
-
     except Exception as exc:
-        # MCP failure không được làm hỏng normal RAG.
         print(
             "[pipeline] MCP tools unavailable: "
             f"{exc}"
         )
         tool_evidence = []
 
-    tool_calls = _build_tool_calls(
-        tool_evidence
-    )
+    tool_calls = _build_tool_calls(tool_evidence)
 
     # ---------------------------------------------------------
-    # Official RAG pipeline
-    # ---------------------------------------------------------
-
-    # 1. Two-step retrieval.
+    # Two-step retrieval
+    t0_retrieve = time.time()
+    raw_to_use = initial_chunks if (consolidated.resolved_query.strip().lower() == query.strip().lower()) else None
     retrieved_chunks = retrieve_two_step(
         query=consolidated.resolved_query,
         context=context,
         domain=domain,
+        raw_results=raw_to_use,
     )
+    print(f"[time] retrieve_two_step = {time.time() - t0_retrieve:.2f}s")
 
-    # Nếu không có RAG evidence lẫn MCP evidence.
-    if (
-        not retrieved_chunks
-        and not tool_evidence
-    ):
+    if (not retrieved_chunks and not tool_evidence):
         return AnswerResponse(
             answer=None,
             claims=[],
@@ -496,18 +563,9 @@ def answer_query(
 
     # ---------------------------------------------------------
     # Strict relevance threshold
-    #
-    # Khi Person A expose raw_score, pipeline tự ưu tiên
-    # raw cosine. Trong thời gian chưa có raw_score,
-    # fallback retrieval_score để giữ backward compatibility.
-    #
-    # MCP-only evidence không bị chặn ở gate này.
-    # ---------------------------------------------------------
     top_score = None
-
     if retrieved_chunks:
         first_chunk = retrieved_chunks[0]
-
         top_score = getattr(
             first_chunk,
             "raw_score",
@@ -517,27 +575,15 @@ def answer_query(
     if (
         effective_mode == "strict"
         and top_score is not None
-        and top_score
-        < runtime.min_retrieval_score
+        and top_score < runtime.min_retrieval_score
     ):
         print(
             "[pipeline] Strict mode: "
-            f"Top-1 score {top_score:.3f} < "
-            f"{runtime.min_retrieval_score:.3f} "
-            "-> NO EVIDENCE"
+            f"Top-1 score {top_score:.3f} < {runtime.min_retrieval_score:.3f} -> NO EVIDENCE"
         )
-
-        answer = (
-            runtime.no_evidence_message
-            or FALLBACK_TEXT
-        )
-
+        answer = runtime.no_evidence_message or FALLBACK_TEXT
         if runtime.disclaimer:
-            answer = (
-                f"{answer}\n\n"
-                f"{runtime.disclaimer}"
-            )
-
+            answer = f"{answer}\n\n{runtime.disclaimer}"
         return AnswerResponse(
             answer=answer,
             claims=[],
@@ -549,43 +595,20 @@ def answer_query(
         )
 
     # ---------------------------------------------------------
-    # 2. Rerank
-    # ---------------------------------------------------------
+    # Rerank
     ranked_chunks = (
-        rerank(retrieved_chunks)
-        if retrieved_chunks
-        else []
+        rerank(retrieved_chunks) if retrieved_chunks else []
     )
 
     # ---------------------------------------------------------
-    # 3. Build evidence
-    # ---------------------------------------------------------
-    evidence_candidates = (
-        build_evidence_candidates(
-            ranked_chunks
-        )
-    )
+    # Build evidence
+    evidence_candidates = build_evidence_candidates(ranked_chunks)
+    evidence_candidates.extend(tool_evidence)
 
-    # MCP evidence đi chung vào prompt + verification.
-    evidence_candidates.extend(
-        tool_evidence
-    )
-
-    if (
-        not evidence_candidates
-        and effective_mode == "strict"
-    ):
-        answer = (
-            runtime.no_evidence_message
-            or FALLBACK_TEXT
-        )
-
+    if (not evidence_candidates and effective_mode == "strict"):
+        answer = runtime.no_evidence_message or FALLBACK_TEXT
         if runtime.disclaimer:
-            answer = (
-                f"{answer}\n\n"
-                f"{runtime.disclaimer}"
-            )
-
+            answer = f"{answer}\n\n{runtime.disclaimer}"
         return AnswerResponse(
             answer=answer,
             claims=[],
@@ -597,140 +620,63 @@ def answer_query(
         )
 
     # ---------------------------------------------------------
-    # 4. Prompt Builder
-    # ---------------------------------------------------------
+    # Prompt Builder
+    t0_prompt = time.time()
     prompt = build_prompt(
         query=consolidated.resolved_query,
         evidence_candidates=evidence_candidates,
         context=context,
         domain=domain,
     )
+    print(f"[time] prompt_build = {time.time() - t0_prompt:.2f}s")
 
     # ---------------------------------------------------------
-    # 5. Final Answer Generation
-    # ---------------------------------------------------------
+    # Final Answer Generation
     from rag.generator import LLMUnavailableError
 
     try:
         generated_answer = generator(
             prompt
         )
-
     except LLMUnavailableError as exc:
-        print(
-            f"GENERATOR ERROR: {exc}"
-        )
+        print(f"GENERATOR ERROR: {exc}")
+        generated_answer = None
 
-        return AnswerResponse(
-            answer=(
-                "Hệ thống đang bận, "
-                "vui lòng thử lại sau ít phút."
-            ),
-            claims=[],
-            needs_clarification=False,
-            clarification_question=None,
-            domain=domain,
-            mode=effective_mode,
-            tool_calls=tool_calls,
-        )
+    # Apply output guard
+    if generated_answer is not None:
+        generated_answer = apply_output_guard(generated_answer)
 
-    except Exception as exc:
-        print(
-            "GENERATOR ERROR:",
-            repr(exc),
-        )
-        generated_answer = ""
-
-    # ---------------------------------------------------------
-    # 6. Fallback if useless answer
-    # ---------------------------------------------------------
-    if _is_useless_answer(
-        generated_answer
-    ):
-        from rag.prompt_builder import (
-            _detect_field_types,
-        )
-
-        field_types = _detect_field_types(
-            consolidated.resolved_query
-        )
-
-        generated_answer = (
-            _answer_from_evidence(
-                evidence_candidates,
-                field_types,
-            )
-        )
-
-    # ---------------------------------------------------------
-    # 7. Verification
-    # ---------------------------------------------------------
-    verification_results = verify_answer(
-        generated_answer=generated_answer,
-        evidence_candidates=evidence_candidates,
-    )
-
-    # ---------------------------------------------------------
-    # 8. Mapper
-    # ---------------------------------------------------------
-    verified_claims = (
-        map_verification_results(
-            verification_results=verification_results,
-            evidence_candidates=evidence_candidates,
-        )
-    )
-
-    # Strict: answer phải có evidence-supported claim.
-    if (
-        effective_mode == "strict"
-        and not verified_claims
-    ):
-        answer = (
-            runtime.no_evidence_message
-            or FALLBACK_TEXT
-        )
-
-        if runtime.disclaimer:
-            answer = (
-                f"{answer}\n\n"
-                f"{runtime.disclaimer}"
-            )
-
-        return AnswerResponse(
-            answer=answer,
-            claims=[],
-            needs_clarification=False,
-            clarification_question=None,
-            domain=domain,
-            mode=effective_mode,
-            tool_calls=tool_calls,
-        )
-
-    # ---------------------------------------------------------
-    # Output guardrail
-    # ---------------------------------------------------------
-    generated_answer = apply_output_guard(
-        generated_answer,
-        effective_mode,
-        runtime.disclaimer,
-        allowed_text=" ".join(
-            ev.content or ""
-            for ev in evidence_candidates
-        ),
-    )
-
-    # ---------------------------------------------------------
-    # Final response
-    # ---------------------------------------------------------
-    return AnswerResponse(
+    # Verification
+    verification_result = verify_answer(
         answer=generated_answer,
-        claims=verified_claims,
-        needs_clarification=False,
-        clarification_question=None,
+        query=consolidated.resolved_query,
+        evidence=evidence_candidates,
+        domain=domain,
+    )
+    verification = map_verification_results(verification_result)
+
+    # Build final response
+    final_response = AnswerResponse(
+        answer=generated_answer,
+        claims=verification.claims,
+        needs_clarification=verification.needs_clarification,
+        clarification_question=verification.clarification_question,
         domain=domain,
         mode=effective_mode,
         tool_calls=tool_calls,
     )
+
+    # Cache the response
+    _PIPELINE_ANSWER_CACHE[cache_key] = final_response
+    if len(_PIPELINE_ANSWER_CACHE) > _MAX_ANSWER_CACHE_SIZE:
+        # simple LRU eviction
+        oldest_key = next(iter(_PIPELINE_ANSWER_CACHE))
+        del _PIPELINE_ANSWER_CACHE[oldest_key]
+
+    total_pipeline = time.time() - t_start_pipeline
+    print(f"[time] total_pipeline = {total_pipeline:.2f}s")
+
+    return final_response
 
 
 def answer_question_stream(
@@ -943,3 +889,4 @@ def answer_question_stream(
         "type": "final",
         "response": result,
     }
+

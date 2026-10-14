@@ -20,10 +20,12 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
+import os
 
 import subprocess
 import socket
 import time
+import asyncio
 from contextlib import asynccontextmanager
 import my_config
 
@@ -37,27 +39,93 @@ def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('127.0.0.1', port)) == 0
 
+async def _warmup_background():
+    # Preload Database tables
+    try:
+        from context.init_db import init_db
+        await init_db()
+        print("[startup] Đã khởi tạo cấu trúc Database thành công.")
+    except Exception as e:
+        print(f"[startup] Cảnh báo lỗi init_db: {e}")
+
+    # Preload Embedding Model, Vector Store, và Alias Catalog
+    try:
+        from rag.retrieval import load_embedding_model, load_vector_store, _get_alias_catalog
+        print("[startup] Đang nạp embedding model vào bộ nhớ...")
+        await asyncio.to_thread(load_embedding_model)
+        print("[startup] Đang kết nối Qdrant vector store...")
+        await asyncio.to_thread(load_vector_store)
+        print("[startup] Đang nạp danh mục alias...")
+        await asyncio.to_thread(_get_alias_catalog)
+        print("[startup] Hoàn tất nạp tài nguyên RAG.")
+    except Exception as e:
+        print(f"[startup] Cảnh báo lỗi nạp tài nguyên RAG: {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global llama_process
+
+    # Khởi động tác vụ preload ngầm để không chặn server FastAPI mở port
+    asyncio.create_task(_warmup_background())
+
     port = 8080
     if not is_port_in_use(port):
-        print(f"Bắt đầu khởi động llama-server tại port {port}...")
+        print(f"Bắt đầu khởi động llama-server tại port {port} với cấu hình CPU tối ưu...")
         cmd = [
             "llama-server", 
             "-m", str(my_config.MODEL_3B_PATH), 
             "--port", str(port), 
-            "--ctx-size", "4096"
+            "--ctx-size", str(my_config.LLAMA_CTX_SIZE),
+            "--parallel", str(my_config.LLAMA_PARALLEL),
+            "--threads", str(my_config.LLAMA_THREADS),
+            "--threads-batch", str(my_config.LLAMA_THREADS),
+            "--batch-size", str(my_config.LLAMA_BATCH_SIZE),
+            "--ubatch-size", str(my_config.LLAMA_UBATCH_SIZE),
+            "--flash-attn", "auto",
+            "--cache-reuse", "256"
         ]
+        os.makedirs("task", exist_ok=True)
+        llama_log_file = open("task/llama_server.log", "w", encoding="utf-8")
         llama_process = subprocess.Popen(
             cmd,
-            stdout=subprocess.DEVNULL,
+            stdout=llama_log_file,
             stderr=subprocess.STDOUT
         )
         
         for _ in range(30):
             if is_port_in_use(port):
-                print("Llama-server đã sẵn sàng!")
+                print("Llama-server đã sẵn sàng! Đang thực hiện warmup ngầm...")
+                # Async warmup request to prefill weights into memory
+                def _warmup_llama():
+                    import urllib.request
+                    import json
+                    import time
+                    time.sleep(1)
+                    for _ in range(20):
+                        try:
+                            h_url = f"http://127.0.0.1:{port}/health"
+                            with urllib.request.urlopen(h_url, timeout=2) as h_resp:
+                                if json.loads(h_resp.read().decode('utf-8')).get("status") == "ok":
+                                    break
+                        except Exception:
+                            pass
+                        time.sleep(1)
+                    try:
+                        req = urllib.request.Request(
+                            f"http://127.0.0.1:{port}/v1/chat/completions",
+                            data=json.dumps({
+                                "messages": [{"role": "user", "content": "Xin chào"}],
+                                "max_tokens": 1
+                            }).encode("utf-8"),
+                            headers={"Content-Type": "application/json"}
+                        )
+                        with urllib.request.urlopen(req, timeout=10) as _:
+                            pass
+                        print("[warmup] Llama-server đã hoàn tất nạp bộ nhớ!")
+                    except Exception as err:
+                        print(f"[warmup] Bỏ qua warmup: {err}")
+
+                asyncio.create_task(asyncio.to_thread(_warmup_llama))
                 break
             time.sleep(1)
         else:

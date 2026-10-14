@@ -46,13 +46,19 @@ def _format_history(history: dict[str, Any]) -> str:
         return "Không có lịch sử hội thoại."
 
     recent_messages = history.get("recent_messages", [])
+    if isinstance(recent_messages, list) and len(recent_messages) > 4:
+        recent_messages = recent_messages[-4:]
+
     conversation_summary = history.get("conversation_summary", "")
 
     parts: list[str] = []
 
     if conversation_summary:
+        sum_text = _extract_text(conversation_summary)
+        if len(sum_text) > 300:
+            sum_text = sum_text[:300] + "..."
         parts.append(
-            f"Tóm tắt hội thoại:\n{conversation_summary}"
+            f"Tóm tắt hội thoại:\n{sum_text}"
         )
 
     if recent_messages:
@@ -62,9 +68,15 @@ def _format_history(history: dict[str, Any]) -> str:
             if isinstance(message, dict):
                 role = message.get("role", "")
                 content = _extract_text(message.get("content", ""))
+                if role == "assistant" and len(content) > 150:
+                    content = content[:150] + "..."
                 message_lines.append(f"{role}: {content}")
             elif isinstance(message, (list, tuple)) and len(message) == 2:
-                message_lines.append(f"user: {_extract_text(message[0])}\nassistant: {_extract_text(message[1])}")
+                user_text = _extract_text(message[0])
+                assistant_text = _extract_text(message[1])
+                if len(assistant_text) > 150:
+                    assistant_text = assistant_text[:150] + "..."
+                message_lines.append(f"user: {user_text}\nassistant: {assistant_text}")
 
         if message_lines:
             parts.append(
@@ -81,7 +93,7 @@ def _format_history(history: dict[str, Any]) -> str:
 def _format_procedure_hint(
     procedure_hint: list[RetrievedChunk],
 ) -> str:
-    """Format procedure hints using only relevant chunk information."""
+    """Format procedure hints using only title (Phase 1)."""
     if not procedure_hint:
         return "Không có gợi ý thủ tục."
 
@@ -89,16 +101,41 @@ def _format_procedure_hint(
 
     for index, chunk in enumerate(procedure_hint, start=1):
         title = chunk.metadata.get("title", "")
-        title_text = f"\nTiêu đề: {title}" if title else ""
+        if title:
+            hint_parts.append(f"Gợi ý {index}: {title}")
 
-        hint_parts.append(
-            f"Gợi ý {index}:\n"
-            f"document_id: {chunk.document_id}"
-            f"{title_text}\n"
-            f"Nội dung: {chunk.content}"
-        )
+    if not hint_parts:
+        return "Không có gợi ý thủ tục."
 
-    return "\n\n".join(hint_parts)
+    return "\n".join(hint_parts)
+
+
+_PRONOUNS = {
+    "nó", "vậy", "thế", "cái đó", "việc đó", "còn", "như vậy", "thì sao",
+    "đây", "đó", "này", "ấy", "chưa", "nếu", "mà", "ủa", "sao", "thế thì",
+    "vậy thì", "ai", "bao nhiêu", "ở đâu", "mấy ngày", "mất bao lâu",
+    "thì làm sao", "thì phải làm sao"
+}
+
+def _is_faithful(
+    resolved_query: str,
+    query: str,
+    history_user_texts: list[str],
+    hint_titles: list[str],
+) -> bool:
+    """Check if LLM hallucinated numbers."""
+    allowed_text = (
+        query.lower() + " " +
+        " ".join(history_user_texts).lower() + " " +
+        " ".join(hint_titles).lower()
+    )
+    
+    # Check if any digits in the resolved query are not in the allowed text
+    for num in re.findall(r'\d+', resolved_query):
+        if num not in allowed_text:
+            return False
+            
+    return True
 
 
 def _build_synthesizer_prompt(
@@ -111,57 +148,74 @@ def _build_synthesizer_prompt(
     procedure_hint_text = _format_procedure_hint(procedure_hint)
 
     return f"""
-Bạn là Query Synthesizer cho một Legal AI Assistant chuyên về
-thủ tục hành chính.
+Bạn là Query Synthesizer cho một Legal AI Assistant chuyên về thủ tục hành chính.
 
-Nhiệm vụ duy nhất của bạn là viết lại câu hỏi hiện tại thành
-một câu hỏi độc lập, đầy đủ ngữ cảnh để hệ thống Retrieval
-có thể sử dụng.
-
-Bạn được cung cấp:
-
-1. Câu hỏi hiện tại.
-2. Lịch sử hội thoại.
-3. Một số gợi ý về thủ tục/chủ đề từ hệ thống Retrieval.
+Nhiệm vụ duy nhất của bạn là viết lại câu hỏi hiện tại thành một câu hỏi độc lập, đầy đủ ngữ cảnh để hệ thống Retrieval có thể sử dụng.
 
 QUY TẮC:
-
 - Giữ nguyên ý định của câu hỏi hiện tại.
-- Sử dụng lịch sử hội thoại để giải quyết các tham chiếu như
-  "nó", "vậy", "thế", "còn", "giấy tờ", "lệ phí thì sao?".
-- Sử dụng gợi ý thủ tục/chủ đề chỉ để hỗ trợ hiểu câu hỏi.
-- Không tự thêm thông tin mà người dùng chưa cung cấp.
-- Không sử dụng kiến thức bên ngoài.
-- Không trả lời câu hỏi pháp lý.
-- Không tạo evidence.
-- Không thực hiện Retrieval.
-- Không thực hiện reranking.
-- Không thực hiện verification.
-- Không gọi MCP.
-- Không tự suy diễn các thông tin còn thiếu.
-- original_query phải giữ nguyên câu hỏi hiện tại.
-- Nếu thông tin hiện có đủ để xác định câu hỏi độc lập:
-  needs_clarification = false
-  clarification_question = null
-- Nếu vẫn thiếu thông tin quan trọng để xác định câu hỏi:
-  needs_clarification = true
-  clarification_question là một câu hỏi làm rõ ngắn gọn bằng tiếng Việt.
-- Không đánh dấu cần làm rõ chỉ vì câu hỏi ngắn. Hãy dựa trên
-  thông tin thực tế trong query, history và procedure hint.
-- ĐẶC BIỆT LƯU Ý: Nếu câu hỏi hiện tại là một câu hỏi mở đầu hoặc chung chung
-  (ví dụ: "chào", "mình muốn hỏi thủ tục", "cho mình hỏi"), và không có
-  dấu hiệu nào cho thấy người dùng đang hỏi tiếp (follow-up) về thủ tục cũ,
-  bạn BẮT BUỘC phải đặt needs_clarification = true và hỏi lại người dùng.
-  KHÔNG tự động nối thủ tục cũ vào câu hỏi nếu người dùng không hỏi về nó.
-- Chỉ trả về JSON hợp lệ.
-- Không trả markdown.
-- Không giải thích ngoài JSON.
+- Sử dụng lịch sử hội thoại để giải quyết các tham chiếu ("nó", "vậy", "thì sao", "còn"...).
+- Sử dụng gợi ý thủ tục chỉ để hỗ trợ hiểu câu hỏi.
+- Không tự thêm thông tin chưa được cung cấp.
+- Không trả lời câu hỏi pháp lý, không suy diễn thông tin.
+- Nếu thông tin hiện có đủ để xác định câu hỏi độc lập: needs_clarification = false, clarification_question = null
+- Nếu thiếu thông tin quan trọng để xác định: needs_clarification = true, clarification_question = "câu hỏi làm rõ ngắn gọn"
+- ĐẶC BIỆT LƯU Ý: Nếu câu mở đầu ("chào", "cho hỏi") không nói rõ thủ tục và không có follow-up, BẮT BUỘC needs_clarification = true. KHÔNG tự nối thủ tục cũ vào nếu người dùng không hỏi.
 
-ĐỊNH DẠNG JSON BẮT BUỘC:
+VÍ DỤ MẪU:
 
+Ví dụ 1:
+LỊCH SỬ: user: tôi muốn đăng ký kết hôn
+CÂU HỎI HIỆN TẠI: vậy lệ phí thì sao?
+ĐÁP ÁN JSON:
 {{
-    "resolved_query": "...",
-    "original_query": "...",
+    "resolved_query": "lệ phí đăng ký kết hôn là bao nhiêu?",
+    "original_query": "vậy lệ phí thì sao?",
+    "needs_clarification": false,
+    "clarification_question": null
+}}
+
+Ví dụ 2:
+LỊCH SỬ: Không có lịch sử hội thoại.
+CÂU HỎI HIỆN TẠI: tôi muốn làm giấy tờ
+ĐÁP ÁN JSON:
+{{
+    "resolved_query": "tôi muốn làm giấy tờ",
+    "original_query": "tôi muốn làm giấy tờ",
+    "needs_clarification": true,
+    "clarification_question": "Bạn muốn làm giấy tờ liên quan đến thủ tục nào?"
+}}
+
+Ví dụ 3:
+LỊCH SỬ: user: thủ tục cấp hộ chiếu
+CÂU HỎI HIỆN TẠI: xin chào
+ĐÁP ÁN JSON:
+{{
+    "resolved_query": "xin chào",
+    "original_query": "xin chào",
+    "needs_clarification": true,
+    "clarification_question": "Chào bạn, bạn muốn hỏi về thủ tục hành chính nào?"
+}}
+
+Ví dụ 4:
+LỊCH SỬ: Không có lịch sử hội thoại.
+GỢI Ý: Gợi ý 1: Thủ tục đăng ký khai sinh
+CÂU HỎI HIỆN TẠI: kiểu mình mới đẻ con ấy thì giờ mình phải làm gì
+ĐÁP ÁN JSON:
+{{
+    "resolved_query": "mới sinh con thì làm thủ tục đăng ký khai sinh như thế nào?",
+    "original_query": "kiểu mình mới đẻ con ấy thì giờ mình phải làm gì",
+    "needs_clarification": false,
+    "clarification_question": null
+}}
+
+Ví dụ 5:
+LỊCH SỬ: user: thủ tục giấy khai sinh
+CÂU HỎI HIỆN TẠI: ủa mà mình chưa đăng kí kết hôn á thì phải làm sao?
+ĐÁP ÁN JSON:
+{{
+    "resolved_query": "chưa đăng ký kết hôn thì đăng ký khai sinh cho con như thế nào?",
+    "original_query": "ủa mà mình chưa đăng kí kết hôn á thì phải làm sao?",
     "needs_clarification": false,
     "clarification_question": null
 }}
@@ -278,7 +332,7 @@ def _validate_consolidated_query(
 def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: str | None = None) -> bool:
     """
     Return True if the query contains at least one keyword that maps to a
-    known procedure in the dataset (procedures.json titles).
+    known procedure in the dataset (procedures.json titles or aliases).
 
     This is a deterministic guard — the LLM is NOT consulted here.
 
@@ -290,7 +344,16 @@ def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: st
     keywords = runtime.entity_keywords
 
     combined = (query + " " + (extra_text or "")).lower()
-    return any(kw.lower() in combined for kw in keywords)
+    if any(kw.lower() in combined for kw in keywords):
+        return True
+
+    from rag.retrieval import _get_alias_catalog
+    catalog = _get_alias_catalog()
+    for doc_id, aliases in catalog.items():
+        if any(a in combined for a in aliases if a):
+            return True
+
+    return False
 
 
 def _get_active_procedure(history: dict, procedure_hint: list, domain: str | None = None) -> str:
@@ -368,16 +431,19 @@ def synthesizer(
     history_text_for_kw = " ".join(user_kw_texts)
 
     # -----------------------------------------------------------------
-    # Rule-based clarification override (Issue #3)
+    # Rule-based clarification override (Bước 2A: Kết hợp Retrieval Hints)
     # -----------------------------------------------------------------
-    if not _has_specific_procedure_keyword(query, history_text_for_kw, domain=domain):
+    has_keyword = _has_specific_procedure_keyword(query, history_text_for_kw, domain=domain)
+    has_hint = bool(procedure_hint and len(procedure_hint) > 0)
+
+    if not has_keyword and not has_hint:
         clarification_q = (
             "Bạn muốn hỏi về thủ tục hành chính nào? "
             "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
         )
         print(
-            "[synthesizer] Rule-based override: no procedure keyword in "
-            "query+history → needs_clarification=True"
+            "[synthesizer] Rule-based override: no procedure keyword and no valid hints "
+            "→ needs_clarification=True"
         )
         return ConsolidatedQuery(
             resolved_query=query,
@@ -387,10 +453,69 @@ def synthesizer(
         )
 
     # -----------------------------------------------------------------
-    # GĐ3 mục 10: (ĐÃ XOÁ BỎ) Rule-based follow-up resolution.
-    # Nhường hoàn toàn cho LLM quyết định việc có phải follow-up hay không.
+    # Bỏ qua LLM khi câu đã rõ
     # -----------------------------------------------------------------
+    query_lower = query.lower()
+    has_pronoun = any(re.search(r'\b' + p + r'\b', query_lower) for p in _PRONOUNS)
+    
+    # Chỉ bypass khi chính câu hiện tại (query) có từ khóa thủ tục rõ ràng
+    has_query_kw = _has_specific_procedure_keyword(query, domain=domain)
+    if not has_pronoun and has_query_kw:
+        print("[synthesizer] Query is clear (no pronouns, has keyword) -> bypass LLM.")
+        return ConsolidatedQuery(
+            resolved_query=query,
+            original_query=query,
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
+    # Turn 1: Không có lịch sử hội thoại, nếu đã có keyword thủ tục/alias thì query độc lập, bypass LLM
+    if not recent_messages and has_query_kw:
+        print("[synthesizer] Turn 1 with procedure keyword -> bypass LLM.")
+        return ConsolidatedQuery(
+            resolved_query=query,
+            original_query=query,
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
     active_procedure = _get_active_procedure(history, procedure_hint, domain=domain)
+
+    # SYNTHESIZER_MODE check: 'rule' or 'off' bypasses LLM call completely
+    import my_config as cfg
+    synth_mode = getattr(cfg, "SYNTHESIZER_MODE", "llm")
+    if generator is generate_answer_1_5b:
+        if synth_mode in ("rule", "off") and active_procedure:
+            resolved = f"{query} (liên quan đến: {active_procedure})"
+            print(f"[synthesizer] Fast rule/off bypass (mode='{synth_mode}'): {resolved}")
+            return ConsolidatedQuery(
+                resolved_query=resolved,
+                original_query=query,
+                needs_clarification=False,
+                clarification_question=None,
+            )
+        elif synth_mode == "off":
+            print(f"[synthesizer] Fast off bypass: {query}")
+            return ConsolidatedQuery(
+                resolved_query=query,
+                original_query=query,
+                needs_clarification=False,
+                clarification_question=None,
+            )
+
+    # Bước 3A Fast Path: Nếu câu hỏi hỏi về field/hồ sơ/lệ phí và đã có thủ tục active, ghép nhanh (chỉ khi dùng production generator)
+    if generator is generate_answer_1_5b:
+        from rag.prompt_builder import _detect_field_types
+        detected_fields = _detect_field_types(query)
+        if detected_fields and active_procedure and not has_query_kw:
+            resolved = f"{query} (liên quan đến: {active_procedure})"
+            print(f"[synthesizer] Fast follow-up field resolution: {resolved}")
+            return ConsolidatedQuery(
+                resolved_query=resolved,
+                original_query=query,
+                needs_clarification=False,
+                clarification_question=None,
+            )
 
 
     # -----------------------------------------------------------------
@@ -404,13 +529,23 @@ def synthesizer(
 
     try:
         from rag.generator import LLMUnavailableError
-        raw_output = generator(prompt)
+        # Phase 1: Call generator with temperature=0 and json_mode=True
+        raw_output = generator(prompt, temperature=0.0, json_mode=True)
         parsed_output = _parse_json_output(raw_output)
-        return _validate_consolidated_query(parsed_output)
-    except (ValueError, LLMUnavailableError) as exc:
+        cq = _validate_consolidated_query(parsed_output)
+        
+        # Phase 1: Faithfulness check
+        hint_titles = [h.metadata.get("title", "") for h in procedure_hint]
+        if not _is_faithful(cq.resolved_query, query, user_kw_texts, hint_titles):
+            print("[synthesizer] LLM output failed faithfulness check, using fallback.")
+            raise ValueError("Faithfulness check failed")
+            
+        return cq
+    except (ValueError, LLMUnavailableError, TypeError) as exc:
+        # TypeError can happen if generator doesn't accept temperature/json_mode kwargs
         # GĐ3 mục 11: khi parse lỗi, ghép thủ tục active vào fallback
         # thay vì dùng nguyên câu gốc (dễ gây nhầm trong multi-turn)
-        print(f"[synthesizer] Fallback do lỗi parse: {exc}")
+        print(f"[synthesizer] Fallback do lỗi parse/LLM: {exc}")
         fallback_query = query
         if active_procedure:
             proc_short = active_procedure[:60] if len(active_procedure) > 60 else active_procedure

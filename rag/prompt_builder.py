@@ -281,12 +281,12 @@ def _format_context(
     )
 
     if conversation_summary:
-
+        sum_text = _extract_text(conversation_summary)
+        if len(sum_text) > 400:
+            sum_text = sum_text[:400] + "..."
         parts.append(
             "TÓM TẮT HỘI THOẠI TRƯỚC:\n"
-            + _extract_text(
-                conversation_summary
-            )
+            + sum_text
         )
 
     # -----------------------------------------------------
@@ -307,8 +307,9 @@ def _format_context(
     ):
 
         lines = []
+        msgs_to_show = recent_messages[-4:] if len(recent_messages) > 4 else recent_messages
 
-        for message in recent_messages:
+        for message in msgs_to_show:
 
             if isinstance(
                 message,
@@ -326,6 +327,9 @@ def _format_context(
                         ""
                     )
                 )
+
+                if role == "assistant" and len(content) > 200:
+                    content = content[:200] + "..."
 
                 if content:
                     lines.append(
@@ -347,6 +351,9 @@ def _format_context(
                 assistant_text = _extract_text(
                     message[1]
                 )
+
+                if len(assistant_text) > 200:
+                    assistant_text = assistant_text[:200] + "..."
 
                 lines.append(
                     f"user: {user_text}"
@@ -454,22 +461,18 @@ def build_prompt(
         cid = evidence.chunk_id or ""
         category_label = ""
         if cid.endswith("_docs"):
-            category_label = " [MỤC THÀNH PHẦN HỒ SƠ / GIẤY TỜ]"
+            category_label = " [HỒ SƠ / GIẤY TỜ]"
         elif cid.endswith("_fee"):
-            category_label = " [MỤC LỆ PHÍ / CHI PHÍ]"
+            category_label = " [LỆ PHÍ]"
         elif cid.endswith("_time"):
-            category_label = " [MỤC THỜI GIAN GIẢI QUYẾT]"
+            category_label = " [THỜI GIAN]"
         elif cid.endswith("_method"):
-            category_label = " [MỤC HÌNH THỨC NỘP HỒ SƠ / ĐỊA ĐIỂM]"
+            category_label = " [HÌNH THỨC NỘP / ĐỊA ĐIỂM]"
         elif cid.endswith("_general"):
-            category_label = " [MỤC THÔNG TIN TỔNG QUAN THỦ TỤC]"
+            category_label = " [TỔNG QUAN]"
 
         section = (
-            f"[Evidence {evidence.candidate_id}]{category_label}\n"
-            f"document_id: {evidence.document_id}\n"
-            f"chunk_id: {evidence.chunk_id}\n"
-            f"title: {evidence.title}\n"
-            f"content:\n"
+            f"[{evidence.candidate_id}]{category_label} {evidence.title}\n"
             f"{evidence.content}"
         )
 
@@ -498,25 +501,26 @@ def build_prompt(
     restriction_text = _build_field_restriction_rule(field_types)
 
     # =====================================================
-    # FINAL PROMPT — GĐ1 mục 2
+    # FINAL PROMPT — GĐ1 mục 2 + Cache-friendly static prefix
     # Tách system/user, 6 quy tắc tích cực, few-shot example.
-    # Citation chỉ ở cuối đoạn, không chèn giữa câu.
+    # system_block giữ nguyên tuyệt đối để llama-server tái sử dụng KV prefix cache.
     # =====================================================
 
-    field_focus = (
-        f"\n{restriction_text}" if restriction_text else ""
+    focus_directive = (
+        f"LƯU Ý TRỌNG TÂM: {restriction_text}\n\n" if restriction_text else ""
     )
 
     system_block = f"""Bạn là {assistant_role} thân thiện và chính xác.
 
 QUY TẮC:
 1. Diễn đạt rõ ràng dễ hiểu, QUAN TRỌNG LÀ PHẢI BÁM SÁT BẰNG CHỨNG ĐƯỢC CUNG CẤP, KHÔNG ĐƯA Ý KIẾN HAY KIẾN THỨC RIÊNG VÀO CÂU TRẢ LỜI  .
+1b. ĐẶC BIỆT CHÚ Ý TÍNH PHỦ ĐỊNH: Nếu bằng chứng ghi 'KHÔNG CẦN', 'KHÔNG PHẢI NỘP', 'MIỄN' giấy tờ/thủ tục nào, tuyệt đối KHÔNG được viết thành 'cần' hay 'phải nộp'. Phải giữ nguyên nghĩa phủ định/miễn trừ theo bằng chứng.
 2. Giữ nguyên chính xác: số tiền, thời hạn, tên giấy tờ, tên cơ quan.
 3. Nếu người dùng hỏi nhiều ý (multi-intent: vừa hỏi giấy tờ, vừa hỏi thời gian hay lệ phí), hãy trả lời đầy đủ từng ý theo cấu trúc rõ ràng.
 4. Ý nào bằng chứng không đề cập → nói rõ "chưa có thông tin về phần này". KHÔNG tự suy đoán.
 5. Cuối câu trả lời, gợi ý một điều người dùng có thể hỏi tiếp.
 6. Trả lời bằng tiếng Việt, rõ ràng, tự nhiên.
-7. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không dùng kiến thức riêng.{field_focus}
+7. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không dùng kiến thức riêng.
 8. Một câu trả lời cần chứa tối thiểu thông tin về tên thủ tục (được in đậm và tách ra dòng riêng để người dùng đọc vào là biết tên thủ tục). Các thông tin còn lại phải được viết rõ ràng, có bullet cho từng thông tin, không viết chùm chùm.
 9. Người dùng hỏi gì thì trả lời đó không trả lời dư: ví dụ người dùng hỏi lệ phí thủ tục đăng kí kết hôn thì chỉ trả thủ tục đăng kí kết hôn.
 10. Sau khi đưa ra câu trả lời về thủ tục cho người dùng thì hãy kết câu bằng: "Bạn muốn hỏi thêm về thông tin thủ tục nào không?"
@@ -528,11 +532,9 @@ Tên thủ tục: [Tên thủ tục]
  - Lệ phí: [Thông tin về lệ phí]
  - Thời gian giải quyết: [Thông tin về thời gian]
  - Địa chỉ cơ quan tiếp nhận hồ sơ: [Thông tin về địa chỉ cơ quan tiếp nhận hồ sơ]
-
-
 """
 
-    user_block = f"""NGỮ CẢNH HỘI THOẠI:
+    user_block = f"""{focus_directive}NGỮ CẢNH HỘI THOẠI:
 {context_text}
 
 BẰNG CHỨNG:

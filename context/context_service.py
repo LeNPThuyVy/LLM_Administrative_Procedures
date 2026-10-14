@@ -1,3 +1,4 @@
+import asyncio
 from sqlalchemy import select
 
 from context.database import AsyncSessionLocal
@@ -16,119 +17,88 @@ from context.structured_context import (
 )
 
 
+async def _fetch_user(user_id):
+    if not user_id:
+        return None
+    async with AsyncSessionLocal() as s:
+        res = await s.execute(select(User).where(User.id == user_id))
+        return res.scalar_one_or_none()
+
+async def _fetch_messages(session_id):
+    async with AsyncSessionLocal() as s:
+        res = await s.execute(
+            select(Message)
+            .where(Message.session_id == session_id)
+            .order_by(Message.created_at.desc())
+            .limit(10)
+        )
+        return list(reversed(res.scalars().all()))
+
+async def _fetch_summary(session_id):
+    async with AsyncSessionLocal() as s:
+        res = await s.execute(
+            select(ConversationSummary).where(ConversationSummary.session_id == session_id)
+        )
+        return res.scalar_one_or_none()
+
+async def _fetch_structured(session_id):
+    async with AsyncSessionLocal() as s:
+        res = await s.execute(
+            select(StructuredContext).where(StructuredContext.session_id == session_id)
+        )
+        return res.scalar_one_or_none()
+
+async def _fetch_memory(user_id):
+    if not user_id:
+        return None
+    async with AsyncSessionLocal() as s:
+        res = await s.execute(
+            select(LongTermMemory).where(LongTermMemory.user_id == user_id)
+        )
+        return res.scalar_one_or_none()
+
+
 async def get_context(
     session_id,
     query: str
 ):
     async with AsyncSessionLocal() as db:
-
         session_result = await db.execute(
-            select(ChatSession)
-            .where(
-                ChatSession.id == session_id
-            )
+            select(ChatSession).where(ChatSession.id == session_id)
         )
-
         session = session_result.scalar_one_or_none()
-
         if session is None:
-            raise ValueError(
-                f"Session not found: {session_id}"
-            )
+            raise ValueError(f"Session not found: {session_id}")
 
-        user_result = await db.execute(
-            select(User)
-            .where(
-                User.id == session.user_id
-            )
-        )
+    # Truy vấn đồng thời các bảng còn lại qua pool
+    user, messages, summary, structured, memory = await asyncio.gather(
+        _fetch_user(session.user_id),
+        _fetch_messages(session_id),
+        _fetch_summary(session_id),
+        _fetch_structured(session_id),
+        _fetch_memory(session.user_id),
+    )
 
-        user = user_result.scalar_one_or_none()
-
-        messages_result = await db.execute(
-            select(Message)
-            .where(
-                Message.session_id == session_id
-            )
-            .order_by(
-                Message.created_at.desc()
-            )
-            .limit(10)
-        )
-
-        messages = list(
-            reversed(
-                messages_result.scalars().all()
-            )
-        )
-
-        summary_result = await db.execute(
-            select(ConversationSummary)
-            .where(
-                ConversationSummary.session_id
-                == session_id
-            )
-        )
-
-        summary = summary_result.scalar_one_or_none()
-
-        structured_result = await db.execute(
-            select(StructuredContext)
-            .where(
-                StructuredContext.session_id
-                == session_id
-            )
-        )
-
-        structured = structured_result.scalar_one_or_none()
-
-        memory_result = await db.execute(
-            select(LongTermMemory)
-            .where(
-                LongTermMemory.user_id
-                == session.user_id
-            )
-        )
-
-        memory = memory_result.scalar_one_or_none()
-
-        return {
-            "session": {
-                "id": str(session.id)
-            },
-
-            "user": {
-                "id": str(user.id),
-                "name": user.name,
-                "email": user.email
-            } if user else {},
-
-            "conversation_summary": (
-                summary.summary
-                if summary
-                else ""
-            ),
-
-            "recent_messages": [
-                {
-                    "role": message.role,
-                    "content": message.content
-                }
-                for message in messages
-            ],
-
-            "structured_context": (
-                structured.data
-                if structured
-                else {}
-            ),
-
-            "long_term_memory": (
-                memory.data
-                if memory
-                else {}
-            )
-        }
+    return {
+        "session": {
+            "id": str(session.id)
+        },
+        "user": {
+            "id": str(user.id),
+            "name": user.name,
+            "email": user.email
+        } if user else {},
+        "conversation_summary": summary.summary if summary else "",
+        "recent_messages": [
+            {
+                "role": message.role,
+                "content": message.content
+            }
+            for message in messages
+        ],
+        "structured_context": structured.data if structured else {},
+        "long_term_memory": memory.data if memory else {}
+    }
 
 
 async def update_memory(
@@ -297,6 +267,7 @@ async def update_memory(
 
 
 SUMMARY_TRIGGER = 20
+SUMMARY_STEP = 10
 RECENT_KEEP = 10
 
 
@@ -320,6 +291,9 @@ async def _update_conversation_summary(
         )
 
         if len(messages) < SUMMARY_TRIGGER:
+            return
+
+        if (len(messages) - SUMMARY_TRIGGER) % SUMMARY_STEP != 0:
             return
 
         old_messages = messages[:-RECENT_KEEP]
