@@ -71,6 +71,24 @@ risk_level: high
 assistant_role: "cán bộ tư vấn thủ tục hành chính"
 no_evidence_message: "Tôi chưa có đủ thông tin để trả lời câu hỏi này."
 disclaimer: "Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+out_of_scope_message: "Hiện tại hệ thống chỉ hỗ trợ tra cứu các thủ tục hành chính công áp dụng tại Thành phố Hồ Chí Minh."
+field_intents:
+  - key: method
+    label: "HÌNH THỨC NỘP HỒ SƠ"
+    section_name: "'Hình thức nộp'"
+    pattern: "\\b(hình\\s+thức\\s+nộp|nộp\\s+online|nộp\\s+trực\\s+tuyến|nộp\\s+trực\\s+tiếp|cách\\s+nộp|nộp\\s+ở\\s+đâu|submission\\s+method)\\b"
+  - key: docs
+    label: "GIẤY TỜ / HỒ SƠ cần thiết"
+    section_name: "'Thành phần hồ sơ'"
+    pattern: "\\b(giấy\\s+tờ|thành\\s+phần\\s+hồ\\s+sơ|cần\\s+chuẩn\\s+bị|tài\\s+liệu|giấy\\s+chứng\\s+minh|giấy\\s+chứng\\s+sinh|giấy\\s+khai|cần\\s+gì|bao\\s+gồm\\s+những\\s+gì|required)\\b"
+  - key: fee
+    label: "LỆ PHÍ"
+    section_name: "'Lệ phí'"
+    pattern: "\\b(lệ\\s+phí|chi\\s+phí|miễn\\s+phí|bao\\s+nhiêu\\s+tiền|fee|mất\\s+bao\\s+nhiêu)\\b"
+  - key: time
+    label: "THỜI GIAN GIẢI QUYẾT"
+    section_name: "'Thời gian giải quyết'"
+    pattern: "\\b(thời\\s+gian|bao\\s+lâu|mấy\\s+ngày|thời\\s+hạn|bao\\s+nhiêu\\s+ngày|processing\\s+time)\\b"
 supported_locations:
   - "hồ chí minh"
   - "hcm"

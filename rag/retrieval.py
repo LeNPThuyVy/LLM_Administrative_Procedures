@@ -144,20 +144,10 @@ def _get_structured_context(
     if not context:
         return {}
 
-    structured_context = context.get(
+    return context.get(
         "structured_context",
         {}
     ) or {}
-
-    if structured_context:
-        return structured_context
-
-    long_term_memory = context.get(
-        "long_term_memory",
-        {}
-    ) or {}
-
-    return long_term_memory
 
 
 def _format_context_value(value) -> str:
@@ -379,37 +369,52 @@ def _is_negated_phrase(phrase: str, text: str) -> bool:
     return bool(re.search(pattern, text_clean))
 
 
-_ALIAS_CATALOG: dict[str, list[str]] | None = None
+_ALIAS_CATALOG: dict[str, dict[str, list[str]]] = {}
 
-def _get_alias_catalog() -> dict[str, list[str]]:
+def _get_alias_catalog(domain: str | None = None) -> dict[str, list[str]]:
     global _ALIAS_CATALOG
-    if _ALIAS_CATALOG is None:
-        _ALIAS_CATALOG = {}
+    d_id = domain or "administrative_procedures"
+    if d_id not in _ALIAS_CATALOG:
+        catalog = {}
         try:
             import json
-            proc_path = cfg.BASE_DIR / "data" / "procedures.json"
-            if proc_path.exists():
-                procs = json.loads(proc_path.read_text(encoding="utf-8"))
-                for p in procs:
-                    did = p.get("document_id")
+            from domains.runtime import get_domain_runtime
+            runtime = get_domain_runtime(d_id)
+
+            sources = runtime.config.sources if (runtime and hasattr(runtime, "config")) else []
+            data_file = None
+            for src in sources:
+                if src.get("type") == "json" and src.get("path"):
+                    data_file = cfg.BASE_DIR / src["path"]
+                    break
+
+            if not data_file or not data_file.exists():
+                data_file = cfg.BASE_DIR / "data" / "procedures.json"
+
+            if data_file.exists():
+                items = json.loads(data_file.read_text(encoding="utf-8"))
+                for p in items:
+                    did = p.get("document_id") or p.get("id")
                     aliases = p.get("aliases", [])
                     if did and aliases:
-                        _ALIAS_CATALOG[did] = [a.lower().strip() for a in aliases if a]
+                        catalog[did] = [a.lower().strip() for a in aliases if a]
         except Exception as e:
-            print(f"[retrieval] Could not load alias catalog: {e}")
-    return _ALIAS_CATALOG
+            print(f"[retrieval] Could not load alias catalog for {d_id}: {e}")
+        _ALIAS_CATALOG[d_id] = catalog
+    return _ALIAS_CATALOG[d_id]
 
 
 def _calculate_alias_bonus(
     query: str,
     doc_id: str,
-    metadata: dict
+    metadata: dict,
+    domain: str | None = None,
 ) -> float:
     """
     Check if query matches any alias of this procedure.
     Exact phrase match gets strong bonus (+0.45).
     """
-    catalog = _get_alias_catalog()
+    catalog = _get_alias_catalog(domain=domain)
     aliases = metadata.get("aliases") or catalog.get(doc_id, [])
     if not aliases:
         return 0.0
@@ -571,6 +576,7 @@ def retrieve(
             query=query,
             doc_id=document_id,
             metadata=payload,
+            domain=domain,
         )
 
         context_bonus = _calculate_context_bonus(
@@ -623,16 +629,28 @@ def _is_ambiguous_query(query: str, domain: str | None = None) -> bool:
     if any(m.lower() in q_lower for m in specific_markers):
         return False
 
-    catalog = _get_alias_catalog()
+    catalog = _get_alias_catalog(domain=domain)
     for doc_id, aliases in catalog.items():
         if any(a in q_lower for a in aliases if a):
             return False
 
-    vague_phrases = ["xin chào", "chào bạn", "hello", "hi", "tôi muốn hỏi", "tôi có câu hỏi", "hỏi về thủ tục"]
-    if any(q_lower == v or q_lower == v + " ạ" for v in vague_phrases):
+    cleaned = re.sub(
+        r'\b(á|ạ|ơi|nha|nhé|với|hộ|giùm|chút|tí|cậu|bạn|anh|chị|em|ad|admin|nào|gì)\b',
+        '',
+        q_lower
+    ).strip()
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+
+    vague_phrases = [
+        "xin chào", "chào", "chào bạn", "hello", "hi", "alo", "tôi muốn hỏi",
+        "mình muốn hỏi", "tôi có câu hỏi", "mình có câu hỏi", "hỏi về thủ tục",
+        "hỏi thủ tục", "muốn hỏi thủ tục", "mình muốn hỏi thủ tục", "tôi muốn hỏi thủ tục",
+        "cho mình hỏi thủ tục", "cho tôi hỏi thủ tục", "cho mình hỏi", "cho tôi hỏi"
+    ]
+    if any(q_lower == v or cleaned == v or cleaned.startswith(v) for v in vague_phrases):
         return True
 
-    words = q_lower.split()
+    words = cleaned.split()
     return len(words) <= 4
 
 
@@ -683,7 +701,7 @@ def retrieve_two_step(
 
     # Lấy top document_id từ _general hoặc bất kỳ chunk nào
     doc_scores: dict[str, float] = {}
-    catalog = _get_alias_catalog()
+    catalog = _get_alias_catalog(domain=domain)
     q_lower = query.lower()
 
     for chunk in raw_results:

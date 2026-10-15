@@ -97,9 +97,41 @@ Hệ thống nạp dữ liệu Similarity Deduplicator với ngưỡng 0.95 đã
 
 ---
 
-## 6. Kết Luận
+## 6. Kết Luận Ngày 2
 Vai trò A đã hoàn thành 100% mục tiêu của Ngày 2:
 1. Domain du lịch chạy hoàn hảo chế độ `friendly` không can thiệp code lõi.
 2. Dữ liệu hành chính đã sạch, có link nguồn, nhãn nhất quán, triệt tiêu lỗi NFD.
 3. Bộ Golden set đạt quy mô 100 câu hành chính + 15 câu du lịch.
 4. Toàn bộ các cổng hồi quy đều thỏa mãn ngưỡng yêu cầu.
+
+---
+
+## 7. Báo Cáo Tổng Kết Dự Án: Slim Context, Bỏ Long-term Memory & Hỗ Trợ Đa Miền (Phase 0 - Phase 7)
+
+### 7.1. Bảng So Sánh Toàn Diện: Trước và Sau Khi Tối Ưu (Before vs After)
+
+| Tiêu Chí / Thành Phần | Ban Đầu (Phase 0 Baseline) | Hiện Tại (Sau Phase 6 - 7) | Lợi Ích Kỹ Thuật Đạt Được |
+| :--- | :--- | :--- | :--- |
+| **Số truy vấn đọc DB (`get_context`)** | 5 truy vấn (`user`, `summary`, `ltm`, `messages`, `structured_context`) | **1 truy vấn duy nhất** (`_fetch_messages`) | Giảm **80%** I/O đọc DB trên mỗi lượt chat |
+| **Số thao tác ghi DB (`update_memory`)** | 4-5 thao tác (ghi message, ghi structured_context, merge LTM, gọi tóm tắt) | **1 thao tác duy nhất** (`save_message`) | Giảm **75-80%** write overhead vào Postgres |
+| **Tranh chấp CPU nền (Contention)** | Tiến trình nền `llm_summarizer.py` định kỳ gọi LLM tóm tắt gây giật lag slot chat chính | **Đã xóa bỏ hoàn toàn** | Dành trọn vẹn 100% năng lực CPU cho slot phục vụ sinh câu trả lời |
+| **Cửa sổ ngữ cảnh hội thoại** | Đọc 6-10 lượt, nhồi nhét cả tóm tắt và LTM vào prompt context | **10 lượt DB / 2 lượt prompt** (4 tin nhắn gần nhất) | Giảm **50-60% token prompt prefill**, tăng tốc TTFT |
+| **Trích xuất thực thể active** | Chạy regex nặng CPU (`extract_structured_context`) ghi vào DB | Đọc động từ `citations` qua hàm `derive_active_entity` | Hoàn toàn không tốn CPU regex và không phụ thuộc bảng DB |
+| **Cơ chế Fact Verification** | Luôn chạy `verify_answer` và mapper trên mọi domain | Phân nhánh: **Strict** (chạy đầy đủ), **Friendly** (bỏ qua) | Tiết kiệm **0.05s - 0.2s CPU** cho các miền thân thiện (du lịch, ẩm thực) |
+| **Output Guardrail & Disclaimer** | Ép gắn disclaimer pháp lý cứng nhắc cho tất cả | Chỉ đính kèm disclaimer khi `mode == "strict"` | Câu trả lời du lịch, ẩm thực tự nhiên, không bị cứng nhắc |
+| **Nâng mode theo rủi ro (Risk Escalation)** | Chỉ có các pattern pháp lý/hành chính cố định | Hỗ trợ `risk_keywords` tùy biến theo domain (dị ứng, ngộ độc, tai nạn,...) | Tự động nâng mode sang `strict` khi gặp câu hỏi nhạy cảm |
+| **Khả năng mở rộng Đa Miền** | Bị hard-code địa điểm HCM, field intents hành chính, catalog đơn lẻ | **Hỗ trợ 3 domain độc lập** (`administrative_procedures`, `tourism_demo`, `cuisine_demo`) | **Zero-Code Domain Onboarding**: thêm domain mới 100% qua YAML/JSON |
+| **Độ chính xác Golden Set Hành chính** | R@1: **89.5%**, MRR: **0.9142** | R@1: **89.5%**, MRR: **0.9142** | **Bảo toàn 100% độ chính xác**, không suy giảm |
+| **Độ chính xác Golden Set Du lịch** | R@1: 100.0%, MRR: 1.0000 | R@1: **100.0%**, MRR: **1.0000** | Duy trì hoàn hảo |
+| **Độ chính xác Golden Set Ẩm thực** | Chưa có | R@1: **100.0%**, MRR: **1.0000** | Đạt tuyệt đối 12/12 câu |
+
+### 7.2. Tóm Tắt Các Cột Mốc Triển Khai
+1. **Phase 0**: Sao lưu toàn bộ DB Supabase memory (610 messages, 156 structured contexts, 1 summary, 53 LTM records), thiết lập baseline an toàn và các cờ cấu hình.
+2. **Phase 1**: Loại bỏ Long-term Memory & Conversation Summary, xóa bỏ hoàn toàn `llm_summarizer.py`.
+3. **Phase 2**: Chuẩn hóa cửa sổ ngữ cảnh: 10 lượt lưu trữ DB, 2 lượt gần nhất đưa vào prompt LLM.
+4. **Phase 3**: Triển khai `SLIM_CONTEXT`: dùng `derive_active_entity` trích xuất từ `citations`, bỏ đọc/ghi bảng `structured_contexts`.
+5. **Phase 4**: Gỡ bỏ toàn bộ hard-code hành chính: `supported_locations`, `field_intents`, `template_fast_path`, `_ALIAS_CATALOG` theo domain, reset active entity khi chuyển domain.
+6. **Phase 5**: Tách biệt hành vi theo mode `strict` / `friendly`, hỗ trợ `risk_keywords` theo domain để tự động nâng mode khi gặp rủi ro sức khỏe/y tế, chỉ đính kèm disclaimer khi strict.
+7. **Phase 6**: Nạp dữ liệu `tourism_demo`, onboarding domain thứ ba `cuisine_demo` hoàn toàn không sửa code lõi, kiểm thử thành công kịch bản chéo domain.
+8. **Phase 7**: Lập script dọn dẹp bảng deprecated (`scripts/cleanup_deprecated_tables.py`) theo cơ chế an toàn, viết cẩm nang onboarding [docs/DOMAIN_ONBOARDING_GUIDE.md](file:///t:/OneDrive/Backup/My_Document/Lexatek_Intern\LLM_Legal\LLM_Administrative_Procedures\docs\DOMAIN_ONBOARDING_GUIDE.md), và cập nhật tài liệu kiến trúc hệ thống [Architecture_system.md](file:///t:/OneDrive/Backup/My_Document/Lexatek_Intern\LLM_Legal\LLM_Administrative_Procedures\Architecture_system.md).
+

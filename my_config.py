@@ -57,3 +57,11 @@ TOP_P = 0.9
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 MULTI_INTENT_ENABLED = os.getenv("MULTI_INTENT_ENABLED", "False").lower() == "true"
+
+# Feature flags for Context Slimming & Memory (Phase 1: disabled LTM & Summary)
+ENABLE_LONG_TERM_MEMORY = os.getenv("ENABLE_LONG_TERM_MEMORY", "False").lower() == "true"
+ENABLE_CONVERSATION_SUMMARY = os.getenv("ENABLE_CONVERSATION_SUMMARY", "False").lower() == "true"
+SLIM_CONTEXT = os.getenv("SLIM_CONTEXT", "True").lower() == "true"
+HISTORY_STORE_TURNS = int(os.getenv("HISTORY_STORE_TURNS", "10"))
+HISTORY_PROMPT_TURNS = int(os.getenv("HISTORY_PROMPT_TURNS", "2"))
+

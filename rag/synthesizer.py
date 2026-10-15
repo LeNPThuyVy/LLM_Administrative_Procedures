@@ -45,9 +45,11 @@ def _format_history(history: dict[str, Any]) -> str:
     if not history:
         return "Không có lịch sử hội thoại."
 
+    import my_config as cfg
+    prompt_window = getattr(cfg, "HISTORY_PROMPT_TURNS", 2) * 2
     recent_messages = history.get("recent_messages", [])
-    if isinstance(recent_messages, list) and len(recent_messages) > 4:
-        recent_messages = recent_messages[-4:]
+    if isinstance(recent_messages, list) and len(recent_messages) > prompt_window:
+        recent_messages = recent_messages[-prompt_window:]
 
     conversation_summary = history.get("conversation_summary", "")
 
@@ -348,7 +350,7 @@ def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: st
         return True
 
     from rag.retrieval import _get_alias_catalog
-    catalog = _get_alias_catalog()
+    catalog = _get_alias_catalog(domain=domain)
     for doc_id, aliases in catalog.items():
         if any(a in combined for a in aliases if a):
             return True
@@ -356,12 +358,87 @@ def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: st
     return False
 
 
-def _get_active_procedure(history: dict, procedure_hint: list, domain: str | None = None) -> str:
+def _is_vague_or_greeting(query: str, domain: str | None = None) -> bool:
     """
-    GĐ3 mục 10: Xác định thủ tục đang active theo thứ tự ưu tiên:
+    Xác định câu hỏi mơ hồ / câu chào mở đầu không chỉ rõ thủ tục cụ thể.
+    Ví dụ: 'xin chào', 'chào bạn', 'mình muốn hỏi thủ tục á cậu', 'cho tôi hỏi thủ tục', v.v.
+    Nếu câu có chứa keyword thủ tục cụ thể, trả về False.
+    """
+    if not query or not query.strip():
+        return True
+
+    # Nếu câu có chứa keyword hoặc alias của thủ tục cụ thể thì không phải mơ hồ
+    if _has_specific_procedure_keyword(query, domain=domain):
+        return False
+
+    q_lower = query.strip().lower()
+
+    # Bỏ các trợ từ/hậu tố giao tiếp tiếng Việt ở cuối hoặc đầu
+    # vd: "á cậu", "ạ", "ơi", "nha", "nhé", "với", "hộ", "giùm", "chút", "tí", "cậu", "á"
+    cleaned = re.sub(
+        r'\b(á|ạ|ơi|nha|nhé|với|hộ|giùm|chút|tí|cậu|bạn|anh|chị|em|ad|admin|nào|gì)\b',
+        '',
+        q_lower
+    ).strip()
+    # Chuẩn hóa khoảng trắng
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+
+    # Các mẫu chào hỏi thuần túy
+    greetings = {
+        "xin chào", "chào", "chào bạn", "hello", "hi", "alo", "ê", "chào ad", "chào bot"
+    }
+    if q_lower in greetings or cleaned in greetings:
+        return True
+
+    # Các mẫu hỏi thăm/mở đầu chung chung về thủ tục hoặc muốn hỏi
+    vague_phrases = [
+        "mình muốn hỏi thủ tục",
+        "tôi muốn hỏi thủ tục",
+        "cho mình hỏi thủ tục",
+        "cho tôi hỏi thủ tục",
+        "hỏi về thủ tục",
+        "hỏi thủ tục",
+        "muốn hỏi thủ tục",
+        "tư vấn thủ tục",
+        "hướng dẫn thủ tục",
+        "làm thủ tục",
+        "tôi muốn hỏi",
+        "mình muốn hỏi",
+        "cho mình hỏi",
+        "cho tôi hỏi",
+        "tôi có câu hỏi",
+        "mình có câu hỏi",
+        "giúp mình với",
+        "tư vấn giúp",
+        "hỗ trợ giúp",
+    ]
+    for vp in vague_phrases:
+        if cleaned == vp or cleaned.startswith(vp) or q_lower == vp or q_lower.startswith(vp):
+            return True
+
+    # Regex tổng quát cho dạng: (tôi/mình/em)? (muốn/cần/xin/có)? (hỏi/tư vấn/tìm hiểu) (về)? (thủ tục)?
+    vague_regex = r'^(mình|tôi|em|anh|chị)?\s*(muốn|cần|xin|có)?\s*(hỏi|tư vấn|tìm hiểu|hướng dẫn)\s*(về)?\s*(thủ tục|hồ sơ|giấy tờ)?$'
+    if re.match(vague_regex, cleaned):
+        return True
+
+    # Nếu câu rất ngắn (<= 4 từ) và không hỏi về thuộc tính cụ thể nào (lệ phí, hồ sơ, thời gian...)
+    words = cleaned.split()
+    if len(words) <= 4:
+        from rag.prompt_builder import _detect_field_types
+        if not _detect_field_types(query):
+            return True
+
+    return False
+
+
+def _get_active_procedure(history: dict, procedure_hint: list | None = None, domain: str | None = None) -> str:
+    """
+    Xác định thủ tục đang active theo thứ tự ưu tiên:
     1. structured_context.procedure_name (do Person 2 điền)
     2. Thủ tục khớp mạnh ở tin nhắn USER gần nhất trong history
-    3. Top-1 procedure_hint title
+
+    LƯU Ý: Không dùng procedure_hint làm fallback vì gợi ý retrieval của lượt hiện tại
+    không đại diện cho thủ tục đã được người dùng xác nhận trong ngữ cảnh hội thoại.
     """
     # 1. structured_context (nếu có)
     if isinstance(history, dict):
@@ -384,12 +461,6 @@ def _get_active_procedure(history: dict, procedure_hint: list, domain: str | Non
                 user_text = _extract_text(msg[0])
                 if _has_specific_procedure_keyword(user_text, domain=domain):
                     return user_text
-
-    # 3. procedure_hint title
-    if procedure_hint:
-        title = procedure_hint[0].metadata.get("title", "")
-        if title:
-            return title
 
     return ""
 
@@ -429,6 +500,32 @@ def synthesizer(
             user_kw_texts.append(m)
 
     history_text_for_kw = " ".join(user_kw_texts)
+    structured_proc = ""
+    if isinstance(history, dict):
+        sc = history.get("structured_context") or {}
+        if isinstance(sc, dict) and sc.get("procedure_name"):
+            structured_proc = str(sc["procedure_name"])
+    if structured_proc:
+        history_text_for_kw = f"{history_text_for_kw} {structured_proc}".strip()
+
+    # -----------------------------------------------------------------
+    # 0. Check câu mơ hồ / chào hỏi mở đầu không chỉ rõ thủ tục
+    # -----------------------------------------------------------------
+    if _is_vague_or_greeting(query, domain=domain):
+        clarification_q = (
+            "Bạn muốn hỏi về thủ tục hành chính nào? "
+            "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
+        )
+        print(
+            "[synthesizer] Query is vague/greeting without specific procedure keyword "
+            "→ needs_clarification=True"
+        )
+        return ConsolidatedQuery(
+            resolved_query=query,
+            original_query=query,
+            needs_clarification=True,
+            clarification_question=clarification_q,
+        )
 
     # -----------------------------------------------------------------
     # Rule-based clarification override (Bước 2A: Kết hợp Retrieval Hints)

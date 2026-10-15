@@ -54,14 +54,29 @@ def _extract_text(val: object) -> str:
     return str(val) if val is not None else ""
 
 
-def _detect_unsupported_location(text: str) -> bool:
+def _detect_unsupported_location(text: str, domain: str | None = None) -> bool:
     """
     Return True if text contains a Vietnamese location that is
-    explicitly NOT in the HCMC dataset.
+    explicitly NOT supported by the current domain.
 
-    Only triggers for well-known non-HCMC cities / provinces
-    to avoid false positives.
+    - Nếu domain không cấu hình supported_locations: trả False.
+    - Nếu domain là administrative_procedures (hoặc rỗng): dùng _NON_HCMC_PATTERNS.
+    - Với các domain khác: nếu câu hỏi chứa supported_locations của domain thì luôn cho phép;
+      chỉ từ chối nếu có địa phương rõ ràng ngoài phạm vi.
     """
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+
+    if not runtime.supported_locations:
+        return False
+
+    if domain == "administrative_procedures" or not domain:
+        return bool(_NON_HCMC_PATTERNS.search(text))
+
+    text_lower = text.lower()
+    if any(loc.lower() in text_lower for loc in runtime.supported_locations):
+        return False
+
     return bool(_NON_HCMC_PATTERNS.search(text))
 
 
@@ -126,19 +141,25 @@ def _get_cache_key(query: str, context: dict | None, domain: str | None, session
     q_norm = (query or "").strip().lower()
     proc = ""
     if context:
-        sc = context.get("structured_context") or context.get("long_term_memory") or {}
+        sc = context.get("structured_context") or {}
         if isinstance(sc, dict):
             proc = str(sc.get("procedure_name", "")).strip().lower()
     return (session_id or "global", q_norm, proc, domain or "default")
 
 
-def _try_template_fast_path(query: str, evidence_candidates, field_types: list[str]) -> str | None:
+def _try_template_fast_path(query: str, evidence_candidates, field_types: list[str], domain: str | None = None) -> str | None:
     """
     Bước 3A Template Fast Path:
-    Khi query chỉ hỏi đúng 1 field (fee, time, method, docs) và đã có field chunk tương ứng,
+    Khi query chỉ hỏi đúng 1 field (fee, time, method, docs) và domain có chunk_field_specs tương ứng,
     kết xuất câu trả lời chuẩn trực tiếp, bỏ qua LLM sinh token để giảm độ trễ từ ~3s về <0.1s.
     """
     if not field_types or len(field_types) != 1 or not evidence_candidates:
+        return None
+
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+    # Nếu domain không cấu hình chunk_field_specs (hoặc chỉ có general), tắt fast path
+    if not runtime.config.chunk_field_specs or list(runtime.config.chunk_field_specs.keys()) == ["general"]:
         return None
 
     ftype = field_types[0]
@@ -305,25 +326,31 @@ def answer_query(
     domain = runtime.domain_id
 
     t0_risk = time.time()
-    risk_result = classify_risk(query)
+    domain_risk_kw = getattr(runtime.config, "risk_keywords", None) if hasattr(runtime, "config") else None
+    risk_result = classify_risk(query, domain_risk_keywords=domain_risk_kw)
     effective_mode = resolve_mode(
         runtime.mode,
         risk_result,
     )
-    print(f"[time] risk = {time.time() - t0_risk:.2f}s")
+    print(f"[time] risk = {time.time() - t0_risk:.2f}s (mode: {runtime.mode} -> {effective_mode})")
     # ---------------------------------------------------------
     # GĐ1 fix — Out-of-scope location detection (mục 5)
     # Chỉ kiểm tra tin nhắn user HIỆN TẠI, không quét history.
     # Trước đây quét cả history khiến user nhắc "Hà Nội" một lần
     # là mọi lượt sau đều bị từ chối.
     # ---------------------------------------------------------
-    if _detect_unsupported_location(query):
+    if _detect_unsupported_location(query, domain=domain):
         print(
             f"[pipeline] Unsupported location in current query: "
             f"{query[:100]!r}"
         )
+        reject_message = (
+            runtime.config.out_of_scope_message
+            if hasattr(runtime, "config") and runtime.config.out_of_scope_message
+            else LOCATION_NOT_SUPPORTED_TEXT
+        )
         return AnswerResponse(
-            answer=LOCATION_NOT_SUPPORTED_TEXT,
+            answer=reject_message,
             claims=[],
             needs_clarification=False,
             clarification_question=None,
@@ -390,6 +417,7 @@ def answer_query(
         context=context,
         top_k=2,
         raw_results_out=initial_chunks,
+        domain=domain,
     )
     print(f"[time] history/procedure_reader = {time.time() - t0_hist:.2f}s")
 
@@ -516,7 +544,7 @@ def answer_query(
 
     fast_answer = None
     if generator is generate_answer_3b:
-        fast_answer = _try_template_fast_path(consolidated.resolved_query, evidence_candidates, detected_fields)
+        fast_answer = _try_template_fast_path(consolidated.resolved_query, evidence_candidates, detected_fields, domain=domain)
     if fast_answer:
         print(f"[pipeline] Fast Path: rendered answer directly from field evidence ({detected_fields}).")
         generated_answer = fast_answer
@@ -554,34 +582,37 @@ def answer_query(
         field_types = _detect_field_types(consolidated.resolved_query)
         generated_answer = _answer_from_evidence(evidence_candidates, field_types)
 
-    # 7. Verification
-    t0_ver = time.time()
-    verification_results = verify_answer(
-        generated_answer=generated_answer,
-        evidence_candidates=evidence_candidates,
-    )
-    print(f"[time] verify = {time.time() - t0_ver:.2f}s")
-
-    # 8. Mapper
-    verified_claims = map_verification_results(
-        verification_results=verification_results,
-        evidence_candidates=evidence_candidates,
-    )
-    # Strict: answer phải có claim đã được evidence support.
-    if effective_mode == "strict" and not verified_claims:
-        answer = runtime.no_evidence_message or FALLBACK_TEXT
-
-        if runtime.disclaimer:
-            answer = f"{answer}\n\n{runtime.disclaimer}"
-
-        return AnswerResponse(
-            answer=answer,
-            claims=[],
-            needs_clarification=False,
-            clarification_question=None,
-            domain=domain,
-            mode=effective_mode,
+    # 7. Verification & 8. Mapper (chỉ chạy khi effective_mode == "strict")
+    if effective_mode == "strict":
+        t0_ver = time.time()
+        verification_results = verify_answer(
+            generated_answer=generated_answer,
+            evidence_candidates=evidence_candidates,
         )
+        print(f"[time] verify = {time.time() - t0_ver:.2f}s")
+
+        verified_claims = map_verification_results(
+            verification_results=verification_results,
+            evidence_candidates=evidence_candidates,
+        )
+        # Strict: answer phải có claim đã được evidence support.
+        if not verified_claims:
+            answer = runtime.no_evidence_message or FALLBACK_TEXT
+
+            if runtime.disclaimer:
+                answer = f"{answer}\n\n{runtime.disclaimer}"
+
+            return AnswerResponse(
+                answer=answer,
+                claims=[],
+                needs_clarification=False,
+                clarification_question=None,
+                domain=domain,
+                mode=effective_mode,
+            )
+    else:
+        # Friendly: bỏ qua bước verification & mapper để tối ưu tốc độ, không ép citation
+        verified_claims = []
         
     t0_out = time.time()
     generated_answer = apply_output_guard(

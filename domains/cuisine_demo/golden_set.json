@@ -1,0 +1,86 @@
+[
+  {
+    "id": "GS_CUIS_001",
+    "question": "Phở bò Hà Nội nấu từ những nguyên liệu gì và giá khoảng bao nhiêu một bát?",
+    "expected_document_id": "CD001",
+    "expected_field": "general",
+    "expected_keywords": ["Phở bò Hà Nội", "xương bò", "50.000"]
+  },
+  {
+    "id": "GS_CUIS_002",
+    "question": "Quán bún chả nào nổi tiếng ở Hà Nội mà Tổng thống Obama từng ghé ăn?",
+    "expected_document_id": "CD002",
+    "expected_field": "general",
+    "expected_keywords": ["Bún chả", "Hương Liên", "Obama"]
+  },
+  {
+    "id": "GS_CUIS_003",
+    "question": "Món chả cá Lã Vọng ăn kèm với những loại rau và nước chấm gì?",
+    "expected_document_id": "CD003",
+    "expected_field": "general",
+    "expected_keywords": ["Chả cá Lã Vọng", "thì là", "mắm tôm"]
+  },
+  {
+    "id": "GS_CUIS_004",
+    "question": "Bún bò Huế có hương vị gì đặc trưng và giá một tô khoảng bao nhiêu?",
+    "expected_document_id": "CD006",
+    "expected_field": "general",
+    "expected_keywords": ["Bún bò Huế", "mắm ruốc", "sả"]
+  },
+  {
+    "id": "GS_CUIS_005",
+    "question": "Món cơm hến xứ Huế ăn kèm với những món gì và có cay không?",
+    "expected_document_id": "CD007",
+    "expected_field": "general",
+    "expected_keywords": ["Cơm hến", "Huế", "nước luộc hến"]
+  },
+  {
+    "id": "GS_CUIS_006",
+    "question": "Mì Quảng Đà Nẵng chan nước lèo như thế nào và ăn kèm bánh gì?",
+    "expected_document_id": "CD009",
+    "expected_field": "general",
+    "expected_keywords": ["Mì Quảng", "xăm xắp", "bánh tráng"]
+  },
+  {
+    "id": "GS_CUIS_007",
+    "question": "Cao lầu Hội An sử dụng loại nước giếng và tro củi nào để làm sợi mì?",
+    "expected_document_id": "CD010",
+    "expected_field": "general",
+    "expected_keywords": ["Cao lầu", "Bá Lễ", "Cù Lao Chàm"]
+  },
+  {
+    "id": "GS_CUIS_008",
+    "question": "Một dĩa cơm tấm Sài Gòn truyền thống đầy đủ gồm những món gì?",
+    "expected_document_id": "CD013",
+    "expected_field": "general",
+    "expected_keywords": ["Cơm tấm Sài Gòn", "sườn", "bì", "chả"]
+  },
+  {
+    "id": "GS_CUIS_009",
+    "question": "Hủ tiếu Nam Vang ở Sài Gòn có những phiên bản nào?",
+    "expected_document_id": "CD014",
+    "expected_field": "general",
+    "expected_keywords": ["Hủ tiếu Nam Vang", "nước", "khô"]
+  },
+  {
+    "id": "GS_CUIS_010",
+    "question": "Bánh xèo miền Tây cuốn cùng những loại rau gì và giá bao nhiêu?",
+    "expected_document_id": "CD015",
+    "expected_field": "general",
+    "expected_keywords": ["Bánh xèo miền Tây", "rau rừng", "củ hủ dừa"]
+  },
+  {
+    "id": "GS_CUIS_011",
+    "question": "Món bánh tráng nướng Đà Lạt được mệnh danh là gì và có nguyên liệu nào?",
+    "expected_document_id": "CD020",
+    "expected_field": "general",
+    "expected_keywords": ["Bánh tráng nướng", "pizza Việt Nam", "trứng cút"]
+  },
+  {
+    "id": "GS_CUIS_012",
+    "question": "Nem nướng Nha Trang chấm cùng loại nước sốt gì đặc biệt?",
+    "expected_document_id": "CD012",
+    "expected_field": "general",
+    "expected_keywords": ["Nem nướng Nha Trang", "nước sốt tương tôm", "nếp"]
+  }
+]

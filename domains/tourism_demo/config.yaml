@@ -8,6 +8,7 @@ collection_name: "tourism_demo"
 assistant_role: "hướng dẫn viên du lịch"
 min_retrieval_score: 0.15
 no_evidence_message: "Xin lỗi, tôi chưa có thông tin về địa điểm hoặc dịch vụ du lịch này."
+out_of_scope_message: "Địa điểm này hiện nằm ngoài phạm vi hướng dẫn của hệ thống du lịch."
 allowed_tools:
   - get_weather
 entity_keywords:
@@ -23,6 +24,13 @@ supported_locations:
   - "Đà Nẵng"
   - "Nha Trang"
   - "Đà Lạt"
+risk_keywords:
+  - "ngộ độc"
+  - "cấp cứu"
+  - "tai nạn"
+  - "nguy hiểm"
+  - "sức khỏe"
+  - "thuốc"
 
 chunk_fields:
   - general

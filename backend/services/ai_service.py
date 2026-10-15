@@ -23,6 +23,10 @@ async def generate_answer(
     evidence_list = jsonable_encoder(
         response.claims
     )
+    if isinstance(evidence_list, list) and response.domain:
+        for c in evidence_list:
+            if isinstance(c, dict) and "domain" not in c:
+                c["domain"] = response.domain
 
     return {
         "answer": response.answer or "",
@@ -83,6 +87,10 @@ async def generate_answer_stream(
 
     response = await pipeline_task
     evidence_list = jsonable_encoder(response.claims)
+    if isinstance(evidence_list, list) and response.domain:
+        for c in evidence_list:
+            if isinstance(c, dict) and "domain" not in c:
+                c["domain"] = response.domain
 
     yield ("final", {
         "answer": response.answer or "",

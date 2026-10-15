@@ -14,6 +14,7 @@ def procedure_reader(
     context: dict | None,
     top_k: int = 2,
     raw_results_out: list[RetrievedChunk] | None = None,
+    domain: str | None = None,
 ) -> list[RetrievedChunk]:
     """
     Retrieve a small number of chunks as procedure/topic hints
@@ -28,26 +29,31 @@ def procedure_reader(
         query=query,
         context=context,
         top_k=fetch_k,
+        domain=domain,
     )
 
     if raw_results_out is not None:
         raw_results_out.extend(chunks)
 
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+    min_score = runtime.min_retrieval_score if (runtime and hasattr(runtime, "min_retrieval_score")) else cfg.MIN_RETRIEVAL_SCORE
+
     # Filter out chunks that fall below the relevance threshold.
     filtered = [
         chunk for chunk in chunks[:top_k]
-        if chunk.retrieval_score >= cfg.MIN_RETRIEVAL_SCORE
+        if chunk.retrieval_score >= min_score
     ]
 
     if filtered:
         print(
             f"[procedure_reader] {len(filtered)}/{len(chunks)} hints "
-            f"above threshold ({cfg.MIN_RETRIEVAL_SCORE})."
+            f"above threshold ({min_score})."
         )
     else:
         print(
             f"[procedure_reader] All {len(chunks)} hints below "
-            f"threshold ({cfg.MIN_RETRIEVAL_SCORE}). Returning []."
+            f"threshold ({min_score}). Returning []."
         )
 
     return filtered
