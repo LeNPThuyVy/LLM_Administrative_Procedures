@@ -58,10 +58,11 @@ Nội dung:
         []
     )
 
+    prompt_window = getattr(cfg, "HISTORY_PROMPT_TURNS", 2) * 2
     history_text = "\n".join(
         [
             f'{msg["role"]}: {msg["content"]}'
-            for msg in recent_messages[-6:]
+            for msg in recent_messages[-prompt_window:]
         ]
     )
 

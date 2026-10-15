@@ -164,7 +164,8 @@ async def chat(request: ChatRequest):
                 done_data = {
                     "answer": result["answer"],
                     "evidence_list": result["evidence_list"],
-                    "needs_clarification": False
+                    "needs_clarification": False,
+                    "mode": result.get("mode")
                 }
                 yield (
                     "event: done\n"

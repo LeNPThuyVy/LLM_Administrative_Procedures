@@ -35,10 +35,13 @@ class DomainConfig:
     assistant_role: str = "chuyên gia tư vấn"
     no_evidence_message: str = "Tôi chưa có đủ thông tin để trả lời câu hỏi này."
     disclaimer: str = ""
+    out_of_scope_message: str = "Yêu cầu nằm ngoài phạm vi hỗ trợ của hệ thống."
     supported_locations: list[str] = field(default_factory=list)
     min_retrieval_score: float = 0.50
     allowed_tools: list[str] = field(default_factory=list)
     entity_keywords: list[str] = field(default_factory=list)
+    field_intents: list[dict[str, Any]] = field(default_factory=list)
+    risk_keywords: list[str] = field(default_factory=list)
 
 
 def load_domain_config(domain_id: str) -> DomainConfig:

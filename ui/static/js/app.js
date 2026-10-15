@@ -60,6 +60,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast("Không thể tạo phiên làm việc", true);
     }
 
+    // 3.1 Check system readiness (Preload & Warmup status)
+    const systemReadyBadge = document.getElementById('system-ready-badge');
+    async function checkSystemStatus() {
+        if (!systemReadyBadge) return false;
+        try {
+            const resp = await fetch('/api/system/status');
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.all_ready) {
+                    systemReadyBadge.textContent = '⚡ AI sẵn sàng';
+                    systemReadyBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                    systemReadyBadge.style.color = '#059669';
+                    systemReadyBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    systemReadyBadge.title = 'Tất cả mô hình (BGE-M3, Qwen 3B, Qwen 1.5B) đã được nạp sẵn!';
+                    return true;
+                }
+            }
+        } catch (e) {
+            // Server có thể đang khởi động
+        }
+        return false;
+    }
+
+    checkSystemStatus().then(ready => {
+        if (!ready) {
+            const interval = setInterval(async () => {
+                const isReady = await checkSystemStatus();
+                if (isReady) clearInterval(interval);
+            }, 2000);
+        }
+    });
+
     // 4. Input handling - đa sự kiện để tương thích tốt với bộ gõ tiếng Việt (Unikey/EVKey)
     function updateInputState() {
         const len = userInput.value.length;

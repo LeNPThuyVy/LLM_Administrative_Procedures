@@ -86,17 +86,19 @@ _FIELD_SECTION_NAMES = {
 
 def _detect_field_types(
     query: str,
-    context: dict | None = None
+    context: dict | None = None,
+    domain: str | None = None,
 ) -> list[str]:
     """
     Detect all procedure fields requested by the user.
 
-    GĐ1 mục 3:
-    - Dùng regex word-boundary thay vì simple substring.
-    - Thứ tự kiểm tra: method → docs → fee → time
-      để "nộp hồ sơ ở đâu" ra method, không ra docs.
-    - Nếu không detect được field nào → trả [] (không thêm restriction).
+    GĐ1 mục 3 & Phase 4:
+    - Nếu domain có cấu hình field_intents: dùng danh sách field_intents của domain.
+    - Nếu domain không có field_intents (ví dụ tourism_demo): trả về [] (không thêm restriction).
+    - Default (hành chính khi chưa load): fallback _ORDERED_FIELD_CHECKS.
     """
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
 
     text_parts = [query or ""]
 
@@ -108,6 +110,19 @@ def _detect_field_types(
 
     q = " ".join(text_parts)
 
+    if runtime and hasattr(runtime, "config") and runtime.config.field_intents:
+        detected = []
+        for fi in runtime.config.field_intents:
+            key = fi.get("key")
+            pattern_str = fi.get("pattern")
+            if key and pattern_str:
+                if _re.search(pattern_str, q, _re.IGNORECASE | _re.UNICODE):
+                    detected.append(key)
+        return detected
+
+    if domain and domain != "administrative_procedures":
+        return []
+
     detected = []
     for key, pattern in _ORDERED_FIELD_CHECKS:
         if pattern.search(q):
@@ -117,7 +132,8 @@ def _detect_field_types(
 
 
 def _build_field_restriction_rule(
-    field_types: list[str]
+    field_types: list[str],
+    domain: str | None = None,
 ) -> str:
     """
     Build a soft focus rule for detected fields.
@@ -126,17 +142,31 @@ def _build_field_restriction_rule(
     phần khác nếu thực sự liên quan trực tiếp.
     Khi không có field nào → trả "" (không thêm rule).
     """
-
     if not field_types:
         return ""
 
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+
+    labels_map = dict(_FIELD_LABELS)
+    sections_map = dict(_FIELD_SECTION_NAMES)
+
+    if runtime and hasattr(runtime, "config") and runtime.config.field_intents:
+        for fi in runtime.config.field_intents:
+            k = fi.get("key")
+            if k:
+                if fi.get("label"):
+                    labels_map[k] = fi["label"]
+                if fi.get("section_name"):
+                    sections_map[k] = fi["section_name"]
+
     asked_labels = "; ".join(
-        _FIELD_LABELS[key]
+        labels_map.get(key, key)
         for key in field_types
     )
 
     asked_sections = ", ".join(
-        _FIELD_SECTION_NAMES[key]
+        sections_map.get(key, f"'{key}'")
         for key in field_types
     )
 
@@ -271,23 +301,7 @@ def _format_context(
 
     parts = []
 
-    # -----------------------------------------------------
-    # CONVERSATION SUMMARY
-    # -----------------------------------------------------
-
-    conversation_summary = context.get(
-        "conversation_summary",
-        ""
-    )
-
-    if conversation_summary:
-        sum_text = _extract_text(conversation_summary)
-        if len(sum_text) > 400:
-            sum_text = sum_text[:400] + "..."
-        parts.append(
-            "TÓM TẮT HỘI THOẠI TRƯỚC:\n"
-            + sum_text
-        )
+    # (Phase 1: Bỏ CONVERSATION SUMMARY)
 
     # -----------------------------------------------------
     # RECENT MESSAGES
@@ -307,7 +321,8 @@ def _format_context(
     ):
 
         lines = []
-        msgs_to_show = recent_messages[-4:] if len(recent_messages) > 4 else recent_messages
+        prompt_window = getattr(cfg, "HISTORY_PROMPT_TURNS", 2) * 2
+        msgs_to_show = recent_messages[-prompt_window:] if len(recent_messages) > prompt_window else recent_messages
 
         for message in msgs_to_show:
 
@@ -394,28 +409,7 @@ def _format_context(
             + formatted_structured
         )
 
-    # -----------------------------------------------------
-    # LONG-TERM MEMORY
-    # -----------------------------------------------------
-
-    long_term_memory = context.get(
-        "long_term_memory",
-        {}
-    ) or {}
-
-    formatted_memory = (
-        _format_mapping(
-            long_term_memory
-        )
-    )
-
-    if formatted_memory:
-
-        parts.append(
-            "LONG-TERM MEMORY "
-            "(thông tin đã lưu trong phiên):\n"
-            + formatted_memory
-        )
+    # (Phase 1: Bỏ LONG-TERM MEMORY)
 
     if not parts:
         return (
@@ -495,22 +489,36 @@ def build_prompt(
 
     field_types = _detect_field_types(
         query=query,
-        context=context
+        context=context,
+        domain=domain,
     )
 
-    restriction_text = _build_field_restriction_rule(field_types)
+    restriction_text = _build_field_restriction_rule(field_types, domain=domain)
 
     # =====================================================
     # FINAL PROMPT — GĐ1 mục 2 + Cache-friendly static prefix
     # Tách system/user, 6 quy tắc tích cực, few-shot example.
-    # system_block giữ nguyên tuyệt đối để llama-server tái sử dụng KV prefix cache.
+    # system_block giữ nguyên tuyệt đối cho administrative_procedures
+    # để llama-server tái sử dụng KV prefix cache.
     # =====================================================
 
     focus_directive = (
         f"LƯU Ý TRỌNG TÂM: {restriction_text}\n\n" if restriction_text else ""
     )
 
-    system_block = f"""Bạn là {assistant_role} thân thiện và chính xác.
+    if domain and domain != "administrative_procedures":
+        system_block = f"""Bạn là {assistant_role} ({runtime.persona}) và chính xác.
+
+QUY TẮC:
+1. Diễn đạt rõ ràng, thân thiện, dễ hiểu, QUAN TRỌNG LÀ PHẢI BÁM SÁT BẰNG CHỨNG ĐƯỢC CUNG CẤP, KHÔNG ĐƯA Ý KIẾN HAY KIẾN THỨC RIÊNG VÀO CÂU TRẢ LỜI.
+2. Giữ nguyên chính xác: địa danh, mức giá, thời gian, dịch vụ.
+3. Nếu người dùng hỏi nhiều ý, hãy trả lời đầy đủ từng ý theo cấu trúc rõ ràng.
+4. Ý nào bằng chứng không đề cập → nói rõ "{runtime.no_evidence_message or 'chưa có thông tin về phần này'}". KHÔNG tự suy đoán.
+5. Trả lời bằng tiếng Việt, tự nhiên, sinh động.
+6. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không bịa đặt kiến thức ngoài.
+"""
+    else:
+        system_block = f"""Bạn là {assistant_role} thân thiện và chính xác.
 
 QUY TẮC:
 1. Diễn đạt rõ ràng dễ hiểu, QUAN TRỌNG LÀ PHẢI BÁM SÁT BẰNG CHỨNG ĐƯỢC CUNG CẤP, KHÔNG ĐƯA Ý KIẾN HAY KIẾN THỨC RIÊNG VÀO CÂU TRẢ LỜI  .
@@ -519,7 +527,7 @@ QUY TẮC:
 3. Nếu người dùng hỏi nhiều ý (multi-intent: vừa hỏi giấy tờ, vừa hỏi thời gian hay lệ phí), hãy trả lời đầy đủ từng ý theo cấu trúc rõ ràng.
 4. Ý nào bằng chứng không đề cập → nói rõ "chưa có thông tin về phần này". KHÔNG tự suy đoán.
 5. Cuối câu trả lời, gợi ý một điều người dùng có thể hỏi tiếp.
-6. Trả lời bằng tiếng Việt, rõ ràng, tự nhiên.
+6. Trả lời bằng tiếng Việt, rõ ràng, tự nhiên, không chèn tiếng khác vào (nhất là tiếng trung) vào câu trả lời.
 7. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không dùng kiến thức riêng.
 8. Một câu trả lời cần chứa tối thiểu thông tin về tên thủ tục (được in đậm và tách ra dòng riêng để người dùng đọc vào là biết tên thủ tục). Các thông tin còn lại phải được viết rõ ràng, có bullet cho từng thông tin, không viết chùm chùm.
 9. Người dùng hỏi gì thì trả lời đó không trả lời dư: ví dụ người dùng hỏi lệ phí thủ tục đăng kí kết hôn thì chỉ trả thủ tục đăng kí kết hôn.
