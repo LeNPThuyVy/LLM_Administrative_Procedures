@@ -41,23 +41,37 @@ class IngestionPipeline:
         self.tracker = VersionTracker()
 
     def _load_schema(self):
-        module = importlib.import_module(
-            f"domains.{self.domain_id}.schema"
-        )
+        try:
+            module = importlib.import_module(
+                f"domains.{self.domain_id}.schema"
+            )
 
-        for name in dir(module):
-            obj = getattr(module, name)
+            for name in dir(module):
+                obj = getattr(module, name)
 
-            if (
-                isinstance(obj, type)
-                and issubclass(obj, BaseModel)
-                and obj is not BaseModel
-            ):
-                return obj
+                if (
+                    isinstance(obj, type)
+                    and issubclass(obj, BaseModel)
+                    and obj is not BaseModel
+                ):
+                    return obj
+        except Exception as e:
+            print(f"[pipeline][{self.domain_id}] Schema module note ({e}), using GenericDomainDocument fallback")
 
-        raise ImportError(
-            f"No Pydantic schema found for domain: {self.domain_id}"
-        )
+        from pydantic import ConfigDict
+        from typing import Optional
+
+        class GenericDomainDocument(BaseModel):
+            model_config = ConfigDict(extra="allow")
+
+            document_id: str
+            title: str
+            category: str = "chung"
+            content: Optional[str] = None
+            source_url: Optional[str] = None
+            aliases: list[str] = []
+
+        return GenericDomainDocument
 
     def _source_paths(self):
         paths = []
@@ -134,12 +148,24 @@ class IngestionPipeline:
             f"[time] load = {time.perf_counter() - t0:.2f}s"
         )
 
+        # AI CHUNK PLANNING & COLUMN MAPPING
+        column_mapping = {}
+        try:
+            from ingestion.ai_chunk_planner import AIChunkPlanner
+            planner = AIChunkPlanner(self.config)
+            plan = planner.create_plan(all_raw)
+            column_mapping = plan.get("column_mapping", {})
+            self.chunker = FieldChunker(self.config)
+        except Exception as e:
+            print(f"[pipeline][{self.domain_id}] AI Chunk Planner note ({e}), using default mapping")
+
         # 2. VALIDATE
         t0 = time.perf_counter()
 
         valid_docs, validation_errors = validate_documents(
             all_raw,
             schema_cls,
+            column_mapping=column_mapping,
         )
 
         print(
@@ -156,8 +182,9 @@ class IngestionPipeline:
 
         representative_texts = [
             (
-                getattr(doc, "content", "")
+                f"{getattr(doc, 'title', '')}\n{getattr(doc, 'content', '')}".strip()
                 or getattr(doc, "title", "")
+                or getattr(doc, "content", "")
                 or ""
             )
             for doc in valid_docs
@@ -205,6 +232,18 @@ class IngestionPipeline:
             f"[time] chunk = {time.perf_counter() - t0:.2f}s"
         )
 
+        if not chunks:
+            print(f"[pipeline][{self.domain_id}] Không sinh được chunk nào, bỏ qua embed & upsert.")
+            return IngestionResult(
+                domain_id=self.domain_id,
+                total_loaded=len(all_raw),
+                total_valid=len(valid_docs),
+                total_after_dedup=len(dedup_result.kept),
+                total_chunks=0,
+                removed_duplicates=dedup_result.removed,
+                validation_errors=validation_errors,
+            )
+
         # 5. EMBED CHUNKS
         t0 = time.perf_counter()
 
@@ -232,8 +271,9 @@ class IngestionPipeline:
             f"[time] upsert = {time.perf_counter() - t0:.2f}s"
         )
 
-        # Chỉ mark sau khi upsert thành công
-        self._mark_sources_indexed()
+        # Chỉ mark sau khi upsert thành công ít nhất 1 chunk
+        if upserted > 0:
+            self._mark_sources_indexed()
 
         print(
             f"[pipeline] Total time: "

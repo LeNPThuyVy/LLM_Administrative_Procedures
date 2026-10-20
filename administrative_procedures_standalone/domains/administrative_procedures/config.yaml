@@ -1,0 +1,178 @@
+domain_id: administrative_procedures
+domain_name: Thủ tục hành chính
+
+description: >
+  Tra cứu các thủ tục hành chính công tại TP.HCM.
+
+# =========================
+# Embedding
+# =========================
+embedding_model: BAAI/bge-m3
+embedding_dim: 1024
+
+# =========================
+# Vector Store
+# =========================
+collection_name: administrative_procedures
+distance_metric: cosine
+
+# =========================
+# Chunking
+# =========================
+chunk_fields:
+  - required_documents
+  - fee
+  - processing_time
+  - submission_method
+  - general
+
+chunk_field_specs:
+  required_documents:
+    suffix: _docs
+    label: Thành phần hồ sơ
+    attr: required_documents
+
+  fee:
+    suffix: _fee
+    label: Lệ phí
+    attr: fee
+
+  processing_time:
+    suffix: _time
+    label: Thời gian giải quyết
+    attr: processing_time
+
+  submission_method:
+    suffix: _method
+    label: Hình thức và nơi nộp hồ sơ
+    attr: submission_method
+    merge_with:
+      - submission_location
+
+  general:
+    suffix: _general
+    label: Nội dung tổng quát
+    attr: content
+
+# =========================
+# ETL Sources
+# =========================
+sources:
+  - type: json
+    path: data/procedures.json
+
+# =========================
+# Policy
+# =========================
+mode: strict
+persona: thân thiện, giản dị
+risk_level: high
+
+assistant_role: "cán bộ tư vấn thủ tục hành chính"
+no_evidence_message: "Tôi chưa có đủ thông tin để trả lời câu hỏi này."
+disclaimer: "Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+out_of_scope_message: "Hiện tại hệ thống chỉ hỗ trợ tra cứu các thủ tục hành chính công áp dụng tại Thành phố Hồ Chí Minh."
+field_intents:
+  - key: method
+    label: "HÌNH THỨC NỘP HỒ SƠ"
+    section_name: "'Hình thức nộp'"
+    pattern: "\\b(hình\\s+thức\\s+nộp|nộp\\s+online|nộp\\s+trực\\s+tuyến|nộp\\s+trực\\s+tiếp|cách\\s+nộp|nộp\\s+ở\\s+đâu|submission\\s+method)\\b"
+  - key: docs
+    label: "GIẤY TỜ / HỒ SƠ cần thiết"
+    section_name: "'Thành phần hồ sơ'"
+    pattern: "\\b(giấy\\s+tờ|thành\\s+phần\\s+hồ\\s+sơ|cần\\s+chuẩn\\s+bị|tài\\s+liệu|giấy\\s+chứng\\s+minh|giấy\\s+chứng\\s+sinh|giấy\\s+khai|cần\\s+gì|bao\\s+gồm\\s+những\\s+gì|required)\\b"
+  - key: fee
+    label: "LỆ PHÍ"
+    section_name: "'Lệ phí'"
+    pattern: "\\b(lệ\\s+phí|chi\\s+phí|miễn\\s+phí|bao\\s+nhiêu\\s+tiền|fee|mất\\s+bao\\s+nhiêu)\\b"
+  - key: time
+    label: "THỜI GIAN GIẢI QUYẾT"
+    section_name: "'Thời gian giải quyết'"
+    pattern: "\\b(thời\\s+gian|bao\\s+lâu|mấy\\s+ngày|thời\\s+hạn|bao\\s+nhiêu\\s+ngày|processing\\s+time)\\b"
+supported_locations:
+  - "hồ chí minh"
+  - "hcm"
+  - "tp hcm"
+  - "tp.hcm"
+  - "thành phố hồ chí minh"
+  - "sài gòn"
+  - "saigon"
+  - "sg"
+min_retrieval_score: 0.50
+allowed_tools: []
+entity_keywords:
+  - "kết hôn"
+  - "khai sinh"
+  - "khai tử"
+  - "đẻ con"
+  - "sinh con"
+  - "sinh em bé"
+  - "mới đẻ"
+  - "mới sinh"
+  - "mới mất"
+  - "người mới mất"
+  - "qua đời"
+  - "dọn về ở chung"
+  - "về ở chung"
+  - "ở chung"
+  - "lấy chồng"
+  - "lấy vợ"
+  - "cưới"
+  - "mở quán"
+  - "quán trà sữa"
+  - "bán trà sữa"
+  - "mở tiệm"
+  - "mở cửa hàng"
+  - "đập đi xây lại"
+  - "xây nhà"
+  - "sửa nhà"
+  - "để lại căn nhà"
+  - "cho nhà"
+  - "thừa kế"
+  - "cho cháu"
+  - "tặng cho"
+  - "giấy độc thân"
+  - "xác nhận độc thân"
+  - "nhận cha"
+  - "nhận mẹ"
+  - "nhận con"
+  - "hôn nhân"
+  - "tình trạng hôn nhân"
+  - "xác nhận tình trạng"
+  - "nội quy lao động"
+  - "việc làm"
+  - "vay vốn"
+  - "khuyết tật"
+  - "hưu trí"
+  - "trợ cấp"
+  - "liệt sĩ"
+  - "bằng tổ quốc"
+  - "thân nhân"
+  - "người có công"
+  - "hỏa táng"
+  - "mai táng"
+  - "hỗ trợ"
+  - "giấy phép xây dựng"
+  - "xây dựng"
+  - "quy hoạch"
+  - "khởi công"
+  - "đất đai"
+  - "số nhà"
+  - "vị trí nhà"
+  - "tình trạng nhà"
+  - "hộ kinh doanh"
+  - "đăng ký kinh doanh"
+  - "kinh doanh"
+  - "tạm ngừng kinh doanh"
+  - "chấm dứt hoạt động"
+  - "học bổng"
+  - "chuyển trường"
+  - "chứng thực"
+  - "chữ ký"
+  - "hợp đồng"
+  - "di chúc"
+
+# =========================
+# Dedup
+# =========================
+dedup_threshold: 0.95

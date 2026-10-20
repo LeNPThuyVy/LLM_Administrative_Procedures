@@ -108,7 +108,9 @@ def _get_qdrant_client() -> QdrantClient:
     return _qdrant_client
 
 
-_QUERY_EMBEDDING_CACHE: dict[str, list[float]] = {}
+from collections import OrderedDict
+
+_QUERY_EMBEDDING_CACHE: OrderedDict[str, list[float]] = OrderedDict()
 _MAX_EMBEDDING_CACHE_SIZE = 1000
 
 def encode_query(query: str) -> list[float]:
@@ -117,13 +119,14 @@ def encode_query(query: str) -> list[float]:
     if not clean_q:
         return []
     if clean_q in _QUERY_EMBEDDING_CACHE:
+        _QUERY_EMBEDDING_CACHE.move_to_end(clean_q)
         return _QUERY_EMBEDDING_CACHE[clean_q]
 
     model = _get_embedding_model()
     vec = model.encode(query, normalize_embeddings=True)
     res = vec.tolist() if hasattr(vec, "tolist") else list(vec)
     if len(_QUERY_EMBEDDING_CACHE) >= _MAX_EMBEDDING_CACHE_SIZE:
-        _QUERY_EMBEDDING_CACHE.pop(next(iter(_QUERY_EMBEDDING_CACHE)))
+        _QUERY_EMBEDDING_CACHE.popitem(last=False)
     _QUERY_EMBEDDING_CACHE[clean_q] = res
     return res
 
@@ -389,9 +392,12 @@ def _get_alias_catalog(domain: str | None = None) -> dict[str, list[str]]:
                     break
 
             if not data_file or not data_file.exists():
-                data_file = cfg.BASE_DIR / "data" / "procedures.json"
+                if d_id == "administrative_procedures":
+                    data_file = cfg.BASE_DIR / "data" / "procedures.json"
+                else:
+                    data_file = None
 
-            if data_file.exists():
+            if data_file and data_file.exists():
                 items = json.loads(data_file.read_text(encoding="utf-8"))
                 for p in items:
                     did = p.get("document_id") or p.get("id")
@@ -830,8 +836,13 @@ def retrieve_two_step(
     # Không có field cụ thể → lấy _general của doc này + top chunks khác
     result = sorted(doc_chunks, key=lambda c: c.retrieval_score, reverse=True)
     if len(result) < top_k:
-        # Bổ sung từ raw_results của doc khác
-        for c in raw_results:
-            if c.document_id != best_doc_id and len(result) < top_k:
+        # Bổ sung từ raw_results của doc khác, ưu tiên doc có tổng điểm doc_scores cao tiếp theo
+        other_chunks = [c for c in raw_results if c.document_id != best_doc_id]
+        other_chunks.sort(
+            key=lambda c: (doc_scores.get(c.document_id, 0.0), c.retrieval_score),
+            reverse=True,
+        )
+        for c in other_chunks:
+            if len(result) < top_k:
                 result.append(c)
     return result[:top_k]

@@ -35,6 +35,69 @@ class APIClient {
         return [];
     }
 
+    async loadDomainDetails() {
+        try {
+            const res = await fetch('/api/domains/details');
+            if (res.ok) {
+                return await res.json();
+            }
+        } catch (error) {
+            console.error("Failed to load domain details", error);
+        }
+        return [];
+    }
+
+    async createDomain(domainData) {
+        try {
+            const res = await fetch('/api/domains/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(domainData)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || "Không thể tạo domain mới");
+            }
+            return data;
+        } catch (error) {
+            console.error("Error creating domain", error);
+            throw error;
+        }
+    }
+
+    async ingestDomainData(domainId, formData) {
+        try {
+            const res = await fetch(`/api/domains/${domainId}/ingest`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || "Không thể nạp dữ liệu vào domain");
+            }
+            return data;
+        } catch (error) {
+            console.error("Error ingesting data", error);
+            throw error;
+        }
+    }
+
+    async deleteDomain(domainId) {
+        try {
+            const res = await fetch(`/api/domains/${encodeURIComponent(domainId)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || "Không thể xóa domain");
+            }
+            return data;
+        } catch (error) {
+            console.error("Error deleting domain", error);
+            throw error;
+        }
+    }
+
     async loadSessions() {
         try {
             const res = await fetch('/api/sessions');
@@ -109,7 +172,7 @@ class APIClient {
         }
 
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat`;
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?session_id=${encodeURIComponent(this.sessionId)}`;
 
         try {
             this.socket = new WebSocket(wsUrl);
@@ -198,6 +261,8 @@ class APIClient {
             this.reconnectTimer = null;
         }
         if (this.socket) {
+            this.socket.onclose = null;
+            this.socket.onerror = null;
             this.socket.close();
             this.socket = null;
         }

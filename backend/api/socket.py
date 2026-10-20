@@ -172,14 +172,14 @@ async def reset_session(response: Response):
 async def websocket_chat(
     websocket: WebSocket,
 ):
-    # Lấy session_id trực tiếp từ cookie
-    session_id = websocket.cookies.get(COOKIE_NAME)
+    # Lấy session_id từ cookie hoặc query params fallback
+    session_id = websocket.cookies.get(COOKIE_NAME) or websocket.query_params.get("session_id")
 
-    # Bắt buộc phải có cookie
+    # Bắt buộc phải có cookie hoặc query param
     if not session_id:
         await websocket.close(
             code=4401,
-            reason="Missing session_id cookie",
+            reason="Missing session_id cookie or query param",
         )
         return
 
@@ -295,6 +295,60 @@ async def websocket_chat(
                         })
                         continue
 
+                    import my_config as cfg
+                    if getattr(cfg, "MULTI_INTENT_ENABLED", False):
+                        from rag.multi.detector import detect_sub_queries
+                        sub_queries, truncated = detect_sub_queries(query, context, domain)
+                        if len(sub_queries) >= 2:
+                            from rag.multi.orchestrator import answer_multi_stream
+
+                            final_result_data = {
+                                "answer": "",
+                                "evidence_list": [],
+                                "needs_clarification": False,
+                                "sections": [],
+                            }
+
+                            try:
+                                async for event_dict in answer_multi_stream(query, context, domain):
+                                    ev_type = event_dict.get("event")
+                                    ev_data = event_dict.get("data", {})
+
+                                    if ev_type == "section":
+                                        final_result_data["sections"].append(ev_data)
+                                        if "evidence_list" in ev_data:
+                                            final_result_data["evidence_list"].extend(ev_data["evidence_list"])
+                                    elif ev_type == "done":
+                                        parts = []
+                                        for sec in final_result_data["sections"]:
+                                            parts.append(f"### {sec.get('title')}\n{sec.get('text')}")
+                                        final_result_data["answer"] = "\n\n".join(parts)
+                                        if truncated:
+                                            final_result_data["answer"] += "\n\n(Lưu ý: Bạn đã hỏi quá nhiều thủ tục, hệ thống chỉ trả lời 8 thủ tục đầu tiên)."
+
+                                    await websocket.send_json(
+                                        jsonable_encoder({
+                                            "type": ev_type,
+                                            "data": ev_data,
+                                        })
+                                    )
+
+                                asyncio.create_task(
+                                    update_memory(
+                                        session_id=session_id,
+                                        query=query,
+                                        final_result=final_result_data,
+                                    )
+                                )
+                                print(f"[WS QUEUE] session={session_id} DONE (Multi)")
+                                continue
+                            except Exception as multi_exc:
+                                print(f"[WS MULTI ERROR] session={session_id}: {multi_exc}")
+                                await websocket.send_json({
+                                    "type": "error",
+                                    "data": {"message": "Đã xảy ra lỗi khi xử lý đa ý định. Đang chuyển sang xử lý thông thường..."},
+                                })
+
                     result = None
                     try:
                         async for event_type, payload in generate_answer_stream(
@@ -343,27 +397,31 @@ async def websocket_chat(
                     # 1. CLARIFICATION
                     # =========================
                     if result["needs_clarification"]:
+                        clarification_text = (
+                            result.get("clarification_question")
+                            or result.get("answer")
+                            or "Bạn muốn hỏi về thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
+                        )
+                        result["answer"] = clarification_text
+
                         await websocket.send_json({
                             "type": "clarification",
                             "data": {
-                                "question":
-                                    result[
-                                        "clarification_question"
-                                    ]
+                                "question": clarification_text,
                             },
                         })
 
                         await websocket.send_json({
                             "type": "done",
                             "data": {
-                                "needs_clarification":
-                                    True,
+                                "answer": clarification_text,
+                                "needs_clarification": True,
                             },
                         })
 
                         print(
                             f"[WS QUEUE] "
-                            f"session={session_id} DONE"
+                            f"session={session_id} DONE (Clarification)"
                         )
 
                         # Update memory theo session_id

@@ -1,0 +1,52 @@
+domain_id: cooking_recipe
+domain_name: Tư vấn nấu ăn
+description: Trợ lý đóng vai trò như một đầu bếp, để tư vấn các công thức nấu ăn,
+  và các món ăn dựa trên những nguyên liệu người dùng có sẵn
+mode: friendly
+risk_level: low
+collection_name: cooking_recipe
+assistant_role: Đầu bếp
+persona: Bạn là một chuyên gia đầu bếp hàng đầu thế giới, hãy giúp người dùng gợi
+  ý món ăn, đưa ra các công thức nấu ăn theo các món ăn mà người dùng đặt ra
+min_retrieval_score: 0.2
+no_evidence_message: Tôi chưa có thông tin chi tiết về nội dung này.
+out_of_scope_message: Yêu cầu nằm ngoài phạm vi hỗ trợ của hệ thống.
+allowed_tools: []
+entity_keywords:
+- tư vấn nấu ăn
+- đầu bếp
+- công thức nấu ăn
+- món ăn dựa trên nguyên liệu
+- thời gian chuẩn bị
+- thời gian nấu
+- độ khó
+- khẩu phần
+- nguyên liệu chính
+- lượng calo
+supported_locations:
+- Toàn quốc
+risk_keywords:
+- ngộ độc
+- gây hại cho sức khỏe
+chunk_fields:
+- general
+chunk_field_specs:
+  general:
+    suffix: _general
+    label: Thông tin tổng quan
+    attr: general
+    source_columns:
+    - Mã Món
+    - Tên món ăn
+    - Danh mục
+    - Thời gian chuẩn bị (phút)
+    - Thời gian nấu (phút)
+    - Độ khó
+    - Khẩu phần (người)
+    - Nguyên liệu chính
+    - Lượng Calo (kcal)
+    - Mô tả ngắn
+    - Cách nấu chi tiết (Từng bước)
+sources:
+- type: xlsx
+  path: data/sources/cooking_recipe_Cong_Thuc_Nau_An_100_Mon.xlsx

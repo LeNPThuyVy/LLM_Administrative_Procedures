@@ -24,20 +24,27 @@ class QdrantVectorStore:
     def __init__(self, config):
         self.config = config
 
+        # Ưu tiên tái sử dụng QdrantClient từ rag.retrieval
+        try:
+            from rag.retrieval import _get_qdrant_client
+            self.client = _get_qdrant_client()
+            return
+        except Exception:
+            pass
+
         url = os.getenv("QDRANT_URL")
         api_key = os.getenv("QDRANT_API_KEY")
 
-        if not url:
-            raise RuntimeError("QDRANT_URL chưa được cấu hình trong .env")
-
-        if not api_key:
-            raise RuntimeError("QDRANT_API_KEY chưa được cấu hình trong .env")
-
-        self.client = QdrantClient(
-            url=url,
-            api_key=api_key,
-            timeout=120,
-        )
+        if url and api_key:
+            self.client = QdrantClient(
+                url=url,
+                api_key=api_key,
+                timeout=120,
+            )
+        else:
+            local_path = Path("data") / "qdrant_db"
+            local_path.mkdir(parents=True, exist_ok=True)
+            self.client = QdrantClient(path=str(local_path))
 
     def ensure_collection(self) -> None:
         name = self.config.collection_name

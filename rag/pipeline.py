@@ -70,11 +70,16 @@ def _detect_unsupported_location(text: str, domain: str | None = None) -> bool:
     if not runtime.supported_locations:
         return False
 
+    text_lower = text.lower()
+    # Nếu câu hỏi có nêu rõ việc thực hiện tại địa bàn được hỗ trợ (VD: hộ khẩu tỉnh khác nhưng làm tại TP.HCM)
+    has_supported_loc = any(loc.lower() in text_lower for loc in runtime.supported_locations if loc)
+
     if domain == "administrative_procedures" or not domain:
+        if has_supported_loc:
+            return False
         return bool(_NON_HCMC_PATTERNS.search(text))
 
-    text_lower = text.lower()
-    if any(loc.lower() in text_lower for loc in runtime.supported_locations):
+    if has_supported_loc:
         return False
 
     return bool(_NON_HCMC_PATTERNS.search(text))
@@ -134,7 +139,8 @@ def _answer_from_evidence(evidence_candidates, field_types: list[str] = None):
     return FALLBACK_TEXT
 
 
-_PIPELINE_ANSWER_CACHE: dict[tuple, AnswerResponse] = {}
+from collections import OrderedDict
+_PIPELINE_ANSWER_CACHE: OrderedDict[tuple, AnswerResponse] = OrderedDict()
 _MAX_ANSWER_CACHE_SIZE = 500
 
 def _get_cache_key(query: str, context: dict | None, domain: str | None, session_id: str | None = None) -> tuple:
@@ -315,6 +321,7 @@ def answer_query(
     # Bước 3B: Pipeline Answer Cache hit check
     cache_key = _get_cache_key(query, context, domain, session_id=session_id)
     if cache_key in _PIPELINE_ANSWER_CACHE:
+        _PIPELINE_ANSWER_CACHE.move_to_end(cache_key)
         cached_resp = _PIPELINE_ANSWER_CACHE[cache_key]
         print(f"[pipeline] Cache hit for query='{query[:40]}' (proc='{cache_key[1]}')")
         if cached_resp.answer:
@@ -437,13 +444,16 @@ def answer_query(
     # ---------------------------------------------------------
 
     if consolidated.needs_clarification:
+        clarification_text = (
+            consolidated.clarification_question
+            or runtime.clarification_prompt
+            or "Bạn muốn hỏi về nội dung nào? Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
+        )
         return AnswerResponse(
-            answer=None,
+            answer=clarification_text,
             claims=[],
             needs_clarification=True,
-            clarification_question=(
-                consolidated.clarification_question
-            ),
+            clarification_question=clarification_text,
             domain=domain,
         )
 
@@ -464,14 +474,15 @@ def answer_query(
     print(f"[time] retrieve_two_step = {time.time() - t0_retrieve:.2f}s")
 
     if not retrieved_chunks:
+        clarification_text = (
+            runtime.clarification_prompt
+            or "Bạn muốn hỏi về nội dung cụ thể nào? Vui lòng nêu rõ thông tin để tôi có thể hỗ trợ chính xác hơn."
+        )
         return AnswerResponse(
-            answer=None,
+            answer=clarification_text,
             claims=[],
             needs_clarification=True,
-            clarification_question=(
-                "Bạn muốn hỏi về thủ tục hành chính nào cụ thể? "
-                "Vui lòng nêu tên thủ tục để tôi có thể hỗ trợ chính xác hơn."
-            ),
+            clarification_question=clarification_text,
             domain=domain,
         )
 
@@ -508,7 +519,7 @@ def answer_query(
         )
 
     # 2. Rerank
-    ranked_chunks = rerank(retrieved_chunks)
+    ranked_chunks = rerank(retrieved_chunks, query=consolidated.resolved_query)
 
     # 3. Build evidence
     evidence_candidates = build_evidence_candidates(ranked_chunks)
@@ -633,7 +644,7 @@ def answer_query(
     )
 
     if len(_PIPELINE_ANSWER_CACHE) >= _MAX_ANSWER_CACHE_SIZE:
-        _PIPELINE_ANSWER_CACHE.pop(next(iter(_PIPELINE_ANSWER_CACHE)))
+        _PIPELINE_ANSWER_CACHE.popitem(last=False)
     _PIPELINE_ANSWER_CACHE[cache_key] = final_response
 
     print(f"[time] total_pipeline = {time.time() - t_start_pipeline:.2f}s")
