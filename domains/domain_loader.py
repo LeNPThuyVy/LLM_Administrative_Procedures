@@ -42,6 +42,7 @@ class DomainConfig:
     entity_keywords: list[str] = field(default_factory=list)
     field_intents: list[dict[str, Any]] = field(default_factory=list)
     risk_keywords: list[str] = field(default_factory=list)
+    clarification_prompt: str = ""
 
 
 def load_domain_config(domain_id: str) -> DomainConfig:

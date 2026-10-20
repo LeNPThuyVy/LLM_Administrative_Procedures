@@ -24,6 +24,17 @@ class BGEEmbedder:
 
     def _get_model(self):
         if self._model is None:
+            try:
+                from rag.retrieval import _get_embedding_model
+                model = _get_embedding_model()
+                if model is not None:
+                    print("[embedder] Reusing preloaded SentenceTransformer BGE-M3 from memory")
+                    self._model = model
+                    self._is_sentence_transformer = True
+                    return self._model
+            except Exception as e:
+                print(f"[embedder] Note: could not reuse preloaded model ({e}), loading fallback")
+
             print(f"[embedder] Loading model: {self.config.embedding_model}")
             print(f"[embedder] Device: {'CUDA' if self.use_cuda else 'CPU'}")
             print(f"[embedder] Batch size: {self.batch_size}")
@@ -32,6 +43,7 @@ class BGEEmbedder:
                 self.config.embedding_model,
                 use_fp16=self.use_cuda,
             )
+            self._is_sentence_transformer = False
 
         return self._model
 
@@ -40,6 +52,10 @@ class BGEEmbedder:
             return []
 
         model = self._get_model()
+
+        if getattr(self, "_is_sentence_transformer", False):
+            embeddings = model.encode(texts, batch_size=self.batch_size, normalize_embeddings=True)
+            return embeddings.tolist()
 
         output = model.encode(
             texts,

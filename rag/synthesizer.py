@@ -144,80 +144,64 @@ def _build_synthesizer_prompt(
     query: str,
     history: dict[str, Any],
     procedure_hint: list[RetrievedChunk],
+    domain: str | None = None,
 ) -> str:
-    """Build the Vietnamese prompt for query synthesis."""
+    """Build the Vietnamese prompt for query synthesis dynamically adapted to the active domain."""
+    from domains.runtime import get_domain_runtime
+    runtime = get_domain_runtime(domain)
+    domain_name = runtime.config.domain_name or "thủ tục hành chính"
+    assistant_role = runtime.assistant_role or "Trợ lý AI"
+
     history_text = _format_history(history)
     procedure_hint_text = _format_procedure_hint(procedure_hint)
 
     return f"""
-Bạn là Query Synthesizer cho một Legal AI Assistant chuyên về thủ tục hành chính.
+Bạn là Query Synthesizer cho {assistant_role} ({domain_name}).
 
 Nhiệm vụ duy nhất của bạn là viết lại câu hỏi hiện tại thành một câu hỏi độc lập, đầy đủ ngữ cảnh để hệ thống Retrieval có thể sử dụng.
 
 QUY TẮC:
 - Giữ nguyên ý định của câu hỏi hiện tại.
 - Sử dụng lịch sử hội thoại để giải quyết các tham chiếu ("nó", "vậy", "thì sao", "còn"...).
-- Sử dụng gợi ý thủ tục chỉ để hỗ trợ hiểu câu hỏi.
+- Sử dụng gợi ý chủ đề/thông tin chỉ để hỗ trợ hiểu câu hỏi.
 - Không tự thêm thông tin chưa được cung cấp.
-- Không trả lời câu hỏi pháp lý, không suy diễn thông tin.
-- Nếu thông tin hiện có đủ để xác định câu hỏi độc lập: needs_clarification = false, clarification_question = null
-- Nếu thiếu thông tin quan trọng để xác định: needs_clarification = true, clarification_question = "câu hỏi làm rõ ngắn gọn"
-- ĐẶC BIỆT LƯU Ý: Nếu câu mở đầu ("chào", "cho hỏi") không nói rõ thủ tục và không có follow-up, BẮT BUỘC needs_clarification = true. KHÔNG tự nối thủ tục cũ vào nếu người dùng không hỏi.
+- Không trả lời câu hỏi, không suy diễn thông tin.
+- Nếu thông tin hiện có đủ để xác định câu hỏi độc lập (hoặc câu hỏi đã có đối tượng, địa điểm, chủ đề cụ thể): needs_clarification = false, clarification_question = null
+- Nếu câu hỏi quá mơ hồ hoặc không đủ ngữ cảnh để tìm kiếm: needs_clarification = true, clarification_question = "câu hỏi làm rõ ngắn gọn"
+- ĐẶC BIỆT LƯU Ý: Nếu câu mở đầu ("chào", "cho hỏi") không nói rõ chủ đề/đối tượng và không có follow-up, BẮT BUỘC needs_clarification = true. KHÔNG tự nối chủ đề cũ vào nếu người dùng không hỏi.
 
 VÍ DỤ MẪU:
 
 Ví dụ 1:
-LỊCH SỬ: user: tôi muốn đăng ký kết hôn
-CÂU HỎI HIỆN TẠI: vậy lệ phí thì sao?
+LỊCH SỬ: user: tôi muốn tìm hiểu thông tin này
+CÂU HỎI HIỆN TẠI: vậy chi phí thì sao?
 ĐÁP ÁN JSON:
 {{
-    "resolved_query": "lệ phí đăng ký kết hôn là bao nhiêu?",
-    "original_query": "vậy lệ phí thì sao?",
+    "resolved_query": "chi phí là bao nhiêu?",
+    "original_query": "vậy chi phí thì sao?",
     "needs_clarification": false,
     "clarification_question": null
 }}
 
 Ví dụ 2:
 LỊCH SỬ: Không có lịch sử hội thoại.
-CÂU HỎI HIỆN TẠI: tôi muốn làm giấy tờ
-ĐÁP ÁN JSON:
-{{
-    "resolved_query": "tôi muốn làm giấy tờ",
-    "original_query": "tôi muốn làm giấy tờ",
-    "needs_clarification": true,
-    "clarification_question": "Bạn muốn làm giấy tờ liên quan đến thủ tục nào?"
-}}
-
-Ví dụ 3:
-LỊCH SỬ: user: thủ tục cấp hộ chiếu
 CÂU HỎI HIỆN TẠI: xin chào
 ĐÁP ÁN JSON:
 {{
     "resolved_query": "xin chào",
     "original_query": "xin chào",
     "needs_clarification": true,
-    "clarification_question": "Chào bạn, bạn muốn hỏi về thủ tục hành chính nào?"
+    "clarification_question": "Chào bạn, bạn muốn tìm hiểu thông tin gì về {domain_name}?"
 }}
 
-Ví dụ 4:
+Ví dụ 3:
 LỊCH SỬ: Không có lịch sử hội thoại.
-GỢI Ý: Gợi ý 1: Thủ tục đăng ký khai sinh
-CÂU HỎI HIỆN TẠI: kiểu mình mới đẻ con ấy thì giờ mình phải làm gì
+GỢI Ý: Gợi ý 1: Thông tin chủ đề A
+CÂU HỎI HIỆN TẠI: cho mình hỏi địa điểm và giá vé của chủ đề A với
 ĐÁP ÁN JSON:
 {{
-    "resolved_query": "mới sinh con thì làm thủ tục đăng ký khai sinh như thế nào?",
-    "original_query": "kiểu mình mới đẻ con ấy thì giờ mình phải làm gì",
-    "needs_clarification": false,
-    "clarification_question": null
-}}
-
-Ví dụ 5:
-LỊCH SỬ: user: thủ tục giấy khai sinh
-CÂU HỎI HIỆN TẠI: ủa mà mình chưa đăng kí kết hôn á thì phải làm sao?
-ĐÁP ÁN JSON:
-{{
-    "resolved_query": "chưa đăng ký kết hôn thì đăng ký khai sinh cho con như thế nào?",
-    "original_query": "ủa mà mình chưa đăng kí kết hôn á thì phải làm sao?",
+    "resolved_query": "địa điểm và giá vé của chủ đề A là bao nhiêu?",
+    "original_query": "cho mình hỏi địa điểm và giá vé của chủ đề A với",
     "needs_clarification": false,
     "clarification_question": null
 }}
@@ -228,7 +212,7 @@ CÂU HỎI HIỆN TẠI:
 LỊCH SỬ HỘI THOẠI:
 {history_text}
 
-GỢI Ý THỦ TỤC/CHỦ ĐỀ:
+GỢI Ý CHỦ ĐỀ/THÔNG TIN:
 {procedure_hint_text}
 """.strip()
 
@@ -313,6 +297,13 @@ def _validate_consolidated_query(
     if not isinstance(needs_clarification, bool):
         raise ValueError(
             "'needs_clarification' must be a boolean."
+        )
+
+    if needs_clarification and (clarification_question is None or not str(clarification_question).strip()):
+        clarification_question = (
+            "Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? "
+            "Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) "
+            "để tôi có thể hỗ trợ bạn chính xác nhất."
         )
 
     if (
@@ -512,13 +503,15 @@ def synthesizer(
     # 0. Check câu mơ hồ / chào hỏi mở đầu không chỉ rõ thủ tục
     # -----------------------------------------------------------------
     if _is_vague_or_greeting(query, domain=domain):
+        from domains.runtime import get_domain_runtime
+        runtime = get_domain_runtime(domain)
         clarification_q = (
-            "Bạn muốn hỏi về thủ tục hành chính nào? "
-            "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
+            runtime.clarification_prompt
+            or f"Xin chào bạn! Tôi là {runtime.assistant_role} ({runtime.config.domain_name}). Bạn cần tìm hiểu thông tin gì, vui lòng cho tôi biết nhé!"
         )
         print(
             "[synthesizer] Query is vague/greeting without specific procedure keyword "
-            "→ needs_clarification=True"
+            "-> needs_clarification=True"
         )
         return ConsolidatedQuery(
             resolved_query=query,
@@ -534,13 +527,15 @@ def synthesizer(
     has_hint = bool(procedure_hint and len(procedure_hint) > 0)
 
     if not has_keyword and not has_hint:
+        from domains.runtime import get_domain_runtime
+        runtime = get_domain_runtime(domain)
         clarification_q = (
-            "Bạn muốn hỏi về thủ tục hành chính nào? "
-            "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
+            runtime.clarification_prompt
+            or f"Bạn muốn hỏi về {runtime.config.domain_name} ở nội dung nào? Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
         )
         print(
             "[synthesizer] Rule-based override: no procedure keyword and no valid hints "
-            "→ needs_clarification=True"
+            "-> needs_clarification=True"
         )
         return ConsolidatedQuery(
             resolved_query=query,
@@ -583,7 +578,22 @@ def synthesizer(
     synth_mode = getattr(cfg, "SYNTHESIZER_MODE", "llm")
     if generator is generate_answer_1_5b:
         if synth_mode in ("rule", "off") and active_procedure:
-            resolved = f"{query} (liên quan đến: {active_procedure})"
+            # Check if user is clearly switching to a new independent topic:
+            is_topic_switch = False
+            if not has_pronoun and len(query.split()) >= 6 and procedure_hint:
+                top_hint_chunk = procedure_hint[0]
+                top_hint_title = str(top_hint_chunk.metadata.get("title", "")).lower()
+                top_hint_score = getattr(top_hint_chunk, "retrieval_score", 0.0)
+                act_lower = active_procedure.lower()
+                if top_hint_score >= 0.65 and top_hint_title and act_lower not in top_hint_title and top_hint_title not in act_lower:
+                    is_topic_switch = True
+                    print(f"[synthesizer] Detected topic switch from '{active_procedure}' to '{top_hint_title}' (score={top_hint_score:.2f}) -> keep query independent")
+
+            if is_topic_switch:
+                resolved = query
+            else:
+                resolved = f"{query} (liên quan đến: {active_procedure})"
+
             print(f"[synthesizer] Fast rule/off bypass (mode='{synth_mode}'): {resolved}")
             return ConsolidatedQuery(
                 resolved_query=resolved,
@@ -622,6 +632,7 @@ def synthesizer(
         query=query,
         history=history,
         procedure_hint=procedure_hint,
+        domain=domain,
     )
 
     try:
@@ -637,6 +648,15 @@ def synthesizer(
             print("[synthesizer] LLM output failed faithfulness check, using fallback.")
             raise ValueError("Faithfulness check failed")
             
+        # Guard against false-positive clarification when query has entity or strong retrieval hint:
+        from domains.runtime import get_domain_runtime
+        runtime = get_domain_runtime(domain)
+        top_hint_score = getattr(procedure_hint[0], 'retrieval_score', 0) if procedure_hint else 0
+        if cq.needs_clarification and (has_query_kw or (top_hint_score >= runtime.min_retrieval_score and len(query.split()) >= 3)):
+            print(f"[synthesizer] Overriding false-positive clarification for query with specific entity/hint match: '{query}'")
+            cq.needs_clarification = False
+            cq.clarification_question = None
+
         return cq
     except (ValueError, LLMUnavailableError, TypeError) as exc:
         # TypeError can happen if generator doesn't accept temperature/json_mode kwargs

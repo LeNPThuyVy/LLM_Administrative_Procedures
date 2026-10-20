@@ -13,6 +13,7 @@ Also detects which administrative procedure field the user is asking
 about and restricts the answer to the requested field(s).
 """
 
+import my_config as cfg
 from rag.evidence_builder import EvidenceCandidate
 
 

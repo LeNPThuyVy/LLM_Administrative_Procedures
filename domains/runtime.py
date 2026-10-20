@@ -17,10 +17,26 @@ class DomainRuntime:
     min_retrieval_score: float
     allowed_tools: list[str]
     entity_keywords: list[str]
+    clarification_prompt: str
 
 @lru_cache(maxsize=None)
 def _build_runtime(domain_id: str) -> DomainRuntime:
     config = load_domain_config(domain_id)
+
+    clarification = getattr(config, "clarification_prompt", "")
+    if not clarification:
+        if domain_id == "administrative_procedures":
+            clarification = (
+                "Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? "
+                "Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) "
+                "để tôi có thể hỗ trợ bạn chính xác nhất."
+            )
+        else:
+            d_name = config.domain_name or domain_id
+            clarification = (
+                f"Bạn muốn tìm hiểu thông tin gì về {d_name}? "
+                "Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn chính xác nhất."
+            )
     
     return DomainRuntime(
         domain_id=domain_id,
@@ -36,6 +52,7 @@ def _build_runtime(domain_id: str) -> DomainRuntime:
         min_retrieval_score=config.min_retrieval_score,
         allowed_tools=config.allowed_tools,
         entity_keywords=config.entity_keywords,
+        clarification_prompt=clarification,
     )
 
 def get_domain_runtime(domain_id: str | None = None) -> DomainRuntime:

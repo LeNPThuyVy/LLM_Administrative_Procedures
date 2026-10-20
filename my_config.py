@@ -65,3 +65,7 @@ SLIM_CONTEXT = os.getenv("SLIM_CONTEXT", "True").lower() == "true"
 HISTORY_STORE_TURNS = int(os.getenv("HISTORY_STORE_TURNS", "10"))
 HISTORY_PROMPT_TURNS = int(os.getenv("HISTORY_PROMPT_TURNS", "2"))
 
+# Server Host & Port Settings
+SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1")
+SERVER_PORT = int(os.getenv("SERVER_PORT", "8002"))
+

@@ -118,3 +118,18 @@ class VersionTracker:
         }
 
         self._save()
+
+    def remove_domain(
+        self,
+        domain_id: str,
+    ) -> int:
+        prefix = f"{domain_id}:"
+        keys_to_remove = [
+            k for k in self._data.keys()
+            if k.startswith(prefix)
+        ]
+        for k in keys_to_remove:
+            del self._data[k]
+        if keys_to_remove:
+            self._save()
+        return len(keys_to_remove)

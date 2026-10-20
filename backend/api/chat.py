@@ -120,8 +120,14 @@ async def chat(request: ChatRequest):
 
                 # Trường hợp cần clarification
                 if result["needs_clarification"]:
+                    clarification_text = (
+                        result.get("clarification_question")
+                        or result.get("answer")
+                        or "Bạn muốn hỏi về nội dung nào? Vui lòng cung cấp thêm thông tin cụ thể để tôi có thể hỗ trợ bạn."
+                    )
+                    result["answer"] = clarification_text
                     data = {
-                        "question": result["clarification_question"]
+                        "question": clarification_text
                     }
                     yield (
                         "event: clarification\n"
@@ -129,7 +135,7 @@ async def chat(request: ChatRequest):
                     )
                     yield (
                         "event: done\n"
-                        f"data: {json.dumps({'needs_clarification': True}, ensure_ascii=False)}\n\n"
+                        f"data: {json.dumps({'answer': clarification_text, 'evidence_list': [], 'needs_clarification': True}, ensure_ascii=False)}\n\n"
                     )
 
                     print(

@@ -23,6 +23,11 @@ from pathlib import Path
 import os
 import sys
 
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 _root_dir = str(Path(__file__).resolve().parent.parent)
 if _root_dir not in sys.path:
     sys.path.insert(0, _root_dir)
@@ -37,6 +42,7 @@ import my_config
 from backend.api.sessions import router as sessions_router
 from backend.api.socket import router as socket_router
 from backend.api.chat import router as chat_router
+from backend.api.ingestion import router as ingestion_router
 
 llama_process_3b = None
 llama_process_1_5b = None
@@ -206,6 +212,7 @@ app = FastAPI(
 app.include_router(sessions_router)
 app.include_router(socket_router)
 app.include_router(chat_router)
+app.include_router(ingestion_router)
 
 @app.get("/health")
 async def health():
@@ -234,7 +241,7 @@ async def get_index():
 if __name__ == "__main__":
     uvicorn.run(
         "backend.main:app",
-        host="127.0.0.1",
-        port=8000,
+        host=my_config.SERVER_HOST,
+        port=my_config.SERVER_PORT,
         reload=False,
     )
