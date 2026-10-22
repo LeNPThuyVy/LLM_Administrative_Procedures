@@ -1,13 +1,11 @@
 import os
 from pathlib import Path 
-import torch
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 PROCEDURES_PATH = BASE_DIR / "data" / "procedures.json"
-CHROMA_PATH = BASE_DIR / "data" / "chroma_db"  # deprecated
 
 # Qdrant Cloud & Vector Store Settings
 QDRANT_URL = os.getenv("QDRANT_URL", "")
@@ -59,7 +57,14 @@ MAX_NEW_TOKENS = 512
 TEMPERATURE = 0.0
 TOP_P = 0.9
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+def _get_device() -> str:
+    try:
+        import torch
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    except ImportError:
+        return "cpu"
+
+DEVICE = _get_device()
 
 MULTI_INTENT_ENABLED = os.getenv("MULTI_INTENT_ENABLED", "False").lower() == "true"
 
@@ -73,4 +78,3 @@ HISTORY_PROMPT_TURNS = int(os.getenv("HISTORY_PROMPT_TURNS", "2"))
 # Server Host & Port Settings
 SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1")
 SERVER_PORT = int(os.getenv("SERVER_PORT", "8002"))
-

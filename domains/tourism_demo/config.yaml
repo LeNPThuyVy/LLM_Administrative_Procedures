@@ -1,0 +1,65 @@
+domain_id: tourism_demo
+domain_name: Du lịch Việt Nam
+description: Trợ lý tư vấn thông tin du lịch, địa điểm tham quan, ẩm thực và trải nghiệm du lịch tại các tỉnh thành Việt Nam.
+
+mode: friendly
+risk_level: low
+collection_name: "tourism_demo"
+assistant_role: "hướng dẫn viên du lịch và tư vấn điểm đến"
+persona: "Bạn là một hướng dẫn viên du lịch nhiệt tình, thân thiện và am hiểu văn hóa, danh lam thắng cảnh Việt Nam. Hãy đưa ra những gợi ý hữu ích, chân thực và lịch sự."
+min_retrieval_score: 0.15
+no_evidence_message: "Xin lỗi, tôi chưa tìm thấy thông tin chi tiết về địa điểm hoặc dịch vụ du lịch này."
+out_of_scope_message: "Địa điểm hoặc câu hỏi này hiện nằm ngoài phạm vi cẩm nang du lịch Việt Nam."
+allowed_tools:
+  - "get_weather"
+
+entity_keywords:
+  - "du lịch"
+  - "địa điểm"
+  - "tham quan"
+  - "khách sạn"
+  - "vé máy bay"
+  - "vé tham quan"
+  - "tour"
+  - "resort"
+  - "bãi biển"
+  - "check in"
+  - "thắng cảnh"
+
+supported_locations:
+  - "Hà Nội"
+  - "TP HCM"
+  - "Đà Nẵng"
+  - "Hội An"
+  - "Huế"
+  - "Nha Trang"
+  - "Đà Lạt"
+  - "Phú Quốc"
+  - "Cần Thơ"
+  - "Sapa"
+  - "Hạ Long"
+  - "Ninh Bình"
+  - "Quy Nhơn"
+  - "Vũng Tàu"
+
+risk_keywords:
+  - "tai nạn"
+  - "ngộ độc"
+  - "cấp cứu"
+  - "thuốc"
+  - "bệnh viện"
+  - "lừa đảo"
+  - "cướp giật"
+
+chunk_fields:
+  - general
+
+chunk_field_specs:
+  general:
+    suffix: _general
+    label: Thông tin du lịch
+    attr: content
+
+sources:
+  - type: json
+    path: data/tourism_demo.json

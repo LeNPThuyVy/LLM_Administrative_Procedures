@@ -74,14 +74,22 @@ def validate_documents(
                     break
 
         if not doc_title:
-            from pathlib import Path
-            src_stem = Path(document.source_path).stem if getattr(document, "source_path", None) else ""
-            if len(documents) > 1:
-                doc_title = f"{src_stem} - Mục {index+1}" if src_stem else f"Tài liệu {index+1}"
-            else:
-                doc_title = metadata.get("file_name") or src_stem or f"Tài liệu {index+1}"
+            # Chỉ auto-fill fallback title nếu metadata gốc có các trường nội dung khác ngoài ID
+            orig_meta = dict(document.metadata or {})
+            meaningful_keys = {
+                k for k in orig_meta.keys()
+                if k not in ("document_id", id_col, "stt", "id", "mã", "ma", "code", "_source_type", "source_type")
+            }
+            if meaningful_keys:
+                from pathlib import Path
+                src_stem = Path(document.source_path).stem if getattr(document, "source_path", None) else ""
+                if len(documents) > 1:
+                    doc_title = f"{src_stem} - Mục {index+1}" if src_stem else f"Tài liệu {index+1}"
+                else:
+                    doc_title = orig_meta.get("file_name") or src_stem or f"Tài liệu {index+1}"
 
-        metadata["title"] = doc_title
+        if doc_title:
+            metadata["title"] = doc_title
 
         # 3. Trích xuất category
         doc_cat = None
@@ -113,7 +121,7 @@ def validate_documents(
                 metadata["content"] = str(document.raw_text).strip()
             else:
                 # Tổng hợp tất cả các cột có giá trị trong metadata
-                content_lines = [f"Tiêu đề: {metadata['title']}"]
+                content_lines = [f"Tiêu đề: {metadata.get('title', '')}"]
                 for k, v in metadata.items():
                     if k not in ("document_id", "title", "category", "source_url", "aliases") and v is not None and str(v).strip():
                         content_lines.append(f"{k}: {str(v).strip()}")
