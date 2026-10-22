@@ -13,6 +13,11 @@ CHROMA_PATH = BASE_DIR / "data" / "chroma_db"  # deprecated
 QDRANT_URL = os.getenv("QDRANT_URL", "")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
 
+# Elasticsearch & Local BM25 Fallback Settings (for Tabular data: Excel / CSV)
+ELASTICSEARCH_URL = os.getenv("ELASTICSEARCH_URL", "http://127.0.0.1:9200")
+ELASTICSEARCH_API_KEY = os.getenv("ELASTICSEARCH_API_KEY", "")
+ELASTIC_LOCAL_DIR = BASE_DIR / "data" / "elastic_local"
+
 DEFAULT_DOMAIN = "administrative_procedures"
 DEFAULT_COLLECTION = os.getenv("DEFAULT_COLLECTION", "administrative_procedures")
 COLLECTION_NAME = DEFAULT_COLLECTION

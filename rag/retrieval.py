@@ -530,31 +530,40 @@ def retrieve(
     # =====================================================
     # EMBEDDING
     # =====================================================
-    query_embedding = encode_query(search_query)
-
-    # =====================================================
-    # VECTOR STORE
-    # =====================================================
-    client = _get_qdrant_client()
     from domains.runtime import get_domain_runtime
-    collection_name = get_domain_runtime(domain).collection_name
+    runtime = get_domain_runtime(domain)
+    collection_name = runtime.collection_name
     candidate_count = max(top_k * 5, 15)
 
     if candidate_count <= 0:
         return []
 
-    # Query Qdrant using query_points API
-    try:
-        query_response = client.query_points(
-            collection_name=collection_name,
-            query=query_embedding,
-            limit=candidate_count,
-            with_payload=True,
-        )
-        hits = query_response.points if hasattr(query_response, "points") else query_response
-    except Exception as e:
-        print(f"[retrieval] Qdrant query_points error: {e}")
-        return []
+    hits = []
+    if getattr(runtime, "search_backend", "qdrant") == "elasticsearch":
+        # =====================================================
+        # NHÁNH TABULAR: ELASTICSEARCH / LOCAL BM25 SEARCH
+        # (Không encode vector BGE-M3, không gọi Qdrant)
+        # =====================================================
+        from ingestion.elastic_store import ElasticTabularStore
+        es_store = ElasticTabularStore(runtime.config)
+        hits = es_store.search(query=search_query, top_k=candidate_count)
+    else:
+        # =====================================================
+        # NHÁNH VECTOR: BGE-M3 EMBEDDING + QDRANT
+        # =====================================================
+        query_embedding = encode_query(search_query)
+        client = _get_qdrant_client()
+        try:
+            query_response = client.query_points(
+                collection_name=collection_name,
+                query=query_embedding,
+                limit=candidate_count,
+                with_payload=True,
+            )
+            hits = query_response.points if hasattr(query_response, "points") else query_response
+        except Exception as e:
+            print(f"[retrieval] Qdrant query_points error: {e}")
+            return []
 
     retrieved_chunks = []
 
@@ -562,14 +571,20 @@ def retrieve(
     # RANKING
     # =====================================================
     for hit in hits:
-        payload = getattr(hit, "payload", {}) or {}
-        score = getattr(hit, "score", 0.0)
+        if isinstance(hit, dict):
+            payload = hit.get("payload", {}) or {}
+            score = float(hit.get("score", 0.0))
+            chunk_id = str(hit.get("id", ""))
+        else:
+            payload = getattr(hit, "payload", {}) or {}
+            score = float(getattr(hit, "score", 0.0))
+            chunk_id = str(getattr(hit, "id", ""))
 
         content = payload.get("text") or payload.get("content") or ""
-        chunk_id = str(payload.get("chunk_id", getattr(hit, "id", "")))
+        chunk_id = str(payload.get("chunk_id", chunk_id))
         document_id = str(payload.get("document_id", ""))
 
-        # Qdrant cosine similarity score (higher is better)
+        # Retrieval score (higher is better)
         vector_score = float(score)
 
         keyword_bonus = _calculate_keyword_bonus(
@@ -845,4 +860,4 @@ def retrieve_two_step(
         for c in other_chunks:
             if len(result) < top_k:
                 result.append(c)
-    return result[:top_k]
+    return result[:top_k]

@@ -20,6 +20,7 @@ class DomainConfig:
 
     collection_name: str = ""
     distance_metric: str = "cosine"
+    search_backend: str = "auto"
 
     chunk_fields: list[str] = field(default_factory=list)
     chunk_field_specs: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -43,6 +44,8 @@ class DomainConfig:
     field_intents: list[dict[str, Any]] = field(default_factory=list)
     risk_keywords: list[str] = field(default_factory=list)
     clarification_prompt: str = ""
+    system_prompt_rules: Any = ""
+    answer_template: Any = ""
 
 
 def load_domain_config(domain_id: str) -> DomainConfig:
@@ -92,5 +95,16 @@ def load_domain_config(domain_id: str) -> DomainConfig:
 
     if not config.collection_name:
         config.collection_name = config.domain_id
+
+    backend = (getattr(config, "search_backend", "") or "auto").strip().lower()
+    if backend == "auto":
+        has_tabular = any(
+            str(src.get("type", "")).lower() in ("csv", "xlsx")
+            or str(src.get("path", "")).lower().endswith((".csv", ".xlsx"))
+            for src in (config.sources or [])
+        )
+        config.search_backend = "elasticsearch" if has_tabular else "qdrant"
+    else:
+        config.search_backend = backend
 
     return config

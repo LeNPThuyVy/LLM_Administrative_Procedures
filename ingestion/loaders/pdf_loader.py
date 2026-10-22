@@ -35,11 +35,15 @@ class PDFLoader(BaseLoader):
 
         parsed = reader.load_data()
 
-        return [
-            RawDocument(
-                source_path=str(path),
-                raw_text=doc.text or "",
-                metadata=dict(doc.metadata or {}),
+        docs = []
+        for doc in parsed:
+            meta = dict(doc.metadata or {})
+            meta["_source_type"] = "document"
+            docs.append(
+                RawDocument(
+                    source_path=str(path),
+                    raw_text=doc.text or "",
+                    metadata=meta,
+                )
             )
-            for doc in parsed
-        ]
+        return docs

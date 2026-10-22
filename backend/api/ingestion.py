@@ -234,6 +234,10 @@ async def ingest_domain_data(
         cleaned_sources = [s for s in existing_sources if Path(s.get("path", "")).name != new_name]
         cleaned_sources.append(new_source)
         current_cfg["sources"] = cleaned_sources
+        if source_type in ("csv", "xlsx"):
+            current_cfg["search_backend"] = "elasticsearch"
+        elif source_type in ("pdf", "docx"):
+            current_cfg["search_backend"] = "qdrant"
 
         with open(config_path, "w", encoding="utf-8") as fp:
             yaml.dump(current_cfg, fp, allow_unicode=True, sort_keys=False)
@@ -329,6 +333,11 @@ async def delete_domain(domain_id: str):
         def _del_qdrant():
             store = QdrantVectorStore(cfg)
             store.delete_collection()
+            try:
+                from ingestion.elastic_store import ElasticTabularStore
+                ElasticTabularStore(cfg).delete_collection()
+            except Exception as e_es:
+                print(f"[api/domains] Note deleting ES index: {e_es}")
         await asyncio.to_thread(_del_qdrant)
         qdrant_deleted = True
     except Exception as e:

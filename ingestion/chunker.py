@@ -13,10 +13,16 @@ class Chunk:
 
 class FieldChunker:
     """
-    Tách ProcedureDocument thành các chunk theo cấu hình domain.
-
-    Không hardcode suffix / label trong code.
-    Các thông tin này được đọc từ config.chunk_field_specs.
+    FieldChunker hỗ trợ 2 nhánh phân tách rõ ràng:
+    1. Nhánh Tabular (Excel / CSV / Structured JSON):
+       - Không chia nhỏ 1 dòng thành nhiều chunk.
+       - Giữ nguyên toàn bộ schema 1 dòng theo format {tên cột}: {nội dung dòng}.
+       - Bảo vệ an toàn chống cell overflow (ngưỡng 2500 ký tự).
+    2. Nhánh Document (PDF / DOCX):
+       - Chia chunk theo đoạn văn bản + sliding window overlap.
+       - Gắn kèm Tiêu đề tài liệu ở đầu mỗi chunk.
+    3. Nhánh Legacy Multi-field (procedures.json):
+       - Duy trì tương thích ngược cho domain hành chính công có nhiều chunk_fields con.
     """
 
     def __init__(self, config: DomainConfig):
@@ -67,10 +73,12 @@ class FieldChunker:
         doc_id = document.document_id
         title = document.title
 
+        source_type = self._get_field_value(document, "source_type") or ""
         base_metadata = {
             "document_id": doc_id,
             "title": title,
             "domain": self.config.domain_id,
+            "source_type": source_type,
             "document_type": getattr(
                 document,
                 "document_type",
@@ -94,6 +102,33 @@ class FieldChunker:
         }
 
         aliases_list = base_metadata["aliases"]
+
+        # =========================================================================
+        # KIỂM TRA NHÁNH:
+        # 1. Nếu là domain administrative_procedures HOẶC domain có nhiều chunk_fields
+        #    thì chạy theo multi-field legacy chunking.
+        # 2. Nếu là Tabular (Excel / CSV / Structured JSON):
+        #    -> Chạy Nhánh 1: 1 dòng = 1 schema record {tên cột}: {nội dung dòng}.
+        # 3. Nếu là Document (PDF / DOCX):
+        #    -> Chạy Nhánh 2: Chia chunk theo đoạn văn + sliding window.
+        # =========================================================================
+        is_legacy_multi_field = (
+            len(self.config.chunk_fields) > 1
+            and any(f != "general" for f in self.config.chunk_fields)
+        )
+
+        if not is_legacy_multi_field:
+            if source_type == "tabular":
+                return self._chunk_tabular(document, base_metadata, aliases_list)
+            elif source_type == "document":
+                return self._chunk_document(document, base_metadata)
+            else:
+                # Mặc định: nếu chỉ có chunk 'general', kiểm tra xem content có cấu trúc cột hay không
+                return self._chunk_tabular(document, base_metadata, aliases_list)
+
+        # =========================================================================
+        # NHÁNH 3: LEGACY MULTI-FIELD CHUNKING (Dành cho administrative_procedures)
+        # =========================================================================
         chunks: list[Chunk] = []
 
         for field_name in self.config.chunk_fields:
@@ -107,13 +142,10 @@ class FieldChunker:
             attr = spec.get("attr", field_name)
             source_cols = spec.get("source_columns", [])
 
-            # =========================
             # GENERAL
-            # =========================
             if field_name == "general":
                 value = self._get_field_value(document, attr)
 
-                # Nếu value rỗng, thử gom từ source_cols hoặc toàn bộ model_extra
                 if not value:
                     if source_cols:
                         parts = []
@@ -126,7 +158,7 @@ class FieldChunker:
                     elif hasattr(document, "model_extra") and document.model_extra:
                         parts = []
                         for col, c_val in document.model_extra.items():
-                            if c_val is not None and str(c_val).strip():
+                            if col not in ("source_type", "_source_type") and c_val is not None and str(c_val).strip():
                                 parts.append(f"{col}: {str(c_val).strip()}")
                         if parts:
                             value = "\n".join(parts)
@@ -138,14 +170,12 @@ class FieldChunker:
                 if not text:
                     continue
 
-                # Đảm bảo có title ở đầu chunk general
                 if title and not text.lower().startswith(title.lower()) and f"tiêu đề: {title.lower()}" not in text.lower():
                     text = f"Tiêu đề: {title}\n{text}"
 
                 if aliases_list:
                     text += f"\nTừ khóa và tình huống liên quan: {', '.join(aliases_list)}"
 
-                # Cắt nhỏ nếu vượt quá CHUNK_SIZE
                 sub_texts = self._split_long_text(text, max_chars=1400, overlap=200)
                 for idx, s_text in enumerate(sub_texts):
                     chunk_id = f"{doc_id}{suffix}" if len(sub_texts) == 1 else f"{doc_id}{suffix}_{idx+1}"
@@ -160,15 +190,11 @@ class FieldChunker:
                             },
                         )
                     )
-
                 continue
 
-            # =========================
             # FIELD VALUE / SPECIAL CHUNK
-            # =========================
             parts: list[str] = []
 
-            # 1. Thu thập từ source_columns nếu có
             if source_cols:
                 for col in source_cols:
                     c_val = self._get_field_value(document, col)
@@ -179,7 +205,6 @@ class FieldChunker:
                 if value is not None and str(value).strip():
                     parts.append(str(value).strip())
 
-            # 2. merge_with
             merge_fields = spec.get("merge_with", [])
             for merge_field in merge_fields:
                 merge_value = self._get_field_value(document, merge_field)
@@ -210,5 +235,90 @@ class FieldChunker:
                         },
                     )
                 )
+
+        return chunks
+
+    def _chunk_tabular(self, document: Any, base_metadata: dict, aliases_list: list[str]) -> list[Chunk]:
+        """
+        Nhánh 1: Tabular Schema Record.
+        1 dòng = 1 Chunk chuẩn dạng {tên cột}: {nội dung dòng}.
+        """
+        doc_id = document.document_id
+        title = document.title
+        content = getattr(document, "content", None) or ""
+
+        # Nếu content chưa có hoặc ngắn, xây dựng từ toàn bộ các cột trong model_extra
+        lines = []
+        if title:
+            lines.append(f"Tiêu đề: {title}")
+
+        if hasattr(document, "model_extra") and document.model_extra:
+            for k, v in document.model_extra.items():
+                if k in ("document_id", "title", "source_type", "_source_type", "aliases", "category", "source_url"):
+                    continue
+                if v is not None and str(v).strip():
+                    lines.append(f"{k}: {str(v).strip()}")
+
+        # Nếu model_extra không có, dùng content đã được tổng hợp ở validator
+        if len(lines) <= 1 and content:
+            record_text = content.strip()
+        else:
+            record_text = "\n".join(lines).strip()
+
+        if aliases_list:
+            record_text += f"\nTừ khóa liên quan: {', '.join(aliases_list)}"
+
+        if not record_text:
+            return []
+
+        # Bảo vệ overflow: nếu 1 dòng quá 2500 ký tự mới cắt phụ
+        chunks = []
+        sub_texts = self._split_long_text(record_text, max_chars=2500, overlap=200)
+        for idx, s_text in enumerate(sub_texts):
+            chunk_id = f"{doc_id}_general" if len(sub_texts) == 1 else f"{doc_id}_general_{idx+1}"
+            chunks.append(
+                Chunk(
+                    chunk_id=chunk_id,
+                    text=s_text,
+                    metadata={
+                        **base_metadata,
+                        "chunk_id": chunk_id,
+                        "field": "general",
+                    },
+                )
+            )
+
+        return chunks
+
+    def _chunk_document(self, document: Any, base_metadata: dict) -> list[Chunk]:
+        """
+        Nhánh 2: Document Chunking cho PDF / DOCX.
+        Chia theo đoạn văn bản + sliding window overlap. Luôn đính kèm Tiêu đề tài liệu.
+        """
+        doc_id = document.document_id
+        title = document.title
+        raw_text = getattr(document, "content", "") or getattr(document, "raw_text", "") or ""
+
+        if not raw_text.strip():
+            return []
+
+        sub_texts = self._split_long_text(raw_text.strip(), max_chars=1200, overlap=200)
+        chunks = []
+
+        for idx, s_text in enumerate(sub_texts):
+            # Luôn gắn kèm tiêu đề ở đầu chunk để giữ ngữ cảnh embedding
+            chunk_text = f"Tài liệu: {title}\n{s_text}" if title and not s_text.startswith(title) else s_text
+            chunk_id = f"{doc_id}_doc_{idx+1}"
+            chunks.append(
+                Chunk(
+                    chunk_id=chunk_id,
+                    text=chunk_text,
+                    metadata={
+                        **base_metadata,
+                        "chunk_id": chunk_id,
+                        "field": "document",
+                    },
+                )
+            )
 
         return chunks
