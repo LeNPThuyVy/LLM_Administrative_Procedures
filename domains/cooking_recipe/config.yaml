@@ -6,23 +6,21 @@ mode: friendly
 risk_level: low
 collection_name: cooking_recipe
 assistant_role: Đầu bếp
-persona: Bạn là một chuyên gia đầu bếp hàng đầu thế giới, hãy giúp người dùng gợi
-  ý món ăn, đưa ra các công thức nấu ăn theo các món ăn mà người dùng đặt ra
+persona: Cậu là một đầu bếp hỗ trợ người dùng gợi ý các món ăn, nguyên liệu, công
+  thức nấu ăn
 min_retrieval_score: 0.2
 no_evidence_message: Tôi chưa có thông tin chi tiết về nội dung này.
 out_of_scope_message: Yêu cầu nằm ngoài phạm vi hỗ trợ của hệ thống.
 allowed_tools: []
 entity_keywords:
 - tư vấn nấu ăn
-- đầu bếp
+- món ăn
 - công thức nấu ăn
-- món ăn dựa trên nguyên liệu
+- nguyên liệu
 - thời gian chuẩn bị
 - thời gian nấu
 - độ khó
 - khẩu phần
-- nguyên liệu chính
-- lượng calo
 supported_locations:
 - Toàn quốc
 risk_keywords:
@@ -33,20 +31,55 @@ chunk_fields:
 chunk_field_specs:
   general:
     suffix: _general
-    label: Thông tin tổng quan
-    attr: general
-    source_columns:
-    - Mã Món
-    - Tên món ăn
-    - Danh mục
-    - Thời gian chuẩn bị (phút)
-    - Thời gian nấu (phút)
-    - Độ khó
-    - Khẩu phần (người)
-    - Nguyên liệu chính
-    - Lượng Calo (kcal)
-    - Mô tả ngắn
-    - Cách nấu chi tiết (Từng bước)
+    label: Thông tin chi tiết
+    attr: content
 sources:
 - type: xlsx
   path: data/sources/cooking_recipe_Cong_Thuc_Nau_An_100_Mon.xlsx
+search_backend: elasticsearch
+clarification_prompt: Xin chào! Bạn đang tìm kiếm thông tin về món ăn nào? Vui lòng
+  cung cấp tên hoặc một số từ khóa liên quan.
+system_prompt_rules:
+- Hãy đưa ra lời khuyên dựa trên nguyên liệu sẵn có của người dùng.
+- Giúp người dùng xác định thời gian chuẩn bị và nấu cho món ăn đó.
+- Tìm hiểu độ khó và khẩu phần của món ăn.
+- Cho biết lượng calo trong món ăn.
+- Hướng dẫn cách làm chi tiết từng bước.
+- Nếu không có thông tin cụ thể, hãy đề xuất một số gợi ý tương tự.
+answer_template:
+- '- **Tên Món:** [Tên món ăn]
+
+  '
+- '- **Danh mục:** [Danh mục]
+
+  '
+- '- **Thời gian chuẩn bị (phút):** [Thời gian chuẩn bị]
+
+  '
+- '- **Thời gian nấu (phút):** [Thời gian nấu]
+
+  '
+- '- **Độ khó:** [Độ khó]
+
+  '
+- '- **Khẩu phần (người):** [Khẩu phần]
+
+  '
+- '- **Lượng Calo (kcal):** [Lượng calo]
+
+  '
+- '- **Nguyên liệu chính:** [Nguyên liệu chính]
+
+  '
+- '- **Cách nấu chi tiết:**
+
+  '
+- '1. [Bước 1]
+
+  '
+- '2. [Bước 2]
+
+  '
+- '3. ...
+
+  '

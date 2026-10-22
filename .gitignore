@@ -243,6 +243,7 @@ test/
 
 #ignore qdrant local db
 data/qdrant_db/
+data/elastic_local/
 
 data/.ingestion_versions.json
 

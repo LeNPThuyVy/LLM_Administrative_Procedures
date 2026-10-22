@@ -19,7 +19,7 @@ class BGEEmbedder:
         self.config = config
         self._model = None
         self.use_cuda = torch.cuda.is_available()
-        self.batch_size = 32 if self.use_cuda else 12
+        self.batch_size = 32
         self._initialized = True
 
     def _get_model(self):
@@ -29,6 +29,8 @@ class BGEEmbedder:
                 model = _get_embedding_model()
                 if model is not None:
                     print("[embedder] Reusing preloaded SentenceTransformer BGE-M3 from memory")
+                    if hasattr(model, "max_seq_length") and model.max_seq_length > 512:
+                        model.max_seq_length = 512
                     self._model = model
                     self._is_sentence_transformer = True
                     return self._model

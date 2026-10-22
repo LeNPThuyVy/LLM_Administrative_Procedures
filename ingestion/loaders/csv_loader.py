@@ -70,11 +70,13 @@ class CSVLoader(BaseLoader):
                     if key is not None
                 }
 
+                doc_meta = dict(cleaned)
+                doc_meta["_source_type"] = "tabular"
                 documents.append(
                     RawDocument(
                         source_path=str(path),
                         raw_text=self._build_row_text(cleaned),
-                        metadata=cleaned,
+                        metadata=doc_meta,
                     )
                 )
 
@@ -126,11 +128,13 @@ class CSVLoader(BaseLoader):
                     else value
                 )
 
+            doc_meta = dict(metadata)
+            doc_meta["_source_type"] = "tabular"
             documents.append(
                 RawDocument(
                     source_path=str(path),
                     raw_text=self._build_row_text(metadata),
-                    metadata=metadata,
+                    metadata=doc_meta,
                 )
             )
 

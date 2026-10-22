@@ -69,7 +69,7 @@ def validate_documents(
         # Nếu là dữ liệu bảng (nhiều cột) mà chưa tìm thấy title, lấy cột string đầu tiên có độ dài <= 150
         if not doc_title and len(metadata) > 1:
             for k, v in metadata.items():
-                if k not in ("document_id", id_col, "stt", "id") and isinstance(v, str) and v.strip() and len(v.strip()) <= 150:
+                if k not in ("document_id", id_col, "stt", "id", "_source_type", "source_type") and isinstance(v, str) and v.strip() and len(v.strip()) <= 150:
                     doc_title = v.strip()
                     break
 
@@ -103,6 +103,11 @@ def validate_documents(
                 metadata["aliases"] = [str(a).strip() for a in raw_aliases if str(a).strip()]
 
         # 5. Enrich content: đảm bảo luôn có văn bản chi tiết
+        # Bảo tồn nguồn gốc dữ liệu (_source_type)
+        if "_source_type" in metadata:
+            metadata.setdefault("source_type", metadata.pop("_source_type"))
+        elif getattr(document, "metadata", None) and "_source_type" in document.metadata:
+            metadata.setdefault("source_type", document.metadata["_source_type"])
         if not metadata.get("content"):
             if getattr(document, "raw_text", "") and str(document.raw_text).strip():
                 metadata["content"] = str(document.raw_text).strip()

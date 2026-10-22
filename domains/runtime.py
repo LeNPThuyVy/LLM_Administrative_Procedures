@@ -1,3 +1,4 @@
+from typing import Any
 from dataclasses import dataclass, field, fields
 from functools import lru_cache
 from domains.domain_loader import DomainConfig, load_domain_config
@@ -18,6 +19,9 @@ class DomainRuntime:
     allowed_tools: list[str]
     entity_keywords: list[str]
     clarification_prompt: str
+    system_prompt_rules: Any = ""
+    answer_template: Any = ""
+    search_backend: str = "qdrant"
 
 @lru_cache(maxsize=None)
 def _build_runtime(domain_id: str) -> DomainRuntime:
@@ -53,6 +57,9 @@ def _build_runtime(domain_id: str) -> DomainRuntime:
         allowed_tools=config.allowed_tools,
         entity_keywords=config.entity_keywords,
         clarification_prompt=clarification,
+        system_prompt_rules=getattr(config, "system_prompt_rules", ""),
+        answer_template=getattr(config, "answer_template", ""),
+        search_backend=getattr(config, "search_backend", "qdrant"),
     )
 
 def get_domain_runtime(domain_id: str | None = None) -> DomainRuntime:

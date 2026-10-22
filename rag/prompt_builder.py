@@ -13,6 +13,7 @@ Also detects which administrative procedure field the user is asking
 about and restricts the answer to the requested field(s).
 """
 
+from typing import Any
 import my_config as cfg
 from rag.evidence_builder import EvidenceCandidate
 
@@ -424,6 +425,24 @@ def _format_context(
 # PROMPT BUILDER
 # =========================================================
 
+def _format_custom_prompt_text(val: Any) -> str:
+    """Chuẩn hóa cấu hình prompt linh hoạt cho cả chuỗi (str) lẫn danh sách (list/tuple)."""
+    if not val:
+        return ""
+    if isinstance(val, (list, tuple)):
+        lines = []
+        for item in val:
+            item_str = str(item).strip()
+            if not item_str:
+                continue
+            if item_str.startswith(("-", "*", "•")):
+                lines.append(item_str)
+            else:
+                lines.append(f"- {item_str}")
+        return "\n".join(lines).strip()
+    return str(val).strip()
+# =========================================================
+
 def build_prompt(
     query: str,
     evidence_candidates: list[EvidenceCandidate],
@@ -508,16 +527,30 @@ def build_prompt(
     )
 
     if domain and domain != "administrative_procedures":
+        custom_rules = getattr(runtime.config, "system_prompt_rules", "") if hasattr(runtime, "config") else ""
+        custom_template = getattr(runtime.config, "answer_template", "") if hasattr(runtime, "config") else ""
+
+        rules_section = ""
+        rules_text = _format_custom_prompt_text(custom_rules)
+        if rules_text:
+            rules_section = "QUY TẮC NGHIỆP VỤ RIÊNG CỦA LĨNH VỰC:\n" + rules_text + "\n"
+
+        template_section = ""
+        template_text = _format_custom_prompt_text(custom_template)
+        if template_text:
+            template_section = "\nĐỊNH DẠNG TRÌNH BÀY MẪU (THAM KHẢO CẤU TRÚC, KHÔNG BÊ NGUYÊN NỘI DUNG MẪU):\n" + template_text + "\n"
+
         system_block = f"""Bạn là {assistant_role} ({runtime.persona}) và chính xác.
 
-QUY TẮC:
+QUY TẮC BẮT BUỘC:
 1. Diễn đạt rõ ràng, thân thiện, dễ hiểu, QUAN TRỌNG LÀ PHẢI BÁM SÁT BẰNG CHỨNG ĐƯỢC CUNG CẤP, KHÔNG ĐƯA Ý KIẾN HAY KIẾN THỨC RIÊNG VÀO CÂU TRẢ LỜI.
-2. Giữ nguyên chính xác: địa danh, mức giá, thời gian, dịch vụ.
+2. Giữ nguyên chính xác các thông tin quan trọng: tên đối tượng, mã số, giá cả, thời gian, thuộc tính.
 3. Nếu người dùng hỏi nhiều ý, hãy trả lời đầy đủ từng ý theo cấu trúc rõ ràng.
 4. Ý nào bằng chứng không đề cập → nói rõ "{runtime.no_evidence_message or 'chưa có thông tin về phần này'}". KHÔNG tự suy đoán.
 5. Trả lời bằng tiếng Việt, tự nhiên, sinh động.
 6. Chỉ dùng thông tin từ phần BẰNG CHỨNG — không bịa đặt kiến thức ngoài.
-"""
+
+{rules_section}{template_section}"""
     else:
         system_block = f"""Bạn là {assistant_role} thân thiện và chính xác.
 

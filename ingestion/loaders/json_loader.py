@@ -44,11 +44,13 @@ class JSONLoader(BaseLoader):
                     f"Record at index {index} is not an object"
                 )
 
+            doc_meta = dict(record)
+            doc_meta.setdefault("_source_type", "tabular")
             documents.append(
                 RawDocument(
                     source_path=str(path),
                     raw_text="",
-                    metadata=record,
+                    metadata=doc_meta,
                 )
             )
 
