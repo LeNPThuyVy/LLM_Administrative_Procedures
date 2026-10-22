@@ -1,19 +1,3 @@
-"""
-scripts/cleanup_deprecated_tables.py — Dọn dẹp an toàn các bảng DB deprecated.
-
-Các bảng được đánh dấu deprecated sau khi triển khai Slim Context:
-- long_term_memories (Phase 1)
-- conversation_summary (Phase 1)
-- structured_contexts (Phase 3)
-
-LƯU Ý AN TOÀN:
-- Mặc định chỉ chạy ở chế độ DRY-RUN (chỉ kiểm tra và đếm số lượng bản ghi).
-- Chỉ thực hiện DROP TABLE khi có cờ --confirm-drop và được sự đồng ý của Owner.
-
-Cách dùng:
-    py -3.12 scripts/cleanup_deprecated_tables.py --dry-run
-    py -3.12 scripts/cleanup_deprecated_tables.py --confirm-drop
-"""
 
 import argparse
 import asyncio
