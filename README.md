@@ -296,3 +296,221 @@ py -3.12 backend/main.py
 # 3. Chạy bộ đo kiểm Benchmark (Quality, Rules, Latency, Load)
 py -3.12 benchmark/run_benchmark.py --domain administrative_procedures
 ```
+
+
+<!-- AN_DOCS_START -->
+
+## 6. Tổng quan hệ thống dành cho người dùng
+
+**LLM Administrative Procedures** là hệ thống trợ lý AI sử dụng kiến trúc **Retrieval-Augmented Generation (RAG)** để hỗ trợ người dùng tra cứu thông tin **thủ tục hành chính tại TP. Hồ Chí Minh** bằng ngôn ngữ tự nhiên.
+
+Hệ thống kết hợp:
+- **FastAPI + Uvicorn** cho API và luồng streaming.
+- **PostgreSQL** để lưu phiên, tin nhắn và ngữ cảnh hội thoại.
+- **BAAI/bge-m3** để mã hóa câu hỏi thành vector 1024 chiều.
+- **Qdrant** để tìm kiếm vector và dữ liệu theo domain.
+- **Qwen2.5-1.5B** cho Query Synthesizer khi cần.
+- **Qwen2.5-3B** cho sinh câu trả lời chính.
+- **SSE / WebSocket** để trả kết quả theo thời gian thực.
+- **Guardrails + Verification + Citation Mapping** để giảm câu trả lời không có căn cứ.
+
+Hệ thống hiện hỗ trợ kiến trúc **Multi-domain**. Domain chính là `administrative_procedures` ở chế độ **Strict**; có thể mở rộng sang các domain khác như `tourism_demo` bằng cấu hình và dữ liệu mà không thay đổi pipeline RAG lõi.
+
+### 6.1. Chức năng chính
+
+- Tra cứu thủ tục hành chính bằng câu hỏi tự nhiên.
+- Duy trì lịch sử và ngữ cảnh theo từng `session_id`.
+- Truy xuất dữ liệu bằng BGE-M3 + Qdrant.
+- Two-Step Retrieval để hạn chế trộn thông tin giữa các thủ tục.
+- Hybrid scoring với alias, keyword, context bonus và negation penalty.
+- Trả bằng chứng theo mã `[EC_xxx]`.
+- Streaming câu trả lời bằng SSE hoặc WebSocket.
+- Kiểm tra Prompt Injection và che dữ liệu nhạy cảm trong log.
+- Kiểm tra phạm vi địa điểm hỗ trợ.
+- Nạp dữ liệu JSON, CSV, XLSX, PDF và DOCX.
+- Hỗ trợ thêm domain mới bằng cấu hình và dữ liệu.
+
+### 6.2. Infographic kiến trúc hệ thống
+
+![Infographic kiến trúc LLM Administrative Procedures](docs/images/system_architecture_infographic.svg)
+
+> Infographic chỉ mô tả các thành phần đang có trong code hiện tại. Redis, CDN, Load Balancer, Kubernetes, Auto Scaling và vLLM không được mô tả như thành phần runtime hiện tại vì chưa được triển khai trong hệ thống.
+
+---
+
+## 7. Hướng dẫn sử dụng hệ thống
+
+### 7.1. Chuẩn bị môi trường
+
+Yêu cầu chính:
+- Python + virtual environment của dự án.
+- PostgreSQL theo `DATABASE_URL`.
+- Model GGUF trong thư mục `model/`:
+  - `Qwen2.5-3B-Instruct-Q4_K_M.gguf`
+  - `Qwen2.5-1.5B-Instruct-Q4_K_M.gguf`
+- Qdrant Cloud hoặc Qdrant Local.
+- Dependency trong `requirements.txt`.
+
+Tạo `.env` từ `.env.example` và cấu hình:
+
+```env
+DATABASE_URL=postgresql+asyncpg://user:password@host:port/dbname
+DB_SSL=require
+QDRANT_URL=https://your-qdrant-url
+QDRANT_API_KEY=your_qdrant_api_key
+DEFAULT_COLLECTION=administrative_procedures
+```
+
+### 7.2. Khởi động backend
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+uvicorn backend.main:app --host 127.0.0.1 --port 8000
+```
+
+Khi khởi động, backend chuẩn bị PostgreSQL, BGE-M3, Qdrant, alias catalog và các `llama-server` cần thiết.
+
+### 7.3. Truy cập Web UI
+
+```text
+http://127.0.0.1:8000
+```
+
+### 7.4. Tạo phiên hội thoại
+
+Endpoint:
+
+```text
+GET /api/session/bootstrap
+```
+
+Hệ thống cấp `user_id` và `session_id` qua cookie `HttpOnly`.
+
+### 7.5. Đặt câu hỏi
+
+Ví dụ:
+
+```text
+Tôi muốn đăng ký kết hôn ở TP.HCM.
+```
+
+```text
+Hồ sơ đăng ký khai sinh cần những giấy tờ gì?
+```
+
+Luồng chính:
+
+```text
+Người dùng
+→ Web UI
+→ FastAPI
+→ Session Lock / Semaphore
+→ Context PostgreSQL
+→ Input Guard
+→ Risk & Scope
+→ Procedure Reader
+→ Query Synthesizer
+→ BGE-M3
+→ Qdrant Retrieval
+→ Rerank + Evidence
+→ Template Fast Path hoặc Qwen2.5-3B
+→ Verification + Output Guard
+→ SSE / WebSocket
+→ Người dùng
+```
+
+### 7.6. Câu hỏi tiếp theo
+
+Trong cùng phiên có thể hỏi:
+
+```text
+Lệ phí bao nhiêu?
+```
+
+```text
+Cần chuẩn bị giấy tờ gì?
+```
+
+```text
+Nộp hồ sơ ở đâu?
+```
+
+Context Service dùng lịch sử PostgreSQL và `active_procedure` để duy trì mạch hội thoại.
+
+### 7.7. Bằng chứng và trích dẫn
+
+Các câu trả lời có thể kèm `[EC_001]`, `[EC_002]`... để liên kết với evidence đã retrieval.
+
+### 7.8. REST SSE
+
+Endpoint:
+
+```text
+POST /api/chat
+```
+
+Request mẫu:
+
+```json
+{
+  "session_id": "<session-id>",
+  "query": "Tôi muốn đăng ký kết hôn ở TP.HCM",
+  "domain": "administrative_procedures"
+}
+```
+
+Các event có thể gồm `chunk`, `evidence`, `clarification`, `done`.
+
+### 7.9. WebSocket
+
+Endpoint:
+
+```text
+/ws/chat
+```
+
+---
+
+## 8. Luồng nạp dữ liệu (Ingestion)
+
+```text
+JSON / CSV / XLSX / PDF / DOCX
+→ Loader
+→ Validation
+→ Chunking
+→ Deduplication
+→ Version Tracking
+→ BGE-M3 Embedding
+→ Qdrant
+```
+
+Đối với thủ tục hành chính, các nhóm chunk có thể gồm `_general`, `_docs`, `_fee`, `_time`, `_method`.
+
+---
+
+## 9. Kiến trúc triển khai hiện tại
+
+| Thành phần | Công nghệ | Vai trò |
+|---|---|---|
+| Frontend | HTML5, CSS3, Vanilla JavaScript | Giao diện chat |
+| Backend API | FastAPI, Uvicorn | REST, SSE, WebSocket |
+| Điều phối | Python asyncio | Session lock, semaphore, queue |
+| Context DB | PostgreSQL, SQLAlchemy, asyncpg | Phiên, tin nhắn, evidence, context |
+| Embedding | SentenceTransformers, BGE-M3 | Vector 1024 chiều |
+| Vector DB | Qdrant | Semantic retrieval |
+| Synthesizer | Qwen2.5-1.5B + llama-server | Tổng hợp câu hỏi khi cần |
+| Generator | Qwen2.5-3B + llama-server | Sinh câu trả lời |
+| Guardrails | Python rules / regex | Input/output safety |
+| Ingestion | Python loaders/chunker/dedup/versioning | Chuẩn hóa và lập chỉ mục |
+
+### Chưa phải thành phần runtime hiện tại
+
+- Redis
+- CDN
+- Load Balancer
+- Kubernetes
+- Auto Scaling
+- vLLM
+- S3/MinIO Object Storage
+
+<!-- AN_DOCS_END -->
