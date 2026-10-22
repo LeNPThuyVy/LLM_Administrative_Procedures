@@ -42,20 +42,20 @@ flowchart TD
         Step3 --> Step4["B4. Out-of-Scope Location Check (Kiểm tra địa bàn ngoài TP.HCM)"]
         Step4 --> IntentCheck{"Multi-Intent Enabled & >=2 sub-queries?"}
         
-        IntentCheck -->|Có (Chỉ trên SSE)| MultiFlow["Multi-Intent Orchestrator (detector -> resolver -> section template)"]
-        IntentCheck -->|Không (Single-Intent)| Step5["B5. History & Procedure Reader (Lấy 2 gợi ý + raw_results_out)"]
+        IntentCheck -->|Có - chỉ SSE| MultiFlow["Multi-Intent Orchestrator (detector -> resolver -> section template)"]
+        IntentCheck -->|Không - single intent| Step5["B5. History & Procedure Reader (Lấy 2 gợi ý + raw_results_out)"]
         
         Step5 --> Step6["B6. Query Synthesizer (Rule-based Bypass hoặc Qwen2.5-1.5B)"]
         Step6 -->|needs_clarification = True| Clarify["Trả câu hỏi làm rõ (Clarification)"]
         Step6 -->|needs_clarification = False| Step7["B7. Two-Step Retrieval (BGE-M3 + Alias/Keyword/Context Bonus + Negation Filter)"]
         
         Step7 --> Threshold{"Strict Mode & top_score < min_retrieval_score?"}
-        Threshold -->|Có (< 0.50)| Fallback["Trả thông báo từ chối (No Evidence)"]
-        Threshold -->|Không (>= 0.50)| Step8["B8. Reranker & Evidence Builder (Gắn mã [EC_001], [EC_002]...)"]
+        Threshold -->|Có - dưới 0.50| Fallback["Trả thông báo từ chối (No Evidence)"]
+        Threshold -->|Không - từ 0.50 trở lên| Step8["B8. Reranker & Evidence Builder (Gắn mã [EC_001], [EC_002]...)"]
         
         Step8 --> Step9["B9. Field Detection & Prompt Builder (Giới hạn trường: docs/fee/time/method)"]
         Step9 --> FastPath{"Đủ điều kiện Template Fast Path?"}
-        FastPath -->|Có (1 field cụ thể)| DirectRender["Kết xuất trực tiếp từ Chunk (< 0.1s)"]
+        FastPath -->|Có - một field cụ thể| DirectRender["Kết xuất trực tiếp từ Chunk (< 0.1s)"]
         FastPath -->|Không| Step10["B10. LLM Generator (Streaming qua Qwen2.5-3B)"]
         
         DirectRender --> Step11["B11. Fact Verification & Citation Mapper (Kiểm tra từ vựng, số liệu, phủ định)"]
