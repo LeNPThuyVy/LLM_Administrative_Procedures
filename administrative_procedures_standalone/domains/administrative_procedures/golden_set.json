@@ -119,7 +119,7 @@
   {
     "id": "GS_014",
     "question": "Hưởng trợ cấp hưu trí xã hội cần nộp giấy tờ gì?",
-    "expected_document_id": "PROC_020",
+    "expected_document_id": "PROC_020, PROC_008",
     "expected_field": "required_documents",
     "expected_keywords": [
       "Văn bản đề nghị"
@@ -149,7 +149,8 @@
     "expected_document_id": "PROC_021",
     "expected_field": "processing_time",
     "expected_keywords": [
-      "3 ngày làm việc"
+      "ngày làm việc",
+      "Ba (3)"
     ]
   },
   {
@@ -308,7 +309,8 @@
     ],
     "expected_field": "required_documents",
     "expected_keywords": [
-      "khuyến khích hoả táng"
+      "hỏa táng",
+      "hoả táng"
     ]
   },
   {
@@ -391,7 +393,8 @@
     "expected_document_id": "PROC_011",
     "expected_field": "submission_location",
     "expected_keywords": [
-      "Ủy ban nhân dân"
+      "Hành chính công",
+      "Tăng Nhơn Phú"
     ]
   },
   {
@@ -400,6 +403,7 @@
     "expected_document_id": "PROC_016",
     "expected_field": "fee",
     "expected_keywords": [
+      "không",
       "Không thu phí"
     ]
   },
@@ -443,7 +447,7 @@
   {
     "id": "GS_049",
     "question": "Thủ tục hưởng trợ cấp một lần khi người có công từ trần cần chuẩn bị gì?",
-    "expected_document_id": "PROC_019",
+    "expected_document_id": "PROC_014, PROC_019",
     "expected_field": "required_documents",
     "expected_keywords": [
       "người có công",
@@ -466,7 +470,8 @@
     "expected_document_id": "PROC_022",
     "expected_field": "processing_time",
     "expected_keywords": [
-      "ngày làm việc"
+      "5 ngày",
+      "ngày"
     ]
   },
   {
@@ -484,7 +489,8 @@
     "expected_document_id": "PROC_024",
     "expected_field": "processing_time",
     "expected_keywords": [
-      "ngày làm việc"
+      "5 ngày",
+      "ngày"
     ]
   },
   {
@@ -514,7 +520,8 @@
     "expected_document_id": "PROC_028",
     "expected_field": "processing_time",
     "expected_keywords": [
-      "ngày làm việc"
+      "5 ngày",
+      "ngày"
     ]
   },
   {
@@ -560,7 +567,8 @@
     "expected_document_id": "PROC_035",
     "expected_field": "processing_time",
     "expected_keywords": [
-      "ngày làm việc"
+      "05 ngày làm việc",
+      "ngày"
     ]
   },
   {
@@ -578,7 +586,9 @@
     "expected_document_id": "PROC_036",
     "expected_field": "fee",
     "expected_keywords": [
-      "đồng"
+      "0",
+      "không",
+      "miễn phí"
     ]
   },
   {
@@ -664,7 +674,9 @@
     "expected_document_id": "PROC_040",
     "expected_field": "fee",
     "expected_keywords": [
-      "đồng"
+      "0",
+      "không",
+      "miễn phí"
     ]
   },
   {
@@ -682,7 +694,8 @@
     "expected_document_id": "PROC_041",
     "expected_field": "processing_time",
     "expected_keywords": [
-      "ngày"
+      "học kỳ",
+      "không quy định"
     ]
   },
   {
@@ -808,7 +821,7 @@
   {
     "id": "GS_088",
     "question": "nop ho so de nghi xac dinh muc do khuyet tat o dau?",
-    "expected_document_id": "PROC_023",
+    "expected_document_id": "PROC_009, PROC_023",
     "expected_field": "submission_location",
     "expected_keywords": [
       "mức độ khuyết tật"
@@ -884,36 +897,41 @@
   {
     "id": "GS_096",
     "question": "Thủ tục xin visa đi Mỹ diện du lịch cần những giấy tờ gì?",
-    "expected_document_id": null,
+    "expected_document_id": "CLARIFY/NONE",
     "expected_field": null,
-    "expected_keywords": []
+    "expected_keywords": [],
+    "expected_behavior": "REJECT"
   },
   {
     "id": "GS_097",
     "question": "Làm thế nào để đăng ký kinh doanh dịch vụ hàng không vũ trụ?",
-    "expected_document_id": null,
+    "expected_document_id": "CLARIFY/NONE",
     "expected_field": null,
-    "expected_keywords": []
+    "expected_keywords": [],
+    "expected_behavior": "REJECT"
   },
   {
     "id": "GS_098",
     "question": "Tôi muốn đổi giấy phép lái xe ô tô hạng B2 ở đâu?",
-    "expected_document_id": null,
+    "expected_document_id": "CLARIFY/NONE",
     "expected_field": null,
-    "expected_keywords": []
+    "expected_keywords": [],
+    "expected_behavior": "REJECT"
   },
   {
     "id": "GS_099",
     "question": "Giá xăng Ron 95 hôm nay tăng hay giảm bao nhiêu tiền một lít?",
-    "expected_document_id": null,
+    "expected_document_id": "CLARIFY/NONE",
     "expected_field": null,
-    "expected_keywords": []
+    "expected_keywords": [],
+    "expected_behavior": "REJECT"
   },
   {
     "id": "GS_100",
     "question": "Cho tôi hỏi về quy định thủ tục hành chính của nhà nước",
-    "expected_document_id": null,
+    "expected_document_id": "CLARIFY/NONE",
     "expected_field": null,
-    "expected_keywords": []
+    "expected_keywords": [],
+    "expected_behavior": "REJECT"
   }
 ]

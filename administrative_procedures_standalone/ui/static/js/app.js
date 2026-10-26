@@ -712,47 +712,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnSampleData && ingestRawJson) {
         btnSampleData.addEventListener('click', () => {
             const mDomain = document.getElementById('modal-domain-select')?.value || 'generic';
-            let samples = [];
-            if (mDomain.includes('tourism')) {
-                samples = [
-                    {
-                        document_id: "TOUR_DEMO_01",
-                        title: "Cầu Vàng Bà Nà Hills Đà Nẵng",
-                        category: "Điểm tham quan",
-                        location: "Đà Nẵng",
-                        price: "900.000 VNĐ / vé",
-                        content: "Cầu Vàng nằm tại quần thể du lịch Sun World Ba Na Hills, nổi tiếng với đôi bàn tay khổng lồ nâng đỡ cây cầu giữa mây trời Đà Nẵng. Thời điểm tham quan đẹp nhất là từ tháng 3 đến tháng 9."
-                    },
-                    {
-                        document_id: "TOUR_DEMO_02",
-                        title: "Khám phá Phố cổ Hội An",
-                        category: "Di sản văn hóa",
-                        location: "Đà Nẵng",
-                        price: "Miễn phí (hoặc 120.000 VNĐ vé tham quan di tích)",
-                        content: "Phố cổ Hội An lưu giữ kiến trúc nhà cổ truyền thống, lung linh ánh đèn lồng về đêm bên dòng sông Hoài thơ mộng, với nhiều món ngon như Cao Lầu, Mì Quảng."
-                    }
-                ];
-            } else if (mDomain.includes('cuisine')) {
-                samples = [
-                    {
-                        document_id: "CUISINE_DEMO_01",
-                        title: "Bún bò Huế truyền thống",
-                        category: "Món nước đặc sản",
-                        region: "Miền Trung",
-                        price_range: "40.000 - 65.000 VNĐ",
-                        content: "Bún bò Huế có hương vị đậm đà đặc trưng từ mắm ruốc, sả, ớt cay nồng cùng sợi bún to, thịt bò bắp hoa, giò heo giòn béo và chả cua thơm ngon."
-                    }
-                ];
-            } else {
-                samples = [
-                    {
-                        document_id: "SAMPLE_DOC_01",
-                        title: "Quy trình tư vấn và hướng dẫn chuyên môn",
-                        category: "Hướng dẫn chung",
-                        content: "Hệ thống hỗ trợ tiếp nhận yêu cầu, phân tích nội dung, đối soát căn cứ và phản hồi thông tin chi tiết, chính xác tới người dùng trong vòng vài giây."
-                    }
-                ];
-            }
+            let samples = [
+                {
+                    "id": "1.000001",
+                    "so_quyet_dinh": "123/QĐ-UBND",
+                    "ten_thu_tuc": "Thủ tục đăng ký khai sinh kết hợp đăng ký thường trú",
+                    "co_quan_thuc_hien": "UBND cấp xã",
+                    "linh_vuc": "Hộ tịch",
+                    "trinh_tu_thuc_hien": "Bước 1: Nộp hồ sơ trực tuyến qua Cổng DVC hoặc trực tiếp tại UBND xã.\nBước 2: Công chức tư pháp - hộ tịch tiếp nhận và thụ lý.\nBước 3: Trả kết quả Giấy khai sinh.",
+                    "cach_thuc_thuc_hien": "Trực tiếp hoặc trực tuyến qua Cổng Dịch vụ công Quốc gia",
+                    "thanh_phan_ho_so": "Tờ khai đăng ký khai sinh theo mẫu; Giấy chứng sinh do cơ sở y tế cấp.",
+                    "thoi_han_giai_quyet": "Ngay trong ngày làm việc",
+                    "le_phi": "Miễn phí",
+                    "yeu_cau_dieu_kien": "Trẻ em sinh ra tại Việt Nam, có cha hoặc mẹ là công dân Việt Nam."
+                }
+            ];
             ingestRawJson.value = JSON.stringify(samples, null, 2);
         });
     }
