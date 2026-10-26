@@ -6,6 +6,7 @@ Giai đoạn 0: Xóa fallback subprocess, báo lỗi thân thiện khi server kh
 """
 
 import json
+import os
 import threading
 import time
 from pathlib import Path
@@ -15,8 +16,8 @@ from urllib.request import Request, urlopen
 import my_config
 
 _SERVER_HOST = "http://127.0.0.1"
-_SERVER_PORT_3B = 8080    # cổng cho model 3B (main RAG)
-_SERVER_PORT_1_5B = 8081  # cổng cho model 1.5B (synthesizer)
+_SERVER_PORT_3B = int(os.getenv("LLAMA_3B_PORT", os.getenv("LLAMA_PORT", "8080")))    # cổng cho model 3B (main RAG)
+_SERVER_PORT_1_5B = int(os.getenv("LLAMA_1_5B_PORT", "8081"))  # cổng cho model 1.5B (synthesizer)
 _REQUEST_TIMEOUT = 120    # giây
 
 _CHAT_PATH = "/v1/chat/completions"
@@ -92,7 +93,7 @@ def generate_answer_1_5b(prompt: str, temperature: float | None = 0.3, json_mode
             json_mode=json_mode,
         )
     except LLMUnavailableError:
-        # Tự động fallback sang port 8080 nếu server 1.5B chưa khởi động
+        # Tự động fallback sang port 3B nếu server 1.5B chưa khởi động
         return generate_answer(
             prompt,
             server_port=_SERVER_PORT_3B,

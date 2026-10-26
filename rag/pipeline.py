@@ -1,6 +1,7 @@
 import asyncio
 import re
 import time
+import unicodedata
 from collections import OrderedDict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -42,7 +43,7 @@ LOCATION_NOT_SUPPORTED_TEXT = (
 )
 
 # Danh sách tỉnh / thành phố lớn ngoài TP.HCM để phát hiện out-of-scope nhanh
-# (tránh false positive bằng word boundary \b)
+# (tránh false positive bằng word boundary )
 _NON_HCMC_PATTERNS = re.compile(
     r"\b(hà nội|hà nam|hải phòng|đà nẵng|hải dương|bắc ninh|quảng ninh|"
     r"thanh hóa|nghệ an|hà tĩnh|huế|thừa thiên huế|quảng bình|quảng trị|"
@@ -67,6 +68,41 @@ def _extract_text(val: object) -> str:
             return _extract_text(val["content"])
         return " ".join(_extract_text(v) for v in val.values() if v)
     return str(val) if val is not None else ""
+
+
+def _fold_vietnamese_text(text: str) -> str:
+    """Normalize Vietnamese text to lowercase ASCII for robust matching."""
+    text = str(text or "").lower().replace("đ", "d")
+    text = unicodedata.normalize("NFD", text)
+    return "".join(
+        ch for ch in text
+        if unicodedata.category(ch) != "Mn"
+    )
+
+
+def _is_underspecified_procedure_query(text: str) -> bool:
+    """
+    Detect generic requests that do not identify any actual procedure.
+    Examples:
+    - Tôi muốn làm thủ tục
+    - Tôi cần làm thủ tục
+    - Làm thủ tục
+    """
+    q = _fold_vietnamese_text(text)
+    q = re.sub(r"[^a-z0-9\s]", " ", q)
+    q = re.sub(r"\s+", " ", q).strip()
+
+    generic_patterns = {
+        "lam thu tuc",
+        "toi muon lam thu tuc",
+        "toi can lam thu tuc",
+        "toi muon hoi thu tuc",
+        "toi can hoi thu tuc",
+        "can lam thu tuc",
+        "muon lam thu tuc",
+    }
+
+    return q in generic_patterns
 
 
 def _detect_unsupported_location(text: str, domain: str | None = None) -> bool:
@@ -416,6 +452,31 @@ def answer_query(
         risk_result,
     )
     print(f"[time] risk = {time.time() - t0_risk:.2f}s (mode: {runtime.mode} -> {effective_mode})")
+
+    # ---------------------------------------------------------
+    # Generic / underspecified procedure clarification
+    # ---------------------------------------------------------
+    if _is_underspecified_procedure_query(query):
+        clarification = (
+            "Bạn muốn thực hiện thủ tục nào? "
+            "Vui lòng cho biết tên thủ tục cụ thể "
+            "để tôi hỗ trợ."
+        )
+
+        print(
+            "[pipeline] Generic procedure query "
+            f"requires clarification: {query[:100]!r}"
+        )
+
+        return AnswerResponse(
+            answer=clarification,
+            claims=[],
+            needs_clarification=True,
+            clarification_question=clarification,
+            domain=domain,
+            mode=effective_mode,
+            tool_calls=[],
+        )
 
     # ---------------------------------------------------------
     # GĐ1 fix — Out-of-scope location detection (mục 5)

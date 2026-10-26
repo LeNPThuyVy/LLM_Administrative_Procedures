@@ -2,11 +2,11 @@
 Unified FastAPI + Gradio server.
 
 Endpoints:
-  GET  /health                        → health check
-  GET  /api/session/bootstrap         → tạo/lấy anonymous session_id (cookie)
-  WS   /ws/chat                       → WebSocket chat (dùng session_id cookie)
-  GET  /api/sessions/{id}/messages    → lịch sử tin nhắn của 1 session
-  /    (root + all paths under /)     → Gradio Web UI
+  GET  /health                        -> health check
+  GET  /api/session/bootstrap         -> tạo/lấy anonymous session_id (cookie)
+  WS   /ws/chat                       -> WebSocket chat (dùng session_id cookie)
+  GET  /api/sessions/{id}/messages    -> lịch sử tin nhắn của 1 session
+  /    (root + all paths under /)     -> Gradio Web UI
 
 
 Run with:
@@ -167,7 +167,7 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(_warmup_background())
 
     # Khởi động LLM 3B (Main RAG - Port 8080)
-    port_3b = 8080
+    port_3b = int(os.getenv("LLAMA_3B_PORT", os.getenv("LLAMA_PORT", "8080")))
     llama_process_3b = _start_llama_server(
         port=port_3b,
         model_path=my_config.MODEL_3B_PATH,
@@ -178,7 +178,7 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(asyncio.to_thread(_warmup_llama_instance, port_3b, "llm_3b", "Xin chào"))
 
     # Khởi động LLM 1.5B (Synthesizer / Clarification - Port 8081)
-    port_1_5b = 8081
+    port_1_5b = int(os.getenv("LLAMA_1_5B_PORT", "8081"))
     synth_threads = max(2, my_config.LLAMA_THREADS // 2) if my_config.LLAMA_THREADS > 2 else 2
     llama_process_1_5b = _start_llama_server(
         port=port_1_5b,

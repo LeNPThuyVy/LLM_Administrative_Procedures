@@ -1,7 +1,7 @@
 import asyncio
 
 from fastapi.encoders import jsonable_encoder
-from rag.pipeline import answer_query
+from rag.pipeline import answer_query, answer_question_stream
 
 
 async def generate_answer(
@@ -62,17 +62,38 @@ async def generate_answer_stream(
 
     def run_pipeline():
         try:
-            res = answer_query(
+            result = None
+
+            for event in answer_question_stream(
                 query=query,
                 session_id=session_id,
                 context=context,
                 domain=domain,
-                on_token=on_token,
+            ):
+                event_type = event.get("type")
+
+                if event_type == "token":
+                    token = event.get("text", "")
+                    if token:
+                        loop.call_soon_threadsafe(
+                            token_queue.put_nowait,
+                            token,
+                        )
+
+                elif event_type == "final":
+                    result = event.get("response")
+
+            loop.call_soon_threadsafe(
+                token_queue.put_nowait,
+                None,
             )
-            loop.call_soon_threadsafe(token_queue.put_nowait, None)
-            return res
+            return result
+
         except Exception as e:
-            loop.call_soon_threadsafe(token_queue.put_nowait, e)
+            loop.call_soon_threadsafe(
+                token_queue.put_nowait,
+                e,
+            )
             raise
 
     pipeline_task = asyncio.create_task(asyncio.to_thread(run_pipeline))

@@ -526,6 +526,18 @@ def synthesizer(
     has_keyword = _has_specific_procedure_keyword(query, history_text_for_kw, domain=domain)
     has_hint = bool(procedure_hint and len(procedure_hint) > 0)
 
+    # B-owned guard: câu hỏi đã cụ thể thì giữ nguyên cho retrieval xử lý.
+    query_is_specific_enough = len(query.strip().split()) >= 6
+
+    if not has_keyword and not has_hint and query_is_specific_enough:
+        print("[synthesizer] Query specific enough -> keep original query.")
+        return ConsolidatedQuery(
+            resolved_query=query,
+            original_query=query,
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
     if not has_keyword and not has_hint:
         from domains.runtime import get_domain_runtime
         runtime = get_domain_runtime(domain)
