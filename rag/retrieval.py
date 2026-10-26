@@ -108,7 +108,9 @@ def _get_qdrant_client() -> QdrantClient:
     return _qdrant_client
 
 
-_QUERY_EMBEDDING_CACHE: dict[str, list[float]] = {}
+from collections import OrderedDict
+
+_QUERY_EMBEDDING_CACHE: OrderedDict[str, list[float]] = OrderedDict()
 _MAX_EMBEDDING_CACHE_SIZE = 1000
 
 def encode_query(query: str) -> list[float]:
@@ -117,13 +119,14 @@ def encode_query(query: str) -> list[float]:
     if not clean_q:
         return []
     if clean_q in _QUERY_EMBEDDING_CACHE:
+        _QUERY_EMBEDDING_CACHE.move_to_end(clean_q)
         return _QUERY_EMBEDDING_CACHE[clean_q]
 
     model = _get_embedding_model()
     vec = model.encode(query, normalize_embeddings=True)
     res = vec.tolist() if hasattr(vec, "tolist") else list(vec)
     if len(_QUERY_EMBEDDING_CACHE) >= _MAX_EMBEDDING_CACHE_SIZE:
-        _QUERY_EMBEDDING_CACHE.pop(next(iter(_QUERY_EMBEDDING_CACHE)))
+        _QUERY_EMBEDDING_CACHE.popitem(last=False)
     _QUERY_EMBEDDING_CACHE[clean_q] = res
     return res
 
@@ -144,20 +147,10 @@ def _get_structured_context(
     if not context:
         return {}
 
-    structured_context = context.get(
+    return context.get(
         "structured_context",
         {}
     ) or {}
-
-    if structured_context:
-        return structured_context
-
-    long_term_memory = context.get(
-        "long_term_memory",
-        {}
-    ) or {}
-
-    return long_term_memory
 
 
 def _format_context_value(value) -> str:
@@ -379,37 +372,55 @@ def _is_negated_phrase(phrase: str, text: str) -> bool:
     return bool(re.search(pattern, text_clean))
 
 
-_ALIAS_CATALOG: dict[str, list[str]] | None = None
+_ALIAS_CATALOG: dict[str, dict[str, list[str]]] = {}
 
-def _get_alias_catalog() -> dict[str, list[str]]:
+def _get_alias_catalog(domain: str | None = None) -> dict[str, list[str]]:
     global _ALIAS_CATALOG
-    if _ALIAS_CATALOG is None:
-        _ALIAS_CATALOG = {}
+    d_id = domain or "administrative_procedures"
+    if d_id not in _ALIAS_CATALOG:
+        catalog = {}
         try:
             import json
-            proc_path = cfg.BASE_DIR / "data" / "procedures.json"
-            if proc_path.exists():
-                procs = json.loads(proc_path.read_text(encoding="utf-8"))
-                for p in procs:
-                    did = p.get("document_id")
+            from domains.runtime import get_domain_runtime
+            runtime = get_domain_runtime(d_id)
+
+            sources = runtime.config.sources if (runtime and hasattr(runtime, "config")) else []
+            data_file = None
+            for src in sources:
+                if src.get("type") == "json" and src.get("path"):
+                    data_file = cfg.BASE_DIR / src["path"]
+                    break
+
+            if not data_file or not data_file.exists():
+                if d_id == "administrative_procedures":
+                    data_file = cfg.BASE_DIR / "data" / "procedures.json"
+                else:
+                    data_file = None
+
+            if data_file and data_file.exists():
+                items = json.loads(data_file.read_text(encoding="utf-8"))
+                for p in items:
+                    did = p.get("document_id") or p.get("id")
                     aliases = p.get("aliases", [])
                     if did and aliases:
-                        _ALIAS_CATALOG[did] = [a.lower().strip() for a in aliases if a]
+                        catalog[did] = [a.lower().strip() for a in aliases if a]
         except Exception as e:
-            print(f"[retrieval] Could not load alias catalog: {e}")
-    return _ALIAS_CATALOG
+            print(f"[retrieval] Could not load alias catalog for {d_id}: {e}")
+        _ALIAS_CATALOG[d_id] = catalog
+    return _ALIAS_CATALOG[d_id]
 
 
 def _calculate_alias_bonus(
     query: str,
     doc_id: str,
-    metadata: dict
+    metadata: dict,
+    domain: str | None = None,
 ) -> float:
     """
     Check if query matches any alias of this procedure.
     Exact phrase match gets strong bonus (+0.45).
     """
-    catalog = _get_alias_catalog()
+    catalog = _get_alias_catalog(domain=domain)
     aliases = metadata.get("aliases") or catalog.get(doc_id, [])
     if not aliases:
         return 0.0
@@ -519,31 +530,40 @@ def retrieve(
     # =====================================================
     # EMBEDDING
     # =====================================================
-    query_embedding = encode_query(search_query)
-
-    # =====================================================
-    # VECTOR STORE
-    # =====================================================
-    client = _get_qdrant_client()
     from domains.runtime import get_domain_runtime
-    collection_name = get_domain_runtime(domain).collection_name
+    runtime = get_domain_runtime(domain)
+    collection_name = runtime.collection_name
     candidate_count = max(top_k * 5, 15)
 
     if candidate_count <= 0:
         return []
 
-    # Query Qdrant using query_points API
-    try:
-        query_response = client.query_points(
-            collection_name=collection_name,
-            query=query_embedding,
-            limit=candidate_count,
-            with_payload=True,
-        )
-        hits = query_response.points if hasattr(query_response, "points") else query_response
-    except Exception as e:
-        print(f"[retrieval] Qdrant query_points error: {e}")
-        return []
+    hits = []
+    if getattr(runtime, "search_backend", "qdrant") == "elasticsearch":
+        # =====================================================
+        # NHÁNH TABULAR: ELASTICSEARCH / LOCAL BM25 SEARCH
+        # (Không encode vector BGE-M3, không gọi Qdrant)
+        # =====================================================
+        from ingestion.elastic_store import ElasticTabularStore
+        es_store = ElasticTabularStore(runtime.config)
+        hits = es_store.search(query=search_query, top_k=candidate_count)
+    else:
+        # =====================================================
+        # NHÁNH VECTOR: BGE-M3 EMBEDDING + QDRANT
+        # =====================================================
+        query_embedding = encode_query(search_query)
+        client = _get_qdrant_client()
+        try:
+            query_response = client.query_points(
+                collection_name=collection_name,
+                query=query_embedding,
+                limit=candidate_count,
+                with_payload=True,
+            )
+            hits = query_response.points if hasattr(query_response, "points") else query_response
+        except Exception as e:
+            print(f"[retrieval] Qdrant query_points error: {e}")
+            return []
 
     retrieved_chunks = []
 
@@ -551,14 +571,20 @@ def retrieve(
     # RANKING
     # =====================================================
     for hit in hits:
-        payload = getattr(hit, "payload", {}) or {}
-        score = getattr(hit, "score", 0.0)
+        if isinstance(hit, dict):
+            payload = hit.get("payload", {}) or {}
+            score = float(hit.get("score", 0.0))
+            chunk_id = str(hit.get("id", ""))
+        else:
+            payload = getattr(hit, "payload", {}) or {}
+            score = float(getattr(hit, "score", 0.0))
+            chunk_id = str(getattr(hit, "id", ""))
 
         content = payload.get("text") or payload.get("content") or ""
-        chunk_id = str(payload.get("chunk_id", getattr(hit, "id", "")))
+        chunk_id = str(payload.get("chunk_id", chunk_id))
         document_id = str(payload.get("document_id", ""))
 
-        # Qdrant cosine similarity score (higher is better)
+        # Retrieval score (higher is better)
         vector_score = float(score)
 
         keyword_bonus = _calculate_keyword_bonus(
@@ -571,6 +597,7 @@ def retrieve(
             query=query,
             doc_id=document_id,
             metadata=payload,
+            domain=domain,
         )
 
         context_bonus = _calculate_context_bonus(
@@ -623,16 +650,28 @@ def _is_ambiguous_query(query: str, domain: str | None = None) -> bool:
     if any(m.lower() in q_lower for m in specific_markers):
         return False
 
-    catalog = _get_alias_catalog()
+    catalog = _get_alias_catalog(domain=domain)
     for doc_id, aliases in catalog.items():
         if any(a in q_lower for a in aliases if a):
             return False
 
-    vague_phrases = ["xin chào", "chào bạn", "hello", "hi", "tôi muốn hỏi", "tôi có câu hỏi", "hỏi về thủ tục"]
-    if any(q_lower == v or q_lower == v + " ạ" for v in vague_phrases):
+    cleaned = re.sub(
+        r'\b(á|ạ|ơi|nha|nhé|với|hộ|giùm|chút|tí|cậu|bạn|anh|chị|em|ad|admin|nào|gì)\b',
+        '',
+        q_lower
+    ).strip()
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+
+    vague_phrases = [
+        "xin chào", "chào", "chào bạn", "hello", "hi", "alo", "tôi muốn hỏi",
+        "mình muốn hỏi", "tôi có câu hỏi", "mình có câu hỏi", "hỏi về thủ tục",
+        "hỏi thủ tục", "muốn hỏi thủ tục", "mình muốn hỏi thủ tục", "tôi muốn hỏi thủ tục",
+        "cho mình hỏi thủ tục", "cho tôi hỏi thủ tục", "cho mình hỏi", "cho tôi hỏi"
+    ]
+    if any(q_lower == v or cleaned == v or cleaned.startswith(v) for v in vague_phrases):
         return True
 
-    words = q_lower.split()
+    words = cleaned.split()
     return len(words) <= 4
 
 
@@ -683,7 +722,7 @@ def retrieve_two_step(
 
     # Lấy top document_id từ _general hoặc bất kỳ chunk nào
     doc_scores: dict[str, float] = {}
-    catalog = _get_alias_catalog()
+    catalog = _get_alias_catalog(domain=domain)
     q_lower = query.lower()
 
     for chunk in raw_results:
@@ -812,8 +851,13 @@ def retrieve_two_step(
     # Không có field cụ thể → lấy _general của doc này + top chunks khác
     result = sorted(doc_chunks, key=lambda c: c.retrieval_score, reverse=True)
     if len(result) < top_k:
-        # Bổ sung từ raw_results của doc khác
-        for c in raw_results:
-            if c.document_id != best_doc_id and len(result) < top_k:
+        # Bổ sung từ raw_results của doc khác, ưu tiên doc có tổng điểm doc_scores cao tiếp theo
+        other_chunks = [c for c in raw_results if c.document_id != best_doc_id]
+        other_chunks.sort(
+            key=lambda c: (doc_scores.get(c.document_id, 0.0), c.retrieval_score),
+            reverse=True,
+        )
+        for c in other_chunks:
+            if len(result) < top_k:
                 result.append(c)
-    return result[:top_k]
+    return result[:top_k]

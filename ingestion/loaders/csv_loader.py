@@ -34,6 +34,13 @@ class CSVLoader(BaseLoader):
             f"Unsupported tabular file type: {suffix}"
         )
 
+    def _build_row_text(self, metadata: dict) -> str:
+        lines = []
+        for k, v in metadata.items():
+            if v is not None and str(v).strip():
+                lines.append(f"{k}: {str(v).strip()}")
+        return "\n".join(lines)
+
     def _load_csv(self, path: Path) -> list[RawDocument]:
         documents = []
 
@@ -63,11 +70,13 @@ class CSVLoader(BaseLoader):
                     if key is not None
                 }
 
+                doc_meta = dict(cleaned)
+                doc_meta["_source_type"] = "tabular"
                 documents.append(
                     RawDocument(
                         source_path=str(path),
-                        raw_text="",
-                        metadata=cleaned,
+                        raw_text=self._build_row_text(cleaned),
+                        metadata=doc_meta,
                     )
                 )
 
@@ -119,11 +128,13 @@ class CSVLoader(BaseLoader):
                     else value
                 )
 
+            doc_meta = dict(metadata)
+            doc_meta["_source_type"] = "tabular"
             documents.append(
                 RawDocument(
                     source_path=str(path),
-                    raw_text="",
-                    metadata=metadata,
+                    raw_text=self._build_row_text(metadata),
+                    metadata=doc_meta,
                 )
             )
 

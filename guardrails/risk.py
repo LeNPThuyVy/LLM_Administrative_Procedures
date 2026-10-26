@@ -50,7 +50,10 @@ MEDIUM_RISK_PATTERNS = {
 }
 
 
-def classify_risk(query: str) -> RiskResult:
+def classify_risk(
+    query: str,
+    domain_risk_keywords: list[str] | None = None
+) -> RiskResult:
     text = (query or "").lower().strip()
 
     high_reasons = []
@@ -59,6 +62,12 @@ def classify_risk(query: str) -> RiskResult:
         for pattern in patterns:
             if re.search(pattern, text, flags=re.IGNORECASE):
                 high_reasons.append(category)
+                break
+
+    if domain_risk_keywords:
+        for kw in domain_risk_keywords:
+            if kw and re.search(r"\b" + re.escape(kw.strip().lower()) + r"\b", text, flags=re.IGNORECASE):
+                high_reasons.append(f"domain_risk:{kw}")
                 break
 
     if high_reasons:

@@ -445,6 +445,26 @@
       color: #ef4444;
       background: rgba(239, 68, 68, 0.1);
     }
+    #btn-delete-domain {
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+    #btn-delete-domain:hover:not(:disabled) {
+      color: #dc2626;
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+    #btn-delete-domain:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
     .history-empty-hint {
       padding: 16px 8px;
       font-size: 13px;
@@ -481,9 +501,20 @@
     
     <div style="padding: 16px;">
       <label style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display:block;">LĨNH VỰC HOẠT ĐỘNG</label>
-      <select id="domain-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-size:15px;">
-        <!-- Filled dynamically by api.js -->
-      </select>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <select id="domain-select" style="flex: 1; min-width: 0; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-size:15px;">
+          <!-- Filled dynamically by api.js -->
+        </select>
+        <button id="btn-delete-domain" title="Xóa lĩnh vực đang chọn" aria-label="Xóa lĩnh vực">
+          🗑️
+        </button>
+      </div>
+    </div>
+
+    <div style="padding: 0 16px 10px;">
+      <button id="btn-open-ingest-modal" style="width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--bg-surface-subtle); color: var(--primary); border: 1px solid var(--border-color); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+        📥 Quản lý & Nạp dữ liệu Đa Domain
+      </button>
     </div>
 
     <div style="padding: 0 16px 12px;">
@@ -550,7 +581,10 @@
           <p id="header-subtitle" style="font-size: 12px; color: var(--text-muted);">Hỗ trợ tra cứu hồ sơ, căn cứ pháp lý & quy trình một cửa</p>
         </div>
       </div>
-      <div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span id="system-ready-badge" class="badge-mode" title="Trạng thái nạp mô hình" style="background: rgba(234, 179, 8, 0.15); color: #ca8a04; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 13px; font-weight: 600;">
+          ⏳ Đang nạp AI...
+        </span>
         <span id="domain-mode-badge" class="badge-mode">
           🛡️ Chế độ: Nghiêm ngặt (Có dẫn chứng)
         </span>
@@ -615,8 +649,140 @@
     Thông báo
   </div>
 
+  <!-- Modal: Quản lý & Nạp Dữ liệu Đa Domain (Domain Onboarding & Ingestion) -->
+  <div id="ingest-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--bg-surface); border-radius:var(--radius-lg); width:100%; max-width:640px; max-height:90vh; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); border:1px solid var(--border-color); overflow:hidden;">
+      <!-- Modal Header -->
+      <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px;">
+          📥 Quản lý & Nạp Dữ liệu Đa Domain
+        </h3>
+        <button id="btn-close-ingest-modal" class="action-btn" style="font-size:18px;">✕</button>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-surface-subtle);">
+        <button id="tab-ingest-data" class="modal-tab active" style="flex:1; padding:12px; font-weight:600; border:none; background:transparent; cursor:pointer; border-bottom:2px solid var(--primary); color:var(--primary);">
+          1. Nạp Dữ Liệu (Import Data)
+        </button>
+        <button id="tab-create-domain" class="modal-tab" style="flex:1; padding:12px; font-weight:600; border:none; background:transparent; cursor:pointer; color:var(--text-muted);">
+          2. + Tạo Domain Mới
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div style="padding:20px; overflow-y:auto; flex:1;">
+        <!-- TAB 1: INGEST DATA -->
+        <div id="view-tab-ingest">
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;">CHỌN DOMAIN ĐÍCH:</label>
+            <select id="modal-domain-select" style="width:100%; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main); font-size:14px;">
+              <!-- Filled by JS -->
+            </select>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;">PHƯƠNG THỨC NẠP DỮ LIỆU:</label>
+            <div style="display:flex; gap:16px; margin-bottom:10px;">
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:14px;">
+                <input type="radio" name="ingest-mode" value="file" checked id="radio-mode-file"> Upload tệp (.json, .csv, .xlsx, .pdf, .docx)
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:14px;">
+                <input type="radio" name="ingest-mode" value="raw" id="radio-mode-raw"> Dán JSON trực tiếp
+              </label>
+            </div>
+
+            <!-- Upload File section -->
+            <div id="section-upload-file">
+              <input type="file" id="ingest-file-input" accept=".json,.csv,.xlsx,.pdf,.docx" style="width:100%; padding:10px; border:1px dashed var(--primary); border-radius:var(--radius-sm); background:var(--bg-surface-subtle); cursor:pointer;">
+              <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Hỗ trợ cấu trúc JSON, bảng Excel/CSV, hoặc tài liệu PDF/DOCX văn bản.</p>
+            </div>
+
+            <!-- Raw JSON section -->
+            <div id="section-raw-json" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:12px; color:var(--text-muted);">Dán mảng JSON các tài liệu:</span>
+                <button id="btn-sample-data" type="button" style="font-size:12px; color:var(--primary); background:none; border:none; cursor:pointer; text-decoration:underline;">
+                  ✨ Điền dữ liệu mẫu
+                </button>
+              </div>
+              <textarea id="ingest-raw-json" rows="6" placeholder='[{"document_id": "DEMO_01", "title": "Tiêu đề mẫu", "content": "Nội dung chi tiết..."}]' style="width:100%; padding:10px; font-family:monospace; font-size:13px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main);"></textarea>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="ingest-force-reindex">
+            <label for="ingest-force-reindex" style="font-size:13px; cursor:pointer;">
+              <strong>Force Re-index:</strong> Xóa dữ liệu cũ của collection trên Qdrant và index lại từ đầu
+            </label>
+          </div>
+
+          <button id="btn-submit-ingest" style="width:100%; padding:12px; border-radius:var(--radius-sm); background:var(--primary); color:#fff; border:none; font-weight:700; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+            🚀 Bắt đầu Nạp & Đánh chỉ mục (Ingest)
+          </button>
+
+          <!-- Status / Progress Box -->
+          <div id="ingest-status-box" style="display:none; margin-top:14px; padding:12px; border-radius:var(--radius-sm); background:var(--bg-surface-subtle); border-left:4px solid var(--primary); font-size:13px;">
+            <div id="ingest-status-msg" style="display:flex; align-items:center; gap:8px;">
+              <span class="pulse-dot"></span> Đang xử lý ETL, chia đoạn và đánh chỉ mục Qdrant...
+            </div>
+            <div id="ingest-result-details" style="margin-top:8px; display:none;"></div>
+          </div>
+        </div>
+
+        <!-- TAB 2: CREATE DOMAIN -->
+        <div id="view-tab-create" style="display:none;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">DOMAIN ID (viết liền, không dấu):</label>
+              <input type="text" id="create-domain-id" placeholder="healthcare_demo" style="width:100%; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main); font-family:monospace;">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">TÊN HIỂN THỊ (Domain Name):</label>
+              <input type="text" id="create-domain-name" placeholder="Tư vấn Y tế & Sức khỏe" style="width:100%; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main);">
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">MÔ TẢ NGẮN (Description):</label>
+            <input type="text" id="create-domain-desc" placeholder="Trợ lý tư vấn thông tin chăm sóc sức khỏe ban đầu..." style="width:100%; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main);">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">CHẾ ĐỘ HOẠT ĐỘNG (Mode):</label>
+              <select id="create-domain-mode" style="width:100%; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main);">
+                <option value="friendly">Friendly (Thân thiện, tốc độ cao)</option>
+                <option value="strict">Strict (Nghiêm ngặt, bắt buộc có trích dẫn)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">VAI TRÒ TRỢ LÝ (Role):</label>
+              <input type="text" id="create-domain-role" placeholder="bác sĩ tư vấn sức khỏe" style="width:100%; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main);">
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">GIỌNG ĐIỆU (Persona):</label>
+            <textarea id="create-domain-persona" rows="2" placeholder="Bạn là chuyên gia tư vấn sức khỏe tận tình, chu đáo và dễ hiểu..." style="width:100%; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main); font-size:13px;"></textarea>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">TỪ KHÓA RỦI RO (Tự động kích hoạt Strict mode nếu phát hiện):</label>
+            <input type="text" id="create-domain-risk-kw" placeholder="ngộ độc, cấp cứu, nguy kịch, tự tử, tai nạn" style="width:100%; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main); font-size:13px;">
+            <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">Các từ khóa phân tách bằng dấu phẩy (,)</p>
+          </div>
+
+          <button id="btn-submit-create-domain" style="width:100%; padding:12px; border-radius:var(--radius-sm); background:var(--primary); color:#fff; border:none; font-weight:700; font-size:15px; cursor:pointer;">
+            ✨ Khởi Tạo Domain Mới
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="static/js/api.js?v=20261012_v4"></script>
-  <script src="static/js/app.js?v=20261012_v4"></script>
+  <script src="static/js/api.js?v=20261019_v6"></script>
+  <script src="static/js/app.js?v=20261019_v6"></script>
 </body>
 </html>

@@ -114,6 +114,7 @@ class StructuredContext(Base):
     )
 
 
+# deprecated (Phase 1: không còn dùng trong runtime, giữ để không gãy schema DB)
 class ConversationSummary(Base):
     __tablename__ = "conversation_summary"
 
@@ -129,6 +130,7 @@ class ConversationSummary(Base):
     )
 
 
+# deprecated (Phase 1: không còn dùng trong runtime, giữ để không gãy schema DB)
 class LongTermMemory(Base):
     __tablename__ = "long_term_memory"
 

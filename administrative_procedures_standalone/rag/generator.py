@@ -1,0 +1,172 @@
+"""
+generator.py — LLM generation via llama-server HTTP endpoint.
+
+GĐ1 mục 4: Chuyển từ llama-cli sang llama-server (HTTP daemon, nạp model một lần).
+Giai đoạn 0: Xóa fallback subprocess, báo lỗi thân thiện khi server không chạy.
+"""
+
+import json
+import threading
+import time
+from pathlib import Path
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+import my_config
+
+_SERVER_HOST = "http://127.0.0.1"
+_SERVER_PORT_3B = 8080    # cổng cho model 3B (main RAG)
+_SERVER_PORT_1_5B = 8081  # cổng cho model 1.5B (synthesizer)
+_REQUEST_TIMEOUT = 120    # giây
+
+_CHAT_PATH = "/v1/chat/completions"
+
+# Fine-grained semaphore guarding the local llama-server instance (LLAMA_PARALLEL slot)
+_LLM_SEMAPHORE = threading.BoundedSemaphore(max(1, getattr(my_config, "LLAMA_PARALLEL", 1)))
+
+class LLMUnavailableError(RuntimeError):
+    pass
+
+def _generate_via_server(prompt: str, port: int, temperature: float | None = 0.3, json_mode: bool = False) -> str | None:
+    if not prompt or not prompt.strip():
+        return ""
+
+    url = f"{_SERVER_HOST}:{port}{_CHAT_PATH}"
+    payload_dict = {
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": temperature if temperature is not None else 0.3,
+        "repeat_penalty": 1.1,
+        "max_tokens": my_config.MAX_NEW_TOKENS,
+        "cache_prompt": True,
+        "stream": False,
+    }
+    if json_mode:
+        payload_dict["response_format"] = {"type": "json_object"}
+
+    payload = json.dumps(payload_dict).encode("utf-8")
+
+    req = Request(
+        url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    t0 = time.time()
+    try:
+        with _LLM_SEMAPHORE:
+            with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                content = data["choices"][0]["message"]["content"].strip()
+                print(f"[generator] non-stream port={port} chars={len(prompt)} took={time.time()-t0:.2f}s out_chars={len(content)}")
+                return content
+    except (URLError, OSError, KeyError, json.JSONDecodeError):
+        return None
+
+def generate_answer(
+    prompt: str,
+    model_path: Path | None = None,
+    server_port: int = _SERVER_PORT_3B,
+    temperature: float | None = 0.3,
+    json_mode: bool = False,
+) -> str:
+    if not prompt or not prompt.strip():
+        return ""
+
+    answer = _generate_via_server(prompt, server_port, temperature, json_mode)
+    if answer is not None:
+        return answer if answer else (
+            "Thông tin trong tài liệu được cung cấp "
+            "chưa đủ để trả lời câu hỏi này."
+        )
+
+    raise LLMUnavailableError(f"llama-server at port {server_port} is not available.")
+
+
+def generate_answer_1_5b(prompt: str, temperature: float | None = 0.3, json_mode: bool = False) -> str:
+    try:
+        return generate_answer(
+            prompt,
+            server_port=_SERVER_PORT_1_5B,
+            temperature=temperature,
+            json_mode=json_mode,
+        )
+    except LLMUnavailableError:
+        # Tự động fallback sang port 8080 nếu server 1.5B chưa khởi động
+        return generate_answer(
+            prompt,
+            server_port=_SERVER_PORT_3B,
+            temperature=temperature,
+            json_mode=json_mode,
+        )
+
+
+def generate_answer_3b(prompt: str) -> str:
+    return generate_answer(
+        prompt,
+        server_port=_SERVER_PORT_3B,
+    )
+
+
+def stream_generate_via_server(prompt: str, port: int):
+    if not prompt or not prompt.strip():
+        yield ""
+        return
+
+    url = f"{_SERVER_HOST}:{port}{_CHAT_PATH}"
+    payload = json.dumps({
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.3,
+        "repeat_penalty": 1.1,
+        "max_tokens": my_config.MAX_NEW_TOKENS,
+        "cache_prompt": True,
+        "stream": True,
+    }).encode("utf-8")
+
+    req = Request(
+        url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    t_start = time.time()
+    first_token_received = False
+    tokens_count = 0
+    t_first_tok = None
+
+    _LLM_SEMAPHORE.acquire()
+    try:
+        with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
+            for line in resp:
+                line = line.decode('utf-8').strip()
+                if not line:
+                    continue
+                if line.startswith("data:"):
+                    data_str = line[5:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        data = json.loads(data_str)
+                        content = data.get("choices", [{}])[0].get("delta", {}).get("content")
+                        if content:
+                            tokens_count += 1
+                            if not first_token_received:
+                                first_token_received = True
+                                t_first_tok = time.time()
+                                print(f"[generator] TTFT port={port} = {t_first_tok - t_start:.2f}s (prompt_chars={len(prompt)})")
+                            yield content
+                    except (KeyError, json.JSONDecodeError):
+                        continue
+        if t_first_tok is not None and tokens_count > 0:
+            decode_time = time.time() - t_first_tok
+            speed = tokens_count / max(0.001, decode_time)
+            print(f"[generator] Decoded {tokens_count} tokens in {decode_time:.2f}s ({speed:.2f} tok/s, total={time.time() - t_start:.2f}s)")
+    except (URLError, OSError) as exc:
+        raise LLMUnavailableError(f"llama-server at port {port} is not available: {exc}")
+    finally:
+        _LLM_SEMAPHORE.release()
+
+
+def stream_answer_3b(prompt: str):
+    yield from stream_generate_via_server(prompt, _SERVER_PORT_3B)

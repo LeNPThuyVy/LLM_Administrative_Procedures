@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // Elements
     const domainSelect = document.getElementById('domain-select');
+    const btnDeleteDomain = document.getElementById('btn-delete-domain');
     const userInput = document.getElementById('user-input');
     const btnSendMsg = document.getElementById('btn-send-msg');
     const messagesList = document.getElementById('messages-list');
@@ -33,17 +34,99 @@ document.addEventListener('DOMContentLoaded', async () => {
         htmlEl.setAttribute('data-theme', isDark ? 'light' : 'dark');
     });
 
-    // 2. Load domains
-    const domains = await api.loadDomains();
-    if (domains && domains.length > 0) {
-        domainSelect.innerHTML = '';
-        domains.forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d;
-            opt.textContent = d;
-            domainSelect.appendChild(opt);
+    // 2. Load domains with full details
+    let allDomainDetails = {};
+    async function refreshDomainList(selectedId = null) {
+        const details = await api.loadDomainDetails();
+        allDomainDetails = {};
+        if (details && details.length > 0) {
+            domainSelect.innerHTML = '';
+            const modalDomainSelect = document.getElementById('modal-domain-select');
+            if (modalDomainSelect) modalDomainSelect.innerHTML = '';
+
+            details.forEach(d => {
+                allDomainDetails[d.domain_id] = d;
+
+                const opt = document.createElement('option');
+                opt.value = d.domain_id;
+                opt.textContent = `${d.domain_name} (${d.mode})`;
+                if (selectedId && d.domain_id === selectedId) opt.selected = true;
+                domainSelect.appendChild(opt);
+
+                if (modalDomainSelect) {
+                    const mOpt = document.createElement('option');
+                    mOpt.value = d.domain_id;
+                    mOpt.textContent = `${d.domain_name} [${d.domain_id}]`;
+                    if (selectedId && d.domain_id === selectedId) mOpt.selected = true;
+                    modalDomainSelect.appendChild(mOpt);
+                }
+            });
+
+            if (btnDeleteDomain) {
+                btnDeleteDomain.disabled = details.length <= 1;
+                btnDeleteDomain.title = details.length <= 1
+                    ? "Không thể xóa domain duy nhất còn lại trên hệ thống"
+                    : "Xóa lĩnh vực đang chọn";
+            }
+
+            applyDomainConfig(selectedId || domainSelect.value);
+        }
+    }
+
+    function applyDomainConfig(domainId) {
+        const d = allDomainDetails[domainId];
+        if (!d) return;
+        const headerName = document.getElementById('header-domain-name');
+        const headerSub = document.getElementById('header-subtitle');
+        const modeBadge = document.getElementById('domain-mode-badge');
+        if (headerName) headerName.textContent = d.domain_name || d.domain_id;
+        if (headerSub) headerSub.textContent = d.description || `Trợ lý chuyên trách ${d.domain_name}`;
+        if (modeBadge) {
+            const isStrict = d.mode === 'strict';
+            modeBadge.textContent = isStrict ? '🛡️ Chế độ: Nghiêm ngặt (Có dẫn chứng)' : '⚡ Chế độ: Thân thiện (Tốc độ cao)';
+            htmlEl.setAttribute('data-domain-mode', d.mode);
+        }
+    }
+
+    domainSelect.addEventListener('change', () => {
+        applyDomainConfig(domainSelect.value);
+    });
+
+    if (btnDeleteDomain) {
+        btnDeleteDomain.addEventListener('click', async () => {
+            const targetId = domainSelect.value;
+            if (!targetId) return;
+            const domainKeys = Object.keys(allDomainDetails);
+            if (domainKeys.length <= 1) {
+                showToast("Không thể xóa domain duy nhất còn lại trên hệ thống!", true);
+                return;
+            }
+            const dInfo = allDomainDetails[targetId] || {};
+            const dName = dInfo.domain_name || targetId;
+            const confirmed = confirm(
+                `Bạn có chắc chắn muốn xóa lĩnh vực "${dName}" [${targetId}]?\n\n` +
+                `Lưu ý: Toàn bộ cấu hình, dữ liệu nguồn và dữ liệu vector trên Qdrant của lĩnh vực này sẽ bị xóa vĩnh viễn!`
+            );
+            if (!confirmed) return;
+
+            btnDeleteDomain.disabled = true;
+            try {
+                const res = await api.deleteDomain(targetId);
+                showToast(res.message || `Đã xóa lĩnh vực ${dName}`);
+                const nextDomain = (res.remaining_domains && res.remaining_domains[0]) || null;
+                await refreshDomainList(nextDomain);
+            } catch (err) {
+                let msg = err.message || "";
+                if (msg.includes("Not Found")) {
+                    msg = "Máy chủ chưa cập nhật API mới (404 Not Found). Vui lòng khởi động lại backend server (py -3.12 backend/main.py)!";
+                }
+                showToast(`Lỗi khi xóa domain: ${msg}`, true);
+                btnDeleteDomain.disabled = Object.keys(allDomainDetails).length <= 1;
+            }
         });
     }
+
+    await refreshDomainList();
 
     // 3. Bootstrap, connect WS & load history
     const sessionId = await api.bootstrapSession();
@@ -59,6 +142,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         showToast("Không thể tạo phiên làm việc", true);
     }
+
+    // 3.1 Check system readiness (Preload & Warmup status)
+    const systemReadyBadge = document.getElementById('system-ready-badge');
+    async function checkSystemStatus() {
+        if (!systemReadyBadge) return false;
+        try {
+            const resp = await fetch('/api/system/status');
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.all_ready) {
+                    systemReadyBadge.textContent = '⚡ AI sẵn sàng';
+                    systemReadyBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                    systemReadyBadge.style.color = '#059669';
+                    systemReadyBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    systemReadyBadge.title = 'Tất cả mô hình (BGE-M3, Qwen 3B, Qwen 1.5B) đã được nạp sẵn!';
+                    return true;
+                }
+            }
+        } catch (e) {
+            // Server có thể đang khởi động
+        }
+        return false;
+    }
+
+    checkSystemStatus().then(ready => {
+        if (!ready) {
+            const interval = setInterval(async () => {
+                const isReady = await checkSystemStatus();
+                if (isReady) clearInterval(interval);
+            }, 2000);
+        }
+    });
 
     // 4. Input handling - đa sự kiện để tương thích tốt với bộ gõ tiếng Việt (Unikey/EVKey)
     function updateInputState() {
@@ -154,7 +269,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (type === 'clarification') {
             statusText.textContent = 'Cần làm rõ...';
             if (currentAssistantMsgBody) {
-                currentAssistantMsgBody.innerHTML = `<div class="clarify-card">${data.question}</div>`;
+                const qText = data.question || "Bạn muốn hỏi về thủ tục hành chính nào?";
+                currentAssistantMsgBody.innerHTML = `<div class="clarify-card">${parseMarkdownChunk(qText, true)}</div>`;
+                scrollToBottom();
             }
         }
         else if (type === 'evidence') {
@@ -239,11 +356,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             resetWaitingState();
             
             if (data.answer && currentAssistantMsgBody) {
-                let html = parseMarkdownChunk(data.answer, true);
-                html = html.replace(/\[(EC_\d+)\]/g, (match, p1) => {
-                    return `<button class="citation-chip" onclick="showEvidence('${p1}')">${p1.replace('EC_', '')}</button>`;
-                });
-                currentAssistantMsgBody.innerHTML = html;
+                if (data.needs_clarification) {
+                    currentAssistantMsgBody.innerHTML = `<div class="clarify-card">${parseMarkdownChunk(data.answer, true)}</div>`;
+                } else {
+                    let html = parseMarkdownChunk(data.answer, true);
+                    html = html.replace(/\[(EC_\d+)\]/g, (match, p1) => {
+                        return `<button class="citation-chip" onclick="showEvidence('${p1}')">${p1.replace('EC_', '')}</button>`;
+                    });
+                    currentAssistantMsgBody.innerHTML = html;
+                }
             }
             
             if (data.domain) {
@@ -511,4 +632,246 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         evidencePanel.classList.add('open');
     };
+
+    // --- Ingest & Domain Onboarding Modal Handlers ---
+    const ingestModal = document.getElementById('ingest-modal');
+    const btnOpenIngestModal = document.getElementById('btn-open-ingest-modal');
+    const btnCloseIngestModal = document.getElementById('btn-close-ingest-modal');
+    const tabIngestData = document.getElementById('tab-ingest-data');
+    const tabCreateDomain = document.getElementById('tab-create-domain');
+    const viewTabIngest = document.getElementById('view-tab-ingest');
+    const viewTabCreate = document.getElementById('view-tab-create');
+    const radioModeFile = document.getElementById('radio-mode-file');
+    const radioModeRaw = document.getElementById('radio-mode-raw');
+    const sectionUploadFile = document.getElementById('section-upload-file');
+    const sectionRawJson = document.getElementById('section-raw-json');
+    const btnSampleData = document.getElementById('btn-sample-data');
+    const ingestRawJson = document.getElementById('ingest-raw-json');
+    const btnSubmitIngest = document.getElementById('btn-submit-ingest');
+    const ingestStatusBox = document.getElementById('ingest-status-box');
+    const ingestStatusMsg = document.getElementById('ingest-status-msg');
+    const ingestResultDetails = document.getElementById('ingest-result-details');
+    const btnSubmitCreateDomain = document.getElementById('btn-submit-create-domain');
+
+    if (btnOpenIngestModal && ingestModal) {
+        btnOpenIngestModal.addEventListener('click', () => {
+            ingestModal.style.display = 'flex';
+        });
+    }
+
+    if (btnCloseIngestModal && ingestModal) {
+        btnCloseIngestModal.addEventListener('click', () => {
+            ingestModal.style.display = 'none';
+        });
+    }
+
+    if (ingestModal) {
+        ingestModal.addEventListener('click', (e) => {
+            if (e.target === ingestModal) ingestModal.style.display = 'none';
+        });
+    }
+
+    // Tab toggling
+    if (tabIngestData && tabCreateDomain) {
+        tabIngestData.addEventListener('click', () => {
+            tabIngestData.classList.add('active');
+            tabIngestData.style.borderBottom = '2px solid var(--primary)';
+            tabIngestData.style.color = 'var(--primary)';
+            tabCreateDomain.classList.remove('active');
+            tabCreateDomain.style.borderBottom = 'none';
+            tabCreateDomain.style.color = 'var(--text-muted)';
+            viewTabIngest.style.display = 'block';
+            viewTabCreate.style.display = 'none';
+        });
+
+        tabCreateDomain.addEventListener('click', () => {
+            tabCreateDomain.classList.add('active');
+            tabCreateDomain.style.borderBottom = '2px solid var(--primary)';
+            tabCreateDomain.style.color = 'var(--primary)';
+            tabIngestData.classList.remove('active');
+            tabIngestData.style.borderBottom = 'none';
+            tabIngestData.style.color = 'var(--text-muted)';
+            viewTabCreate.style.display = 'block';
+            viewTabIngest.style.display = 'none';
+        });
+    }
+
+    // Input mode toggling (File vs Raw JSON)
+    if (radioModeFile && radioModeRaw) {
+        radioModeFile.addEventListener('change', () => {
+            if (radioModeFile.checked) {
+                sectionUploadFile.style.display = 'block';
+                sectionRawJson.style.display = 'none';
+            }
+        });
+        radioModeRaw.addEventListener('change', () => {
+            if (radioModeRaw.checked) {
+                sectionUploadFile.style.display = 'none';
+                sectionRawJson.style.display = 'block';
+            }
+        });
+    }
+
+    // Sample data button
+    if (btnSampleData && ingestRawJson) {
+        btnSampleData.addEventListener('click', () => {
+            const mDomain = document.getElementById('modal-domain-select')?.value || 'generic';
+            let samples = [];
+            if (mDomain.includes('tourism')) {
+                samples = [
+                    {
+                        document_id: "TOUR_DEMO_01",
+                        title: "Cầu Vàng Bà Nà Hills Đà Nẵng",
+                        category: "Điểm tham quan",
+                        location: "Đà Nẵng",
+                        price: "900.000 VNĐ / vé",
+                        content: "Cầu Vàng nằm tại quần thể du lịch Sun World Ba Na Hills, nổi tiếng với đôi bàn tay khổng lồ nâng đỡ cây cầu giữa mây trời Đà Nẵng. Thời điểm tham quan đẹp nhất là từ tháng 3 đến tháng 9."
+                    },
+                    {
+                        document_id: "TOUR_DEMO_02",
+                        title: "Khám phá Phố cổ Hội An",
+                        category: "Di sản văn hóa",
+                        location: "Đà Nẵng",
+                        price: "Miễn phí (hoặc 120.000 VNĐ vé tham quan di tích)",
+                        content: "Phố cổ Hội An lưu giữ kiến trúc nhà cổ truyền thống, lung linh ánh đèn lồng về đêm bên dòng sông Hoài thơ mộng, với nhiều món ngon như Cao Lầu, Mì Quảng."
+                    }
+                ];
+            } else if (mDomain.includes('cuisine')) {
+                samples = [
+                    {
+                        document_id: "CUISINE_DEMO_01",
+                        title: "Bún bò Huế truyền thống",
+                        category: "Món nước đặc sản",
+                        region: "Miền Trung",
+                        price_range: "40.000 - 65.000 VNĐ",
+                        content: "Bún bò Huế có hương vị đậm đà đặc trưng từ mắm ruốc, sả, ớt cay nồng cùng sợi bún to, thịt bò bắp hoa, giò heo giòn béo và chả cua thơm ngon."
+                    }
+                ];
+            } else {
+                samples = [
+                    {
+                        document_id: "SAMPLE_DOC_01",
+                        title: "Quy trình tư vấn và hướng dẫn chuyên môn",
+                        category: "Hướng dẫn chung",
+                        content: "Hệ thống hỗ trợ tiếp nhận yêu cầu, phân tích nội dung, đối soát căn cứ và phản hồi thông tin chi tiết, chính xác tới người dùng trong vòng vài giây."
+                    }
+                ];
+            }
+            ingestRawJson.value = JSON.stringify(samples, null, 2);
+        });
+    }
+
+    // Handle Submit Ingest
+    if (btnSubmitIngest) {
+        btnSubmitIngest.addEventListener('click', async () => {
+            const mDomainSelect = document.getElementById('modal-domain-select');
+            const targetDomain = mDomainSelect ? mDomainSelect.value : domainSelect.value;
+            if (!targetDomain) {
+                showToast("Vui lòng chọn domain đích!", true);
+                return;
+            }
+
+            const formData = new FormData();
+            const isFileMode = radioModeFile ? radioModeFile.checked : true;
+            const forceReindex = document.getElementById('ingest-force-reindex')?.checked || false;
+            formData.append('force_reindex', forceReindex ? 'true' : 'false');
+
+            if (isFileMode) {
+                const fileInput = document.getElementById('ingest-file-input');
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    showToast("Vui lòng chọn một tệp để nạp!", true);
+                    return;
+                }
+                formData.append('file', fileInput.files[0]);
+            } else {
+                const jsonText = ingestRawJson ? ingestRawJson.value.trim() : '';
+                if (!jsonText) {
+                    showToast("Vui lòng dán nội dung JSON!", true);
+                    return;
+                }
+                formData.append('raw_json', jsonText);
+            }
+
+            btnSubmitIngest.disabled = true;
+            if (ingestStatusBox) ingestStatusBox.style.display = 'block';
+            if (ingestStatusMsg) ingestStatusMsg.innerHTML = '<span class="pulse-dot"></span> Đang xử lý ETL, chia đoạn và đánh chỉ mục Qdrant...';
+            if (ingestResultDetails) ingestResultDetails.style.display = 'none';
+
+            try {
+                const res = await api.ingestDomainData(targetDomain, formData);
+                if (ingestStatusMsg) {
+                    ingestStatusMsg.innerHTML = `✅ <strong>${res.message}</strong>`;
+                }
+                if (ingestResultDetails) {
+                    ingestResultDetails.style.display = 'block';
+                    ingestResultDetails.innerHTML = `
+                        <div style="margin-top:6px; font-size:12px; color:var(--text-main);">
+                            • Số tài liệu đọc được: <strong>${res.total_loaded}</strong><br>
+                            • Tài liệu hợp lệ: <strong>${res.total_valid}</strong><br>
+                            • Sau khử trùng lặp: <strong>${res.total_after_dedup}</strong><br>
+                            • Tổng số chunks đã nạp Qdrant: <strong style="color:var(--primary); font-size:14px;">${res.total_chunks}</strong><br>
+                            • Thời gian xử lý: <strong>${res.elapsed_seconds}s</strong>
+                        </div>
+                    `;
+                }
+                showToast(`Nạp thành công ${res.total_chunks} chunks vào domain ${targetDomain}!`);
+                
+                // Đồng bộ và chuyển sang domain vừa nạp
+                await refreshDomainList(targetDomain);
+                domainSelect.value = targetDomain;
+                applyDomainConfig(targetDomain);
+            } catch (err) {
+                if (ingestStatusMsg) {
+                    ingestStatusMsg.innerHTML = `❌ <span style="color:#ef4444;">Lỗi: ${escapeHtml(err.message)}</span>`;
+                }
+                showToast(`Lỗi: ${err.message}`, true);
+            } finally {
+                btnSubmitIngest.disabled = false;
+            }
+        });
+    }
+
+    // Handle Submit Create Domain
+    if (btnSubmitCreateDomain) {
+        btnSubmitCreateDomain.addEventListener('click', async () => {
+            const domainId = document.getElementById('create-domain-id')?.value.trim();
+            const domainName = document.getElementById('create-domain-name')?.value.trim();
+            const desc = document.getElementById('create-domain-desc')?.value.trim() || '';
+            const mode = document.getElementById('create-domain-mode')?.value || 'friendly';
+            const role = document.getElementById('create-domain-role')?.value.trim() || 'chuyên gia tư vấn';
+            const persona = document.getElementById('create-domain-persona')?.value.trim() || '';
+            const riskKwStr = document.getElementById('create-domain-risk-kw')?.value.trim() || '';
+            const riskKeywords = riskKwStr.split(',').map(s => s.trim()).filter(Boolean);
+
+            if (!domainId || !domainName) {
+                showToast("Vui lòng điền Domain ID và Tên hiển thị!", true);
+                return;
+            }
+
+            btnSubmitCreateDomain.disabled = true;
+            try {
+                const res = await api.createDomain({
+                    domain_id: domainId,
+                    domain_name: domainName,
+                    description: desc,
+                    mode: mode,
+                    assistant_role: role,
+                    persona: persona,
+                    risk_keywords: riskKeywords
+                });
+                showToast(res.message);
+                
+                // Refresh list và chuyển sang Tab 1 với domain mới
+                await refreshDomainList(domainId);
+                const mDomainSelect = document.getElementById('modal-domain-select');
+                if (mDomainSelect) mDomainSelect.value = domainId;
+
+                if (tabIngestData) tabIngestData.click();
+            } catch (err) {
+                showToast(`Lỗi tạo domain: ${err.message}`, true);
+            } finally {
+                btnSubmitCreateDomain.disabled = false;
+            }
+        });
+    }
 });

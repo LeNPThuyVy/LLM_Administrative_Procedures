@@ -6,6 +6,7 @@ Giai đoạn 0: Xóa fallback subprocess, báo lỗi thân thiện khi server kh
 """
 
 import json
+import threading
 import time
 from pathlib import Path
 from urllib.error import URLError
@@ -19,6 +20,9 @@ _SERVER_PORT_1_5B = 8081  # cổng cho model 1.5B (synthesizer)
 _REQUEST_TIMEOUT = 120    # giây
 
 _CHAT_PATH = "/v1/chat/completions"
+
+# Fine-grained semaphore guarding the local llama-server instance (LLAMA_PARALLEL slot)
+_LLM_SEMAPHORE = threading.BoundedSemaphore(max(1, getattr(my_config, "LLAMA_PARALLEL", 1)))
 
 class LLMUnavailableError(RuntimeError):
     pass
@@ -50,11 +54,12 @@ def _generate_via_server(prompt: str, port: int, temperature: float | None = 0.3
 
     t0 = time.time()
     try:
-        with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            content = data["choices"][0]["message"]["content"].strip()
-            print(f"[generator] non-stream port={port} chars={len(prompt)} took={time.time()-t0:.2f}s out_chars={len(content)}")
-            return content
+        with _LLM_SEMAPHORE:
+            with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                content = data["choices"][0]["message"]["content"].strip()
+                print(f"[generator] non-stream port={port} chars={len(prompt)} took={time.time()-t0:.2f}s out_chars={len(content)}")
+                return content
     except (URLError, OSError, KeyError, json.JSONDecodeError):
         return None
 
@@ -130,6 +135,7 @@ def stream_generate_via_server(prompt: str, port: int):
     tokens_count = 0
     t_first_tok = None
 
+    _LLM_SEMAPHORE.acquire()
     try:
         with urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
             for line in resp:
@@ -158,6 +164,8 @@ def stream_generate_via_server(prompt: str, port: int):
             print(f"[generator] Decoded {tokens_count} tokens in {decode_time:.2f}s ({speed:.2f} tok/s, total={time.time() - t_start:.2f}s)")
     except (URLError, OSError) as exc:
         raise LLMUnavailableError(f"llama-server at port {port} is not available: {exc}")
+    finally:
+        _LLM_SEMAPHORE.release()
 
 
 def stream_answer_3b(prompt: str):

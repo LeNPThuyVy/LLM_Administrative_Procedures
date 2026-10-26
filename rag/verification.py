@@ -83,6 +83,10 @@ def _extract_numbers_from_text(text: str) -> set[str]:
     # Strip citations like [EC_001]
     cleaned = re.sub(r'\[?EC_\d{3}\]?', '', text, flags=re.IGNORECASE)
 
+    # Strip list numbering at start of line (e.g. "1. ", "2) ", "- 1.") and "Bước 1"
+    cleaned = re.sub(r'(?:^|\n)\s*(?:-\s*)?\d+[.)]\s+', ' ', cleaned)
+    cleaned = re.sub(r'\bbước\s+\d+\b', ' ', cleaned, flags=re.IGNORECASE)
+
     # Find sequences of digits, possibly with separators
     raw_nums = re.findall(r'\b\d+(?:[.,]\d+)*\b', cleaned)
     normalized = set()
@@ -169,7 +173,19 @@ def verify_answer(
 
         if valid_explicit:
             best_evidence_id = valid_explicit[0]
-            best_score = 1.0
+            target_ev = evidence_map.get(best_evidence_id)
+            raw_overlap = (
+                _calculate_word_overlap(claim=claim, content=target_ev.content)
+                if target_ev else 0.0
+            )
+            claim_meaningful_words = {
+                w for w in re.findall(r'\w+', re.sub(r'\[?EC_\d{3}\]?', '', claim).lower())
+                if w not in VIETNAMESE_STOPWORDS
+            }
+            if raw_overlap >= 0.15 or len(claim_meaningful_words) <= 2:
+                best_score = max(raw_overlap + 0.25, 0.35)
+            else:
+                best_score = raw_overlap
         else:
             for evidence in evidence_candidates:
                 score = _calculate_word_overlap(

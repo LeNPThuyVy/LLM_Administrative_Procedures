@@ -50,4 +50,4 @@ class QueueManager:
         return "simple"
 
 
-queue_manager = QueueManager(max_concurrency=max(2, getattr(cfg, "LLAMA_PARALLEL", 1)))
+queue_manager = QueueManager(max_concurrency=max(4, getattr(cfg, "LLAMA_PARALLEL", 1) * 4))

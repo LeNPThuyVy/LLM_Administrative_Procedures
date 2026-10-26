@@ -4,18 +4,18 @@
 
 Context / Memory Manager sử dụng các bảng:
 
-- users
 - sessions
 - messages
 - structured_context
-- conversation_summary
-- long_term_memory
+- users (deprecated - Phase 1)
+- conversation_summary (deprecated - Phase 1)
+- long_term_memory (deprecated - Phase 1)
 
 Evidence của câu trả lời được lưu dạng JSONB trong bảng `messages`.
 
 ## 2. Context Object
 
-`get_context(session_id, query)` trả về:
+`get_context(session_id, query)` trả về (với `conversation_summary` trả về `""` và `long_term_memory` trả về `{}` khi tắt theo Phase 1):
 
 ```json
 {
