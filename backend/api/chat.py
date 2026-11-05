@@ -20,6 +20,7 @@ async def get_domains():
 
 
 @router.post("/api/chat")
+@router.post("/api/chat/stream")
 async def chat(request: ChatRequest):
     if not is_valid_domain(request.domain):
         raise HTTPException(
