@@ -43,6 +43,9 @@ class DomainConfig:
     field_intents: list[dict[str, Any]] = field(default_factory=list)
     risk_keywords: list[str] = field(default_factory=list)
     clarification_prompt: str = ""
+    out_of_scope_topics: list[str] = field(default_factory=list)
+    min_semantic_score: float = 0.42
+    scope_classifier: bool = False
 
 
 def load_domain_config(domain_id: str) -> DomainConfig:

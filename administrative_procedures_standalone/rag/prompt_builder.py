@@ -15,6 +15,7 @@ about and restricts the answer to the requested field(s).
 
 import my_config as cfg
 from rag.evidence_builder import EvidenceCandidate
+from rag.text_normalizer import fold_accents, normalize_query_text
 
 
 # =========================================================
@@ -26,42 +27,53 @@ import re as _re
 # =========================================================
 # FIELD DETECTION PATTERNS
 # GĐ1 mục 3: Dùng regex word-boundary, tránh match substring rộng.
-# Thứ tự kiểm tra: method → docs → fee → time
-# để "nộp hồ sơ ở đâu" ra method, không ra docs.
 # =========================================================
 
-# Regex patterns — dùng \b để tránh match giữa từ
-_METHOD_REGEX = _re.compile(
-    r"\b(hình\s+thức\s+nộp|nộp\s+online|nộp\s+trực\s+tuyến|"
-    r"nộp\s+trực\s+tiếp|cách\s+nộp|nộp\s+ở\s+đâu|submission\s+method)\b",
+_DOCS_REGEX = _re.compile(
+    r"\b((?<!trên\s)(?<!trong\s)giấy\s+tờ|thành\s+phần\s+hồ\s+sơ|hồ\s+sơ\s+gì|hồ\s+sơ\s+gồm|hồ\s+sơ\s+cần|"
+    r"cần\s+hồ\s+sơ|chuẩn\s+bị\s+hồ\s+sơ|những\s+hồ\s+sơ|cần\s+chuẩn\s+bị|"
+    r"tài\s+liệu|giấy\s+chứng\s+minh|giấy\s+chứng\s+sinh|"
+    r"giấy\s+khai|cần\s+gì|cần\s+những\s+gì|gồm\s+những\s+gì|gồm\s+gì|"
+    r"bao\s+gồm\s+những\s+gì|cần\s+mang|mang\s+theo|xuất\s+trình|required|"
+    r"(?<!tren\s)(?<!trong\s)giay\s+to|thanh\s+phan\s+ho\s+so|ho\s+so\s+gi|ho\s+so\s+gom|ho\s+so\s+can|"
+    r"can\s+ho\s+so|chuan\s+bi\s+ho\s+so|can\s+chuan\s+bi|tai\s+lieu|can\s+gi|"
+    r"can\s+nhung\s+gi|gom\s+nhung\s+gi|gom\s+gi|can\s+mang|xuat\s+trinh)\b",
     _re.IGNORECASE | _re.UNICODE,
 )
 
-# "hồ sơ" và "phí" đứng riêng bị bỏ (quá rộng).
-# Chỉ giữ cụm từ cụ thể hơn.
-_DOCS_REGEX = _re.compile(
-    r"\b(giấy\s+tờ|thành\s+phần\s+hồ\s+sơ|cần\s+chuẩn\s+bị|"
-    r"tài\s+liệu|giấy\s+chứng\s+minh|giấy\s+chứng\s+sinh|"
-    r"giấy\s+khai|cần\s+gì|bao\s+gồm\s+những\s+gì|required)\b",
+_METHOD_REGEX = _re.compile(
+    r"\b(hình\s+thức\s+nộp|hình\s+thức\s+nào|nộp\s+online|nộp\s+trực\s+tuyến|"
+    r"nộp\s+trực\s+tiếp|cách\s+nộp|nộp\s+ở\s+đâu|nộp\s+tại\s+đâu|"
+    r"nộp\s+hồ\s+sơ\s+ở\s+đâu|nộp\s+hồ\s+sơ\s+tại\s+đâu|làm\s+ở\s+đâu|"
+    r"đăng\s+ký\s+ở\s+đâu|ở\s+đâu|tại\s+đâu|nơi\s+nộp|địa\s+điểm\s+nộp|submission\s+method|"
+    r"hinh\s+thuc\s+nop|hinh\s+thuc\s+nao|nop\s+online|nop\s+truc\s+tuyen|"
+    r"nop\s+truc\s+tiep|cach\s+nop|nop\s+o\s+dau|nop\s+tai\s+dau|nop\s+ho\s+so\s+o\s+dau|"
+    r"lam\s+o\s+dau|o\s+dau|tai\s+dau|noi\s+nop)\b",
     _re.IGNORECASE | _re.UNICODE,
 )
 
 _FEE_REGEX = _re.compile(
-    r"\b(lệ\s+phí|chi\s+phí|miễn\s+phí|bao\s+nhiêu\s+tiền|"
-    r"fee|mất\s+bao\s+nhiêu)\b",
+    r"\b(lệ\s+phí|lệ\s+pí|chi\s+phí\s+làm|miễn\s+phí|bao\s+nhiêu\s+tiền|mất\s+bao\s+nhiêu\s+tiền|"
+    r"mất\s+phí|tốn\s+phí|thu\s+phí|phí\s+chứng\s+thực|phí\s+đăng\s+ký|phí\s+cấp|"
+    r"mức\s+thu|bao\s+nhiêu\s+một\s+trường\s+hợp|lệ\s+phí.*?(?:bao\s+nhiêu|bn)|"
+    r"phí.*?(?:bao\s+nhiêu\s+tiền|là\s+bao\s+nhiêu)|"
+    r"cấp\s+lại.*bao\s+nhiêu|fee|le\s+phi|le\s+pi|mien\s+phi|bao\s+nhieu\s+tien|mat\s+phi|"
+    r"ton\s+phi|thu\s+phi|phi\s+chung\s+thuc|muc\s+thu|le\s+phi.*?(?:bao\s+nhieu|bn)|"
+    r"phi.*?(?:bao\s+nhieu\s+tien|la\s+bao\s+nhieu))\b",
     _re.IGNORECASE | _re.UNICODE,
 )
 
 _TIME_REGEX = _re.compile(
     r"\b(thời\s+gian|bao\s+lâu|mấy\s+ngày|thời\s+hạn|"
-    r"bao\s+nhiêu\s+ngày|processing\s+time)\b",
+    r"bao\s+nhiêu\s+ngày|trong\s+ngày|lấy\s+ngay|processing\s+time|"
+    r"thoi\s+gian|bao\s+lau|may\s+ngay|thoi\s+han|bao\s+nhieu\s+ngay|"
+    r"trong\s+ngay|lay\s+ngay)\b",
     _re.IGNORECASE | _re.UNICODE,
 )
 
-# Thứ tự kiểm tra: method trước docs
 _ORDERED_FIELD_CHECKS = [
-    ("method", _METHOD_REGEX),
     ("docs",   _DOCS_REGEX),
+    ("method", _METHOD_REGEX),
     ("fee",    _FEE_REGEX),
     ("time",   _TIME_REGEX),
 ]
@@ -109,7 +121,10 @@ def _detect_field_types(
         if intent:
             text_parts.append(str(intent))
 
-    q = " ".join(text_parts)
+    raw_q = " ".join(text_parts)
+    norm_q = normalize_query_text(raw_q)
+    folded_q = fold_accents(norm_q)
+    q = f"{raw_q} | {norm_q} | {folded_q}"
 
     if runtime and hasattr(runtime, "config") and runtime.config.field_intents:
         detected = []

@@ -391,7 +391,7 @@
     "id": "GS_043",
     "question": "Chế độ trợ cấp thờ cúng liệt sĩ nộp hồ sơ ở đâu?",
     "expected_document_id": "PROC_011",
-    "expected_field": "submission_location",
+    "expected_field": "submission_method",
     "expected_keywords": [
       "Hành chính công",
       "Tăng Nhơn Phú"
@@ -547,7 +547,7 @@
     "id": "GS_059",
     "question": "Nộp hồ sơ chuyển trường THCS ở đâu?",
     "expected_document_id": "PROC_029",
-    "expected_field": "submission_location",
+    "expected_field": "submission_method",
     "expected_keywords": [
       "trường THCS"
     ]
@@ -822,7 +822,7 @@
     "id": "GS_088",
     "question": "nop ho so de nghi xac dinh muc do khuyet tat o dau?",
     "expected_document_id": "PROC_009, PROC_023",
-    "expected_field": "submission_location",
+    "expected_field": "submission_method",
     "expected_keywords": [
       "mức độ khuyết tật"
     ]
