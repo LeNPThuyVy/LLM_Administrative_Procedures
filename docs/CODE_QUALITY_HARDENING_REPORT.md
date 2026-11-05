@@ -104,7 +104,7 @@ AI Core Pipeline (rag/pipeline.py)   Background Task Supervisor (backend/service
 - **Chiến lược hai tầng (Two-Tier Dependency Management):**
   1. `requirements.in`: Khai báo các thư viện trực tiếp cấp cao của dự án kèm ngưỡng phiên bản tối thiểu tương thích.
   2. `requirements-lock.txt`: Khóa cứng chính xác 197 gói thư viện dựa trên môi trường Python 3.12.10 đã chạy kiểm thử thành công 100%.
-- **Môi trường ghi nhận:** `Python 3.12.10` trên Windows 11 (tương thích Linux x86_64).
+- **Môi trường ghi nhận:** Môi trường kiểm thử hiện tại sử dụng Python 3.12.10 trên Windows. Dependency lock được tạo nhằm tăng khả năng tái lập trên các môi trường tương thích.
 - **Hướng dẫn cài đặt tái lập:**
   ```bash
   python -m pip install -r requirements-lock.txt
@@ -170,3 +170,4 @@ Khởi chạy thực tế: Backend port 8000, Llama-3B port 8090, Llama-1.5B por
 1. **In-process Background Queue:** Cơ chế `run_background_with_retry` hiện chạy trên in-memory task loop của tiến trình Python. Nếu tiến trình server bị kill đột ngột (SIGKILL / mất nguồn máy chủ) đúng lúc task đang chờ delay để retry, tác vụ đó sẽ mất. Trong tương lai nếu yêu cầu độ bền dữ liệu tuyệt đối (Guaranteed Delivery), cần xem xét hàng đợi bền vững bên ngoài (như Redis / Celery / PG Queue).
 2. **Mock Server Benchmark Dataset:** File `selftest/mock_server.py` hiện chỉ giả lập 2 domain (`administrative_procedures` và `cuisine_demo`). Nếu chạy benchmark đầy đủ các domain khác cần cấu hình thêm golden set tương ứng.
 3. **Phụ thuộc CPU/GPU Local:** Tốc độ streaming token vẫn phụ thuộc vào tải cục bộ của máy tính chạy llama-server.
+

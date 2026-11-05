@@ -101,3 +101,9 @@ graphify-out/
 Architecture_system.md
 **/Architecture_system.md
 test/
+
+# Benchmark generated outputs
+benchmark/results/*
+!benchmark/results/.gitkeep
+multi_domain_system/benchmark/results/*
+!multi_domain_system/benchmark/results/.gitkeep

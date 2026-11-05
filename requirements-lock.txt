@@ -1,6 +1,6 @@
 # ============================================================
 # Pinned Exact Dependency Lockfile for Reproducible Deployments
-# Python Version: 3.12.10 (Tested & Verified on Windows 11 / Linux compatible)
+# Python Version: 3.12.10 (Tested on Windows. Dependency lock created for reproducible installation across compatible environments)
 # Generated: 2026-11-05
 # Installation: python -m pip install -r requirements-lock.txt
 # ============================================================

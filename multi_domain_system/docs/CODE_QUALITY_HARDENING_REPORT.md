@@ -104,7 +104,7 @@ AI Core Pipeline (rag/pipeline.py)   Background Task Supervisor (backend/service
 - **Chiến lược hai tầng (Two-Tier Dependency Management):**
   1. `requirements.in`: Khai báo các thư viện trực tiếp cấp cao của dự án kèm ngưỡng phiên bản tối thiểu tương thích.
   2. `requirements-lock.txt`: Khóa cứng chính xác 197 gói thư viện dựa trên môi trường Python 3.12.10 đã chạy kiểm thử thành công 100%.
-- **Môi trường ghi nhận:** `Python 3.12.10` trên Windows 11 (tương thích Linux x86_64).
+- **Môi trường ghi nhận:** Môi trường kiểm thử hiện tại sử dụng Python 3.12.10 trên Windows. Dependency lock được tạo nhằm tăng khả năng tái lập trên các môi trường tương thích.
 - **Hướng dẫn cài đặt tái lập:**
   ```bash
   python -m pip install -r requirements-lock.txt
