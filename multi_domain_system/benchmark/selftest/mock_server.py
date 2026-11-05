@@ -27,8 +27,11 @@ DISCLAIMER = "Đây là thông tin tư vấn tự động. Vui lòng liên hệ 
 
 def load():
     for dom, p in [("administrative_procedures", "domains/administrative_procedures/golden_set.json"),
-                   ("tourism_demo", "domains/tourism_demo/golden_set.json")]:
-        for c in json.loads((ROOT / p).read_text(encoding="utf-8")):
+                   ("cuisine_demo", "domains/cuisine_demo/golden_set.json")]:
+        file_path = ROOT / p
+        if not file_path.exists():
+            continue
+        for c in json.loads(file_path.read_text(encoding="utf-8")):
             d = c.get("expected_document_id") or []
             d = [d] if isinstance(d, str) else d
             A[c["question"]] = (dom, d, c.get("expected_keywords", []))
