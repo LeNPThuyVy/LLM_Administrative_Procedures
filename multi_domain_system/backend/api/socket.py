@@ -14,10 +14,13 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 
+import logging
 from backend.services.context_service import (
     get_context,
     update_memory,
 )
+from backend.services.background_tasks import run_background_with_retry
+logger = logging.getLogger(__name__)
 from backend.services.ai_service import (
     generate_answer,
     generate_answer_stream,
@@ -345,17 +348,17 @@ async def websocket_chat(
                                         })
                                     )
 
-                                asyncio.create_task(
-                                    update_memory(
-                                        session_id=session_id,
-                                        query=query,
-                                        final_result=final_result_data,
-                                    )
+                                run_background_with_retry(
+                                    update_memory,
+                                    session_id=session_id,
+                                    query=query,
+                                    final_result=final_result_data,
+                                    name=f"ws_multi_{session_id[:8]}",
                                 )
                                 print(f"[WS QUEUE] session={session_id} DONE (Multi)")
                                 continue
                             except Exception as multi_exc:
-                                print(f"[WS MULTI ERROR] session={session_id}: {multi_exc}")
+                                logger.exception(f"[WS MULTI ERROR] session={session_id}: {multi_exc}")
                                 await websocket.send_json({
                                     "type": "error",
                                     "data": {"message": "Đã xảy ra lỗi khi xử lý đa ý định. Đang chuyển sang xử lý thông thường..."},
@@ -377,7 +380,7 @@ async def websocket_chat(
                             elif event_type == "final":
                                 result = payload
                     except Exception as gen_exc:
-                        print(f"[WS GENERATE ERROR] session={session_id}: {gen_exc}")
+                        logger.exception(f"[WS GENERATE ERROR] session={session_id}: {gen_exc}")
                         await _send_json_safe(websocket, {
                             "type": "error",
                             "data": {
@@ -437,12 +440,12 @@ async def websocket_chat(
                         )
 
                         # Update memory theo session_id
-                        asyncio.create_task(
-                            update_memory(
-                                session_id=session_id,
-                                query=query,
-                                final_result=result,
-                            )
+                        run_background_with_retry(
+                            update_memory,
+                            session_id=session_id,
+                            query=query,
+                            final_result=result,
+                            name=f"ws_clarify_{session_id[:8]}",
                         )
 
                         print(
@@ -494,12 +497,12 @@ async def websocket_chat(
 
                     # Truyền đúng session_id
                     # xuống Long-term Memory
-                    asyncio.create_task(
-                        update_memory(
-                            session_id=session_id,
-                            query=query,
-                            final_result=result,
-                        )
+                    run_background_with_retry(
+                        update_memory,
+                        session_id=session_id,
+                        query=query,
+                        final_result=result,
+                        name=f"ws_normal_{session_id[:8]}",
                     )
 
                     print(
