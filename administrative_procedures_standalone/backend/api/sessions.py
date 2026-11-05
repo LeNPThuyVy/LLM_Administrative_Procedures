@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Request, Response
 from sqlalchemy import select, delete, func
@@ -14,12 +14,12 @@ router = APIRouter(
 
 COOKIE_NAME = "hcc_session_id"
 USER_COOKIE_NAME = "hcc_user_id"
-COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 ngày
-USER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 ngày
+COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 ngÃ y
+USER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 ngÃ y
 
 
 async def _resolve_user_id(request: Request, db) -> uuid.UUID | None:
-    """Xác định user_id từ cookie user_id hoặc tra cứu từ session_id hiện tại."""
+    """XÃ¡c Ä‘á»‹nh user_id tá»« cookie user_id hoáº·c tra cá»©u tá»« session_id hiá»‡n táº¡i."""
     cookie_user_id = request.cookies.get(USER_COOKIE_NAME)
     if cookie_user_id:
         try:
@@ -27,7 +27,7 @@ async def _resolve_user_id(request: Request, db) -> uuid.UUID | None:
         except ValueError:
             pass
 
-    # Fallback: tra cứu từ session_id hiện tại
+    # Fallback: tra cá»©u tá»« session_id hiá»‡n táº¡i
     cookie_session_id = request.cookies.get(COOKIE_NAME)
     if cookie_session_id:
         try:
@@ -42,18 +42,57 @@ async def _resolve_user_id(request: Request, db) -> uuid.UUID | None:
     return None
 
 
+
+async def _require_authenticated_user_id(
+    request: Request,
+    db,
+) -> uuid.UUID:
+    """
+    Bat buoc request phai co cookie user_id hop le.
+    session_id khong duoc dung lam bang chung dinh danh
+    cho cac thao tac doc/chuyen/xoa session.
+    """
+    raw_user_id = request.cookies.get(USER_COOKIE_NAME)
+
+    if not raw_user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Thieu thong tin dinh danh nguoi dung",
+        )
+
+    try:
+        user_id = uuid.UUID(raw_user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=401,
+            detail="Thong tin dinh danh nguoi dung khong hop le",
+        )
+
+    user_result = await db.execute(
+        select(User.id).where(User.id == user_id)
+    )
+    existing_user_id = user_result.scalar_one_or_none()
+
+    if existing_user_id is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Thong tin dinh danh nguoi dung khong hop le",
+        )
+
+    return user_id
+
 @router.get("")
 async def list_user_sessions(request: Request):
     """
-    Lấy danh sách các phiên trò chuyện của user hiện tại để hiển thị trên sidebar.
-    Mỗi phiên kèm theo tiêu đề tóm tắt (từ câu hỏi đầu tiên của user) và thời gian tạo.
+    Láº¥y danh sÃ¡ch cÃ¡c phiÃªn trÃ² chuyá»‡n cá»§a user hiá»‡n táº¡i Ä‘á»ƒ hiá»ƒn thá»‹ trÃªn sidebar.
+    Má»—i phiÃªn kÃ¨m theo tiÃªu Ä‘á» tÃ³m táº¯t (tá»« cÃ¢u há»i Ä‘áº§u tiÃªn cá»§a user) vÃ  thá»i gian táº¡o.
     """
     async with AsyncSessionLocal() as db:
         user_id = await _resolve_user_id(request, db)
         if not user_id:
             return []
 
-        # Truy vấn tối đa 30 sessions gần nhất
+        # Truy váº¥n tá»‘i Ä‘a 30 sessions gáº§n nháº¥t
         sessions_res = await db.execute(
             select(ChatSession)
             .where(ChatSession.user_id == user_id)
@@ -64,7 +103,7 @@ async def list_user_sessions(request: Request):
 
         results = []
         for s in sessions:
-            # Lấy tin nhắn user đầu tiên làm tiêu đề
+            # Láº¥y tin nháº¯n user Ä‘áº§u tiÃªn lÃ m tiÃªu Ä‘á»
             first_msg_res = await db.execute(
                 select(Message.content)
                 .where(
@@ -76,18 +115,18 @@ async def list_user_sessions(request: Request):
             )
             first_msg = first_msg_res.scalar_one_or_none()
 
-            # Đếm tổng số tin nhắn
+            # Äáº¿m tá»•ng sá»‘ tin nháº¯n
             count_res = await db.execute(
                 select(func.count(Message.id)).where(Message.session_id == s.id)
             )
             msg_count = count_res.scalar() or 0
 
             if first_msg:
-                # Cắt gọn tối đa 40 ký tự
+                # Cáº¯t gá»n tá»‘i Ä‘a 40 kÃ½ tá»±
                 first_line = first_msg.strip().split("\n")[0]
                 title = first_line[:40] + ("..." if len(first_line) > 40 else "")
             else:
-                title = "Cuộc trò chuyện mới"
+                title = "Cuá»™c trÃ² chuyá»‡n má»›i"
 
             results.append({
                 "id": str(s.id),
@@ -102,7 +141,7 @@ async def list_user_sessions(request: Request):
 @router.post("/new")
 async def create_new_session(request: Request, response: Response):
     """
-    Tạo phiên trò chuyện mới cho user hiện tại và cập nhật cookie session_id.
+    Táº¡o phiÃªn trÃ² chuyá»‡n má»›i cho user hiá»‡n táº¡i vÃ  cáº­p nháº­t cookie session_id.
     """
     async with AsyncSessionLocal() as db:
         user_id = await _resolve_user_id(request, db)
@@ -139,7 +178,7 @@ async def create_new_session(request: Request, response: Response):
 
         return {
             "session_id": str(new_session_id),
-            "title": "Cuộc trò chuyện mới",
+            "title": "Cuá»™c trÃ² chuyá»‡n má»›i",
             "message_count": 0,
             "created_at": chat_session.created_at.isoformat() if chat_session.created_at else None,
         }
@@ -152,7 +191,7 @@ async def switch_session(
     response: Response,
 ):
     """
-    Chuyển phiên hoạt động sang session_id được chọn và cập nhật cookie session_id.
+    Chuyá»ƒn phiÃªn hoáº¡t Ä‘á»™ng sang session_id Ä‘Æ°á»£c chá»n vÃ  cáº­p nháº­t cookie session_id.
     """
     async with AsyncSessionLocal() as db:
         session_res = await db.execute(
@@ -160,11 +199,18 @@ async def switch_session(
         )
         session = session_res.scalar_one_or_none()
         if not session:
-            raise HTTPException(status_code=404, detail="Phiên không tồn tại")
+            raise HTTPException(status_code=404, detail="PhiÃªn khÃ´ng tá»“n táº¡i")
 
-        user_id = await _resolve_user_id(request, db)
-        if user_id and session.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Không có quyền truy cập phiên này")
+        user_id = await _require_authenticated_user_id(
+            request,
+            db,
+        )
+
+        if session.user_id != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Khong co quyen truy cap phien nay",
+            )
 
         response.set_cookie(
             key=COOKIE_NAME,
@@ -185,7 +231,7 @@ async def delete_session(
     response: Response,
 ):
     """
-    Xóa phiên trò chuyện và toàn bộ dữ liệu tin nhắn/bộ nhớ liên quan.
+    XÃ³a phiÃªn trÃ² chuyá»‡n vÃ  toÃ n bá»™ dá»¯ liá»‡u tin nháº¯n/bá»™ nhá»› liÃªn quan.
     """
     async with AsyncSessionLocal() as db:
         session_res = await db.execute(
@@ -193,25 +239,32 @@ async def delete_session(
         )
         session = session_res.scalar_one_or_none()
         if not session:
-            raise HTTPException(status_code=404, detail="Phiên không tồn tại")
+            raise HTTPException(status_code=404, detail="PhiÃªn khÃ´ng tá»“n táº¡i")
 
-        user_id = await _resolve_user_id(request, db)
-        if user_id and session.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Không có quyền xóa phiên này")
+        user_id = await _require_authenticated_user_id(
+            request,
+            db,
+        )
 
-        # Xóa tin nhắn
+        if session.user_id != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Khong co quyen truy cap phien nay",
+            )
+
+        # XÃ³a tin nháº¯n
         await db.execute(
             delete(Message).where(Message.session_id == session_id)
         )
-        # Xóa structured context
+        # XÃ³a structured context
         await db.execute(
             delete(StructuredContext).where(StructuredContext.session_id == session_id)
         )
-        # Xóa session
+        # XÃ³a session
         await db.delete(session)
         await db.commit()
 
-        # Nếu đang xóa đúng session hiện tại trong cookie, xóa cookie session_id
+        # Náº¿u Ä‘ang xÃ³a Ä‘Ãºng session hiá»‡n táº¡i trong cookie, xÃ³a cookie session_id
         cookie_session_id = request.cookies.get(COOKIE_NAME)
         if cookie_session_id == str(session_id):
             response.delete_cookie(
@@ -230,8 +283,8 @@ async def get_session_messages(
     request: Request,
 ):
     """
-    Trả lịch sử tin nhắn của một session.
-    Cho phép đọc nếu session_id trùng cookie session_id HOẶC thuộc cùng user_id.
+    Tráº£ lá»‹ch sá»­ tin nháº¯n cá»§a má»™t session.
+    Cho phÃ©p Ä‘á»c náº¿u session_id trÃ¹ng cookie session_id HOáº¶C thuá»™c cÃ¹ng user_id.
     """
     async with AsyncSessionLocal() as db:
         session_result = await db.execute(
@@ -245,20 +298,15 @@ async def get_session_messages(
                 detail="Session not found"
             )
 
-        cookie_session_id = request.cookies.get(COOKIE_NAME)
-        user_id = await _resolve_user_id(request, db)
+        user_id = await _require_authenticated_user_id(
+            request,
+            db,
+        )
 
-        # Kiểm tra quyền: trùng session_id cookie hoặc cùng user_id
-        has_access = False
-        if cookie_session_id and cookie_session_id == str(session_id):
-            has_access = True
-        elif user_id and session.user_id == user_id:
-            has_access = True
-
-        if not has_access:
+        if session.user_id != user_id:
             raise HTTPException(
                 status_code=403,
-                detail="Không có quyền truy cập vào phiên này"
+                detail="KhÃ´ng cÃ³ quyá»n truy cáº­p vÃ o phiÃªn nÃ y",
             )
 
         messages_result = await db.execute(

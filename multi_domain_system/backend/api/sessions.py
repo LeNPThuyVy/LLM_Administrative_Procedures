@@ -42,6 +42,45 @@ async def _resolve_user_id(request: Request, db) -> uuid.UUID | None:
     return None
 
 
+
+async def _require_authenticated_user_id(
+    request: Request,
+    db,
+) -> uuid.UUID:
+    """
+    Bat buoc request phai co cookie user_id hop le.
+    session_id khong duoc dung lam bang chung dinh danh
+    cho cac thao tac doc/chuyen/xoa session.
+    """
+    raw_user_id = request.cookies.get(USER_COOKIE_NAME)
+
+    if not raw_user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Thieu thong tin dinh danh nguoi dung",
+        )
+
+    try:
+        user_id = uuid.UUID(raw_user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=401,
+            detail="Thong tin dinh danh nguoi dung khong hop le",
+        )
+
+    user_result = await db.execute(
+        select(User.id).where(User.id == user_id)
+    )
+    existing_user_id = user_result.scalar_one_or_none()
+
+    if existing_user_id is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Thong tin dinh danh nguoi dung khong hop le",
+        )
+
+    return user_id
+
 @router.get("")
 async def list_user_sessions(request: Request):
     """
@@ -162,9 +201,16 @@ async def switch_session(
         if not session:
             raise HTTPException(status_code=404, detail="Phiên không tồn tại")
 
-        user_id = await _resolve_user_id(request, db)
-        if user_id and session.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Không có quyền truy cập phiên này")
+        user_id = await _require_authenticated_user_id(
+            request,
+            db,
+        )
+
+        if session.user_id != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Khong co quyen truy cap phien nay",
+            )
 
         response.set_cookie(
             key=COOKIE_NAME,
@@ -195,9 +241,16 @@ async def delete_session(
         if not session:
             raise HTTPException(status_code=404, detail="Phiên không tồn tại")
 
-        user_id = await _resolve_user_id(request, db)
-        if user_id and session.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Không có quyền xóa phiên này")
+        user_id = await _require_authenticated_user_id(
+            request,
+            db,
+        )
+
+        if session.user_id != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Khong co quyen truy cap phien nay",
+            )
 
         # Xóa tin nhắn
         await db.execute(
@@ -245,20 +298,15 @@ async def get_session_messages(
                 detail="Session not found"
             )
 
-        cookie_session_id = request.cookies.get(COOKIE_NAME)
-        user_id = await _resolve_user_id(request, db)
+        user_id = await _require_authenticated_user_id(
+            request,
+            db,
+        )
 
-        # Kiểm tra quyền: trùng session_id cookie hoặc cùng user_id
-        has_access = False
-        if cookie_session_id and cookie_session_id == str(session_id):
-            has_access = True
-        elif user_id and session.user_id == user_id:
-            has_access = True
-
-        if not has_access:
+        if session.user_id != user_id:
             raise HTTPException(
                 status_code=403,
-                detail="Không có quyền truy cập vào phiên này"
+                detail="Không có quyền truy cập vào phiên này",
             )
 
         messages_result = await db.execute(

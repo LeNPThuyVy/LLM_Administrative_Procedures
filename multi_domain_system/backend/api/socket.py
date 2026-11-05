@@ -1,3 +1,4 @@
+import json
 import asyncio
 import uuid
 from sqlalchemy import select
@@ -22,6 +23,17 @@ from backend.services.ai_service import (
     generate_answer_stream,
 )
 from backend.services.queue_service import queue_manager
+
+
+
+async def _send_json_safe(websocket: WebSocket, payload) -> None:
+    await websocket.send_text(
+        json.dumps(
+            jsonable_encoder(payload),
+            ensure_ascii=True,
+            separators=(",", ":"),
+        )
+    )
 
 
 router = APIRouter(
@@ -146,9 +158,9 @@ async def bootstrap_session(
     }
 
 
-# ==============================================================================
+# ------------------------------------------------------------------------------
 # [DEV/TEST ONLY] Reset cookie endpoint - Có thể xóa khối này khi không cần nữa
-# ==============================================================================
+# ------------------------------------------------------------------------------
 @router.api_route("/api/session/reset", methods=["GET", "POST"])
 async def reset_session(response: Response):
     """Xóa cookie session_id và user_id để tạo mới hoàn toàn (dùng cho testing)."""
@@ -165,7 +177,7 @@ async def reset_session(response: Response):
         samesite="lax",
     )
     return {"status": "ok", "message": "Cookie đã được xóa"}
-# ==============================================================================
+# ------------------------------------------------------------------------------
 
 
 @router.websocket("/ws/chat")
@@ -200,7 +212,7 @@ async def websocket_chat(
     )
 
     # Báo client biết socket đã kết nối
-    await websocket.send_json({
+    await _send_json_safe(websocket, {
         "type": "connected",
         "data": {
             "session_id": session_id,
@@ -220,7 +232,7 @@ async def websocket_chat(
 
             from domains import is_valid_domain
             if not is_valid_domain(domain):
-                await websocket.send_json({
+                await _send_json_safe(websocket, {
                     "type": "error",
                     "data": {
                         "code": 400,
@@ -231,7 +243,7 @@ async def websocket_chat(
 
             # Query rỗng
             if not query:
-                await websocket.send_json({
+                await _send_json_safe(websocket, {
                     "type": "clarification",
                     "data": {
                         "question":
@@ -239,7 +251,7 @@ async def websocket_chat(
                     },
                 })
 
-                await websocket.send_json({
+                await _send_json_safe(websocket, {
                     "type": "done",
                     "data": {
                         "needs_clarification": True,
@@ -284,7 +296,7 @@ async def websocket_chat(
                             f"[WS] get_context error for "
                             f"session={session_id}: {exc}"
                         )
-                        await websocket.send_json({
+                        await _send_json_safe(websocket, {
                             "type": "error",
                             "data": {
                                 "message": (
@@ -358,7 +370,7 @@ async def websocket_chat(
                             domain=domain,
                         ):
                             if event_type == "chunk":
-                                await websocket.send_json({
+                                await _send_json_safe(websocket, {
                                     "type": "chunk",
                                     "data": {"text": payload},
                                 })
@@ -366,13 +378,13 @@ async def websocket_chat(
                                 result = payload
                     except Exception as gen_exc:
                         print(f"[WS GENERATE ERROR] session={session_id}: {gen_exc}")
-                        await websocket.send_json({
+                        await _send_json_safe(websocket, {
                             "type": "error",
                             "data": {
                                 "message": "Hệ thống đang bận hoặc gặp lỗi xử lý. Bạn vui lòng thử lại sau ít giây.",
                             },
                         })
-                        await websocket.send_json({
+                        await _send_json_safe(websocket, {
                             "type": "done",
                             "data": {
                                 "answer": "Hệ thống đang bận hoặc gặp sự cố tạm thời. Bạn vui lòng thử gửi lại câu hỏi.",
@@ -383,7 +395,7 @@ async def websocket_chat(
                         continue
 
                     if not result:
-                        await websocket.send_json({
+                        await _send_json_safe(websocket, {
                             "type": "done",
                             "data": {
                                 "answer": "Chưa nhận được câu trả lời từ hệ thống. Bạn vui lòng thử lại.",
@@ -393,9 +405,9 @@ async def websocket_chat(
                         })
                         continue
 
-                    # =========================
+                    # -------------------------
                     # 1. CLARIFICATION
-                    # =========================
+                    # -------------------------
                     if result["needs_clarification"]:
                         clarification_text = (
                             result.get("clarification_question")
@@ -404,14 +416,14 @@ async def websocket_chat(
                         )
                         result["answer"] = clarification_text
 
-                        await websocket.send_json({
+                        await _send_json_safe(websocket, {
                             "type": "clarification",
                             "data": {
                                 "question": clarification_text,
                             },
                         })
 
-                        await websocket.send_json({
+                        await _send_json_safe(websocket, {
                             "type": "done",
                             "data": {
                                 "answer": clarification_text,
@@ -441,24 +453,24 @@ async def websocket_chat(
 
                         continue
 
-                    # =========================
+                    # -------------------------
                     # 2. EVIDENCE
-                    # =========================
+                    # -------------------------
                     evidence_data = {
                         "evidence_list":
                             result["evidence_list"]
                     }
 
-                    await websocket.send_json(
+                    await _send_json_safe(websocket, 
                         jsonable_encoder({
                             "type": "evidence",
                             "data": evidence_data,
                         })
                     )
 
-                    # =========================
+                    # -------------------------
                     # 3. DONE
-                    # =========================
+                    # -------------------------
                     done_data = {
                         "answer":
                             result["answer"],
@@ -468,7 +480,7 @@ async def websocket_chat(
                             False,
                     }
 
-                    await websocket.send_json(
+                    await _send_json_safe(websocket, 
                         jsonable_encoder({
                             "type": "done",
                             "data": done_data,

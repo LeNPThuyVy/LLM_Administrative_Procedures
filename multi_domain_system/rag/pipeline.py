@@ -4,7 +4,9 @@ from collections.abc import Callable
 
 import my_config as cfg
 from rag.evidence_builder import build_evidence_candidates
-from rag.generator import generate_answer_1_5b, generate_answer_3b
+from queue import Queue
+from threading import Thread
+from rag.generator import generate_answer_1_5b, generate_answer_3b, stream_answer_3b
 from rag.history_reader import history_reader
 from rag.mapper import AnswerResponse, map_verification_results
 from rag.procedure_reader import procedure_reader
@@ -735,3 +737,93 @@ def answer_query(
 
     print(f"[time] total_pipeline = {time.time() - t_start_pipeline:.2f}s")
     return final_response
+
+
+
+def answer_question_stream(
+    query: str,
+    session_id: str | None = None,
+    context: dict | None = None,
+    domain: str | None = None,
+    synthesizer_generator: Callable[[str], str] = generate_answer_1_5b,
+    stream_generator=stream_answer_3b,
+):
+    """
+    Streaming entry point adapter.
+    Chạy answer_query và yield các sự kiện:
+      - {"type": "token", "text": "..."}
+      - {"type": "final", "response": AnswerResponse}
+    Đảm bảo 100% tuân thủ buffer-then-stream và verification của Bug 4.
+    """
+    token_queue = Queue()
+    state = {
+        "result": None,
+        "error": None,
+        "token_emitted": False,
+    }
+
+    def on_token(tok: str):
+        if tok:
+            state["token_emitted"] = True
+            token_queue.put(("token", tok))
+
+    custom_generator = generate_answer_3b
+    if stream_generator is not None and stream_generator is not stream_answer_3b:
+        def custom_generator(prompt: str, **kwargs) -> str:
+            chunks = []
+            for tok in stream_generator(prompt):
+                if tok:
+                    chunks.append(tok)
+            return "".join(chunks)
+
+    def worker():
+        try:
+            state["result"] = answer_query(
+                query=query,
+                session_id=session_id,
+                context=context,
+                domain=domain,
+                generator=custom_generator,
+                synthesizer_generator=synthesizer_generator,
+                on_token=on_token,
+            )
+        except Exception as exc:
+            state["error"] = exc
+        finally:
+            token_queue.put(("done", None))
+
+    thread = Thread(target=worker, daemon=True)
+    thread.start()
+
+    while True:
+        event_type, payload = token_queue.get()
+        if event_type == "token":
+            yield {"type": "token", "text": payload}
+        elif event_type == "done":
+            break
+
+    thread.join()
+
+    if state["error"] is not None:
+        raise state["error"]
+
+    result = state["result"]
+    if result is None:
+        from domains.runtime import get_domain_runtime
+        from guardrails.risk import classify_risk, resolve_mode
+        runtime = get_domain_runtime(domain)
+        risk_result = classify_risk(query, domain_risk_keywords=getattr(runtime.config, "risk_keywords", None) if hasattr(runtime, "config") else None)
+        effective_mode = resolve_mode(runtime.mode, risk_result)
+        result = AnswerResponse(
+            answer="",
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+            domain=domain,
+            mode=effective_mode,
+        )
+
+    if not state["token_emitted"] and result.answer:
+        yield {"type": "token", "text": result.answer}
+
+    yield {"type": "final", "response": result}
