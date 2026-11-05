@@ -1,16 +1,12 @@
 import os
 from pathlib import Path 
-import torch
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
-SHARED_ROOT_DIR = BASE_DIR.parent
 
-# Load .env: local first, fallback to shared root
+# Load .env inside standalone directory
 if (BASE_DIR / ".env").exists():
     load_dotenv(BASE_DIR / ".env")
-else:
-    load_dotenv(SHARED_ROOT_DIR / ".env")
 
 PROCEDURES_PATH = BASE_DIR / "data" / "procedures.json"
 CHROMA_PATH = BASE_DIR / "data" / "chroma_db"  # deprecated
@@ -31,14 +27,12 @@ CHUNK_OVERLAP = 200
 
 DEFAULT_TOP_K = 5
 
-# Models: Check local folder first, fallback to shared root folder
-_local_1_5b = BASE_DIR / "model" / "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf"
-_local_3b = BASE_DIR / "model" / "Qwen2.5-3B-Instruct-Q4_K_M.gguf"
-_shared_1_5b = SHARED_ROOT_DIR / "model" / "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf"
-_shared_3b = SHARED_ROOT_DIR / "model" / "Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+# Models: Standalone model folder or MODEL_DIR env override
+DEFAULT_MODEL_DIR = BASE_DIR / "model"
+MODEL_DIR = Path(os.getenv("MODEL_DIR", str(DEFAULT_MODEL_DIR)))
 
-MODEL_1_5B_PATH = _local_1_5b if _local_1_5b.exists() else _shared_1_5b
-MODEL_3B_PATH = _local_3b if _local_3b.exists() else _shared_3b
+MODEL_1_5B_PATH = Path(os.getenv("LLM_1_5B_MODEL_PATH", str(MODEL_DIR / "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf")))
+MODEL_3B_PATH = Path(os.getenv("LLM_3B_MODEL_PATH", str(MODEL_DIR / "Qwen2.5-3B-Instruct-Q4_K_M.gguf")))
 
 # Default model path for RAG final answer generation
 MODEL_PATH = MODEL_3B_PATH
@@ -64,7 +58,16 @@ MAX_NEW_TOKENS = 512
 TEMPERATURE = 0.0
 TOP_P = 0.9
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+def _get_device() -> str:
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+    except Exception:
+        pass
+    return "cpu"
+
+DEVICE = _get_device()
 
 MULTI_INTENT_ENABLED = os.getenv("MULTI_INTENT_ENABLED", "False").lower() == "true"
 

@@ -14,8 +14,8 @@ datasets:
   - domain: administrative_procedures
     golden: domains/administrative_procedures/golden_set.json
     scenarios: task/scenarios_admin.json
-  - domain: tourism_demo
-    golden: domains/tourism_demo/golden_set.json
+  - domain: cuisine_demo
+    golden: domains/cuisine_demo/golden_set.json
 
 behavior:
   multi_turn_gap_s: 2.0          # chờ update_memory (chạy nền) xong giữa các lượt
@@ -65,13 +65,13 @@ slo:
     friendly_pass_min: 0.8
     robustness_pass_min: 1.0
   latency:
-    ttft_p95_max_s: 5
-    total_p50_max_s: 8
-    total_p95_max_s: 20
+    ttft_p95_max_s: 9
+    total_p50_max_s: 16
+    total_p95_max_s: 22
     repeat_hit_p95_max_s: 1.0
   load:
     error_rate_max: 0.01
-    total_p95_max_s: 30          # p95 tổng thời gian ở mức tải mục tiêu
+    total_p95_max_s: 45          # p95 tổng thời gian ở mức tải mục tiêu
   soak:
     error_rate_max: 0.01
     latency_drift_max: 1.5

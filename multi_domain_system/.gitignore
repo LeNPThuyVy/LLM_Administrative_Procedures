@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[codz]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Database & local vector storage
+data/qdrant_db/
+data/elastic_local/
+data/sources/*
+!data/sources/.gitkeep
+data/.ingestion_versions.json
+data/*backup*.json
+
+# Large model files (GGUF)
+model/*.gguf
+
+# Logs & temp
+logs/
+*.log
+temp/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Architecture & Tasks
+Architecture_system.md
+task/
+
+# OS generated
+.DS_Store
+Thumbs.db

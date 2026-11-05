@@ -333,17 +333,25 @@ def _has_specific_procedure_keyword(query: str, extra_text: str = "", domain: st
     không bao gồm câu trả lời assistant (tránh match keyword không liên quan).
     """
     from domains.runtime import get_domain_runtime
+    from rag.text_normalizer import fold_accents, normalize_query_text
     runtime = get_domain_runtime(domain)
     keywords = runtime.entity_keywords
 
-    combined = (query + " " + (extra_text or "")).lower()
+    norm_query = normalize_query_text(query)
+    combined = (norm_query + " " + (extra_text or "")).lower()
+    combined_folded = fold_accents(combined)
+
     if any(kw.lower() in combined for kw in keywords):
+        return True
+    if any(fold_accents(kw) in combined_folded for kw in keywords if len(kw) >= 3):
         return True
 
     from rag.retrieval import _get_alias_catalog
     catalog = _get_alias_catalog(domain=domain)
     for doc_id, aliases in catalog.items():
-        if any(a in combined for a in aliases if a):
+        if any(a and a.lower() in combined for a in aliases):
+            return True
+        if any(a and len(a) >= 4 and fold_accents(a) in combined_folded for a in aliases):
             return True
 
     return False

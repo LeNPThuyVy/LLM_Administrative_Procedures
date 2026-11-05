@@ -158,9 +158,9 @@ async def bootstrap_session(
     }
 
 
-# ==============================================================================
+# ------------------------------------------------------------------------------
 # [DEV/TEST ONLY] Reset cookie endpoint - Có thể xóa khối này khi không cần nữa
-# ==============================================================================
+# ------------------------------------------------------------------------------
 @router.api_route("/api/session/reset", methods=["GET", "POST"])
 async def reset_session(response: Response):
     """Xóa cookie session_id và user_id để tạo mới hoàn toàn (dùng cho testing)."""
@@ -177,7 +177,7 @@ async def reset_session(response: Response):
         samesite="lax",
     )
     return {"status": "ok", "message": "Cookie đã được xóa"}
-# ==============================================================================
+# ------------------------------------------------------------------------------
 
 
 @router.websocket("/ws/chat")
@@ -405,9 +405,9 @@ async def websocket_chat(
                         })
                         continue
 
-                    # =========================
+                    # -------------------------
                     # 1. CLARIFICATION
-                    # =========================
+                    # -------------------------
                     if result["needs_clarification"]:
                         clarification_text = (
                             result.get("clarification_question")
@@ -453,9 +453,9 @@ async def websocket_chat(
 
                         continue
 
-                    # =========================
+                    # -------------------------
                     # 2. EVIDENCE
-                    # =========================
+                    # -------------------------
                     evidence_data = {
                         "evidence_list":
                             result["evidence_list"]
@@ -468,9 +468,9 @@ async def websocket_chat(
                         })
                     )
 
-                    # =========================
+                    # -------------------------
                     # 3. DONE
-                    # =========================
+                    # -------------------------
                     done_data = {
                         "answer":
                             result["answer"],

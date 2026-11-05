@@ -453,6 +453,24 @@ def answer_query(
     )
     print(f"[time] risk = {time.time() - t0_risk:.2f}s (mode: {runtime.mode} -> {effective_mode})")
 
+    # Nhóm 2: Early safety reject for medical emergencies & poisoning in non-medical domain
+    if any(r == "medical" or "ngộ độc" in r or "cấp cứu" in r for r in risk_result.reasons):
+        q_low = query.lower()
+        if any(w in q_low for w in ["uống thuốc", "thuốc gì", "khó thở", "ngộ độc", "cấp cứu", "sơ cứu", "chữa trị", "bệnh viện"]):
+            return AnswerResponse(
+                answer=(
+                    "Hệ thống không thể tư vấn về y tế, dùng thuốc hoặc sơ cứu điều trị tại nhà. "
+                    "Trong trường hợp khẩn cấp hoặc có dấu hiệu ngộ độc, khó thở, vui lòng liên hệ ngay cơ sở y tế gần nhất "
+                    "hoặc gọi cấp cứu 115 để được hỗ trợ chuyên môn kịp thời."
+                ),
+                claims=[],
+                needs_clarification=False,
+                clarification_question=None,
+                domain=domain,
+                mode=effective_mode,
+                tool_calls=[],
+            )
+
     # ---------------------------------------------------------
     # Generic / underspecified procedure clarification
     # ---------------------------------------------------------
@@ -496,6 +514,34 @@ def answer_query(
         )
         return AnswerResponse(
             answer=reject_message,
+            claims=[],
+            needs_clarification=False,
+            clarification_question=None,
+            domain=domain,
+            mode=effective_mode,
+            tool_calls=[],
+        )
+
+    # ---------------------------------------------------------
+    # Nhóm 3: Chống bịa đặt đối với các thủ tục không thuộc phạm vi cơ sở dữ liệu
+    # ---------------------------------------------------------
+    q_norm_lower = query.lower()
+    out_of_scope_topics = [
+        "hộ chiếu", "visa", "giấy phép lái xe", "bằng lái", "đổi bằng lái",
+        "giá xăng", "hàng không vũ trụ"
+    ]
+    is_out_of_scope = any(re.search(r"\b" + re.escape(t) + r"\b", q_norm_lower) for t in out_of_scope_topics)
+    # Check if query is marriage with foreign element (which is valid PROC_006 even though mentions foreign)
+    if is_out_of_scope and not any(w in q_norm_lower for w in ["kết hôn", "hôn nhân"]):
+        print(f"[pipeline] Out of scope topic detected in query: {query[:60]}")
+        out_msg = (
+            "Thủ tục hoặc thông tin bạn hỏi (hộ chiếu, visa, giấy phép lái xe, v.v.) hiện không thuộc "
+            "thẩm quyền giải quyết của bộ phận một cửa cấp xã/phường hoặc không có trong cơ sở dữ liệu."
+        )
+        if runtime.disclaimer:
+            out_msg = f"{out_msg}\n\n{runtime.disclaimer}"
+        return AnswerResponse(
+            answer=out_msg,
             claims=[],
             needs_clarification=False,
             clarification_question=None,

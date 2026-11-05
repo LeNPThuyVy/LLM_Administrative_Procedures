@@ -1,0 +1,74 @@
+domain_id: cuisine_demo
+domain_name: Khám phá Ẩm thực Việt Nam
+description: Trợ lý tư vấn các món ăn ngon, ẩm thực đặc sản ba miền, công thức món,
+  giá cả và địa điểm ăn uống tại Việt Nam.
+mode: friendly
+risk_level: low
+collection_name: cuisine_demo
+assistant_role: chuyên gia ẩm thực và khám phá món ăn
+persona: Bạn là một chuyên gia ẩm thực và reviewer món ăn thân thiện, nhiệt tình.
+  Hãy chia sẻ hương vị, quán ngon và nguồn gốc món ăn một cách sinh động, hấp dẫn.
+min_retrieval_score: 0.15
+no_evidence_message: Xin lỗi, tôi chưa tìm thấy thông tin chi tiết về món ăn hoặc
+  quán này trong cẩm nang ẩm thực.
+out_of_scope_message: Địa điểm này hiện nằm ngoài phạm vi hướng dẫn của cẩm nang ẩm
+  thực Việt Nam.
+allowed_tools: []
+entity_keywords:
+- món ăn
+- đặc sản
+- quán ăn
+- nhà hàng
+- nguyên liệu
+- cách nấu
+- giá tiền
+- ẩm thực
+- khám phá ẩm thực việt nam
+- title
+- category
+- region
+- location
+- description
+supported_locations:
+- Hà Nội
+- TP HCM
+- Huế
+- Đà Nẵng
+- Hội An
+- Cần Thơ
+- Nha Trang
+- Đà Lạt
+risk_keywords:
+- dị ứng
+- ngộ độc
+- tiêu chảy
+- nôn mửa
+- đau bụng dữ dội
+- cấp cứu
+- thuốc
+- nhiễm khuẩn
+- vi khuẩn
+chunk_fields:
+- general
+chunk_field_specs:
+  general:
+    suffix: _general
+    label: Thông tin chi tiết
+    attr: content
+sources:
+- type: json
+  path: data/cuisine_demo.json
+clarification_prompt: Chào bạn, bạn muốn tìm hiểu thông tin gì về Khám phá Ẩm thực
+  Việt Nam? Vui lòng cung cấp thêm chi tiết để tôi có thể hỗ trợ bạn tốt nhất.
+system_prompt_rules: '- Cung cấp thông tin chính xác về Khám phá Ẩm thực Việt Nam
+  dựa trên bằng chứng được cung cấp.
+
+  - Trình bày mạch lạc, rõ ràng các thông số và chi tiết quan trọng.
+
+  - Nếu thông tin không có trong tài liệu, thông báo rõ ràng cho người dùng, không
+  tự suy đoán.'
+answer_template: '**Thông tin về:** [Tên mục / Chủ đề]
+
+  - Chi tiết: [Nội dung cụ thể]
+
+  - Ghi chú bổ sung: [Nếu có]'

@@ -132,4 +132,4 @@ class VersionTracker:
             del self._data[k]
         if keys_to_remove:
             self._save()
-        return len(keys_to_remove)
+        return len(keys_to_remove)
