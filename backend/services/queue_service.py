@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 import asyncio
+import logging
 from collections import defaultdict
 import my_config as cfg
+
+logger = logging.getLogger(__name__)
 
 
 class QueueManager:
@@ -19,7 +24,7 @@ class QueueManager:
             "tìm kiếm",
             "thời tiết",
             "realtime",
-            "api"
+            "api",
         ]
 
         reasoning_keywords = [
@@ -27,20 +32,18 @@ class QueueManager:
             "phân tích",
             "giải thích",
             "tại sao",
-            "các bước"
+            "các bước",
         ]
 
-        import my_config as cfg
         if getattr(cfg, "MULTI_INTENT_ENABLED", False):
             try:
                 from rag.multi.detector import detect_sub_queries
-                # We don't have domain and context here easily, but we can pass dummy values
                 sub_queries, _ = detect_sub_queries(query, {}, cfg.DEFAULT_DOMAIN)
                 if len(sub_queries) >= 2:
                     return "multi_step"
-            except Exception:
-                pass
-                
+            except Exception as exc:
+                logger.debug("[queue_service] multi-intent detection bypassed: %s", exc)
+
         if any(keyword in query_lower for keyword in tool_keywords):
             return "tool"
 

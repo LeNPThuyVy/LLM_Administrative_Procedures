@@ -1,7 +1,10 @@
 import asyncio
+import logging
 
 from fastapi.encoders import jsonable_encoder
 from rag.pipeline import answer_query, answer_question_stream
+
+logger = logging.getLogger(__name__)
 
 
 async def generate_answer(
@@ -18,8 +21,6 @@ async def generate_answer(
         domain
     )
 
-    # Chuyển các object Pydantic / Citation / nested objects
-    # thành dữ liệu JSON serializable.
     evidence_list = jsonable_encoder(
         response.claims
     )
@@ -57,9 +58,6 @@ async def generate_answer_stream(
     loop = asyncio.get_running_loop()
     token_queue = asyncio.Queue()
 
-    def on_token(token: str):
-        loop.call_soon_threadsafe(token_queue.put_nowait, token)
-
     def run_pipeline():
         try:
             result = None
@@ -90,6 +88,7 @@ async def generate_answer_stream(
             return result
 
         except Exception as e:
+            logger.exception("[ai_service] Exception in background pipeline runner for session=%s: %s", session_id, e)
             loop.call_soon_threadsafe(
                 token_queue.put_nowait,
                 e,

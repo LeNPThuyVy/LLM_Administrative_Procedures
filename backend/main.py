@@ -15,6 +15,7 @@ or:
     uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 """
 
+import logging
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -44,6 +45,8 @@ from backend.api.socket import router as socket_router
 from backend.api.chat import router as chat_router
 from backend.api.ingestion import router as ingestion_router
 
+logger = logging.getLogger(__name__)
+
 llama_process_3b = None
 llama_process_1_5b = None
 
@@ -67,7 +70,7 @@ async def _warmup_background():
         _system_ready_status["db"] = True
         print("[startup] Đã khởi tạo cấu trúc Database thành công.")
     except Exception as e:
-        print(f"[startup] Cảnh báo lỗi init_db: {e}")
+        logger.exception(f"[startup] Cảnh báo lỗi init_db: {e}")
 
     # 2. Preload Embedding Model, Vector Store, và Alias Catalog
     try:
@@ -89,7 +92,7 @@ async def _warmup_background():
         await asyncio.to_thread(encode_query, "thủ tục hành chính đăng ký kết hôn")
         print("[startup] Hoàn tất nạp và làm nóng tài nguyên Retrieval.")
     except Exception as e:
-        print(f"[startup] Cảnh báo lỗi nạp tài nguyên RAG: {e}")
+        logger.exception(f"[startup] Cảnh báo lỗi nạp tài nguyên RAG: {e}")
 
 
 def _start_llama_server(port: int, model_path: Path, ctx_size: int, threads: int, log_name: str):
@@ -136,7 +139,7 @@ def _warmup_llama_instance(port: int, status_key: str, warmup_prompt: str = "Xin
             with urllib.request.urlopen(h_url, timeout=2) as h_resp:
                 if json.loads(h_resp.read().decode("utf-8")).get("status") == "ok":
                     break
-        except Exception:
+        except (urllib.error.URLError, TimeoutError, ConnectionRefusedError, json.JSONDecodeError, OSError):
             pass
         time.sleep(1)
 
@@ -154,8 +157,8 @@ def _warmup_llama_instance(port: int, status_key: str, warmup_prompt: str = "Xin
             pass
         _system_ready_status[status_key] = True
         print(f"[warmup] Llama-server tại port {port} ({status_key}) đã hoàn tất nạp bộ nhớ!")
-    except Exception as err:
-        print(f"[warmup] Bỏ qua warmup port {port}: {err}")
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as err:
+        logger.warning(f"[warmup] Bỏ qua warmup port {port}: {err}")
         _system_ready_status[status_key] = True  # Coi như sẵn sàng nếu port đã mở
 
 

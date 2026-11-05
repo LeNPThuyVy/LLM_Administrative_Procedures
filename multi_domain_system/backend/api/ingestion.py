@@ -1,4 +1,6 @@
 import os
+import logging
+logger = logging.getLogger(__name__)
 import json
 import time
 import asyncio
@@ -265,13 +267,13 @@ async def ingest_domain_data(
     try:
         from rag.retrieval import _ALIAS_CATALOG
         _ALIAS_CATALOG.pop(domain_id, None)
-    except Exception:
-        pass
+    except (ImportError, AttributeError) as e_alias:
+        logger.debug("[ingestion] Alias catalog reset skipped: %s", e_alias)
     try:
         from rag.pipeline import _PIPELINE_ANSWER_CACHE
         _PIPELINE_ANSWER_CACHE.clear()
-    except Exception:
-        pass
+    except (ImportError, AttributeError) as e_cache:
+        logger.debug("[ingestion] Pipeline answer cache reset skipped: %s", e_cache)
 
     return {
         "status": "ok",
@@ -324,8 +326,8 @@ async def delete_domain(domain_id: str):
             for src in other_cfg.sources:
                 if src.get("path"):
                     other_used_paths.add(Path(src["path"]).resolve())
-        except Exception:
-            pass
+        except (FileNotFoundError, KeyError, ValueError) as e_cfg:
+            logger.debug("[ingestion] Error reading other domain config %s: %s", other_id, e_cfg)
 
     # 1. Xóa collection trên Qdrant
     qdrant_deleted = False
@@ -383,13 +385,13 @@ async def delete_domain(domain_id: str):
     try:
         from rag.retrieval import _ALIAS_CATALOG
         _ALIAS_CATALOG.pop(d_id, None)
-    except Exception:
-        pass
+    except (ImportError, AttributeError) as e_alias:
+        logger.debug("[ingestion] Alias catalog clear skipped: %s", e_alias)
     try:
         from rag.pipeline import _PIPELINE_ANSWER_CACHE
         _PIPELINE_ANSWER_CACHE.clear()
-    except Exception:
-        pass
+    except (ImportError, AttributeError) as e_cache:
+        logger.debug("[ingestion] Pipeline answer cache clear skipped: %s", e_cache)
 
     remaining = list_domains()
     return {
