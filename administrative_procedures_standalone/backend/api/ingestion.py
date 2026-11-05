@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from pydantic import BaseModel
 import yaml
 
@@ -17,7 +17,22 @@ from ingestion.pipeline import IngestionPipeline
 from ingestion.vector_store import QdrantVectorStore
 from ingestion.version_tracker import VersionTracker
 
+from backend.security import require_ingestion_admin
+from backend.upload_security import (
+    save_and_validate_upload,
+    validate_raw_json_size,
+)
+
 router = APIRouter(prefix="/api/domains", tags=["domains"])
+
+MAX_CONCURRENT_INGESTIONS = max(
+    1,
+    int(os.getenv("MAX_CONCURRENT_INGESTIONS", "1")),
+)
+
+_ingestion_semaphore = asyncio.Semaphore(
+    MAX_CONCURRENT_INGESTIONS
+)
 
 
 
@@ -65,7 +80,10 @@ async def get_domains_details():
 
 
 @router.post("/create")
-async def create_domain(req: CreateDomainRequest):
+async def create_domain(
+    req: CreateDomainRequest,
+    _: None = Depends(require_ingestion_admin),
+):
     """Tạo một domain mới và sinh tự động config.yaml + schema.py."""
     import re
     d_id = req.domain_id.strip().lower()
@@ -152,6 +170,7 @@ async def ingest_domain_data(
     file: Optional[UploadFile] = File(None),
     raw_json: Optional[str] = Form(None),
     force_reindex: bool = Form(False),
+    _: None = Depends(require_ingestion_admin),
 ):
     """
     Nạp dữ liệu mới vào Domain và đánh chỉ mục (Embed + Upsert Qdrant).
@@ -170,27 +189,13 @@ async def ingest_domain_data(
     saved_file_path = None
 
     if file and file.filename:
-        safe_name = f"{domain_id}_{file.filename}"
-        saved_file_path = data_dir / safe_name
-        ext = saved_file_path.suffix.lower()
-
-        ext_to_type = {
-            ".json": "json",
-            ".csv": "csv",
-            ".xlsx": "xlsx",
-            ".pdf": "pdf",
-            ".docx": "docx",
-        }
-        if ext not in ext_to_type:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Định dạng tệp '{ext}' không được hỗ trợ. Vui lòng chọn .json, .csv, .xlsx, .pdf hoặc .docx.",
-            )
-        source_type = ext_to_type[ext]
-
-        content_bytes = await file.read()
-        with open(saved_file_path, "wb") as f:
-            f.write(content_bytes)
+        stored_upload = await save_and_validate_upload(
+            file=file,
+            domain_id=domain_id,
+            data_dir=data_dir,
+        )
+        saved_file_path = stored_upload.path
+        source_type = stored_upload.source_type
 
     elif raw_json and raw_json.strip():
         # Dán JSON trực tiếp
@@ -284,7 +289,10 @@ async def ingest_domain_data(
 
 
 @router.delete("/{domain_id}")
-async def delete_domain(domain_id: str):
+async def delete_domain(
+    domain_id: str,
+    _: None = Depends(require_ingestion_admin),
+):
     """
     Xóa hoàn toàn một domain khỏi hệ thống:
     1. Xóa collection trên Qdrant
