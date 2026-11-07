@@ -1,14 +1,16 @@
-import asyncio
 import json
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from backend.schemas.chat import ChatRequest
-from backend.services.context_service import get_context, update_memory
+from backend.services.context_service import get_context, schedule_memory_update
 from backend.services.ai_service import generate_answer, generate_answer_stream
 from backend.services.queue_service import queue_manager
+from backend.api.sessions import USER_COOKIE_NAME
+from backend.rate_limit import chat_rate_limiter
+from backend.session_access import SessionAccessDenied, assert_session_access
 
 from domains import list_domains, is_valid_domain
 
@@ -20,12 +22,31 @@ async def get_domains():
 
 
 @router.post("/api/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, http_request: Request):
+    client_key = http_request.client.host if http_request.client else "unknown"
+    if not chat_rate_limiter.allow(client_key):
+        raise HTTPException(
+            status_code=429,
+            detail="Bạn gửi quá nhiều câu hỏi. Vui lòng thử lại sau ít phút.",
+            headers={"Retry-After": "60"},
+        )
+
     domain = request.domain or "administrative_procedures"
     if not is_valid_domain(domain):
         raise HTTPException(
             status_code=400,
             detail=f"Domain không hợp lệ: {request.domain}"
+        )
+
+    try:
+        await assert_session_access(
+            request.session_id,
+            http_request.cookies.get(USER_COOKIE_NAME),
+        )
+    except SessionAccessDenied:
+        raise HTTPException(
+            status_code=403,
+            detail="Không có quyền truy cập vào phiên này",
         )
 
     async def event_stream():
@@ -88,16 +109,11 @@ async def chat(request: ChatRequest):
                             )
                             
                         # Cập nhật memory background
-                        async def _timed_update_multi():
-                            t0 = time.time()
-                            await update_memory(
-                                session_id=request.session_id,
-                                query=request.query,
-                                final_result=final_result_data
-                            )
-                            print(f"[time] update_memory = {time.time() - t0:.2f}s")
-
-                        asyncio.create_task(_timed_update_multi())
+                        schedule_memory_update(
+                            session_id=request.session_id,
+                            query=request.query,
+                            final_result=final_result_data,
+                        )
                         print(f"[QUEUE] session={request.session_id} DONE (Multi)")
                         return
 
@@ -143,16 +159,11 @@ async def chat(request: ChatRequest):
                         f"[QUEUE] session={request.session_id} DONE"
                     )
 
-                    async def _timed_update():
-                        t0 = time.time()
-                        await update_memory(
-                            session_id=request.session_id,
-                            query=request.query,
-                            final_result=result
-                        )
-                        print(f"[time] update_memory = {time.time() - t0:.2f}s")
-
-                    asyncio.create_task(_timed_update())
+                    schedule_memory_update(
+                        session_id=request.session_id,
+                        query=request.query,
+                        final_result=result,
+                    )
                     print(
                         f"[MEMORY] session={request.session_id} update scheduled"
                     )
@@ -183,16 +194,11 @@ async def chat(request: ChatRequest):
                     f"[QUEUE] session={request.session_id} DONE"
                 )
 
-                async def _timed_update_done():
-                    t0 = time.time()
-                    await update_memory(
-                        session_id=request.session_id,
-                        query=request.query,
-                        final_result=result
-                    )
-                    print(f"[time] update_memory = {time.time() - t0:.2f}s")
-
-                asyncio.create_task(_timed_update_done())
+                schedule_memory_update(
+                    session_id=request.session_id,
+                    query=request.query,
+                    final_result=result,
+                )
 
     return StreamingResponse(
         event_stream(),

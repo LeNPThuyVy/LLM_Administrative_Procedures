@@ -1,5 +1,7 @@
 # BÁO CÁO KIỂM THỬ VÀ ĐÁNH GIÁ HỆ THỐNG
 
+> **Cập nhật 07/11/2026:** số liệu dưới đây là của đợt 22/10. Kết quả mới, gồm tập holdout độc lập, ở [docs/quality_evaluation_20261107.md](docs/quality_evaluation_20261107.md).
+
 **Dự án:** LLM_Administrative_Procedures — Trợ lý AI thủ tục hành chính  
 **Phiên bản được kiểm thử:** `main`, commit `034b965` (ngày 22/10/2026)  
 **Môi trường:** Windows, Python 3.12, FastAPI `http://127.0.0.1:8002`, BGE-M3, Qdrant Cloud, PostgreSQL, Qwen2.5 3B và 1.5B (GGUF), llama-server.  
@@ -122,7 +124,7 @@ Bộ đánh giá nội bộ báo 7/7 ca có `expected_document_id` tìm trúng t
 | **Trung bình** | 5 + 12 request, p95 chưa đại diện tải thực tế | Chạy load test, phân biệt cold/warm và đo TTFT token | Chưa đánh giá đầy đủ |
 | **Trung bình** | RAM theo tên process, có process không liên quan | Dùng chuỗi `ram_samples.csv`, lọc PID và thời điểm | Chưa có RAM peak hệ thống chuẩn |
 | **Trung bình** | Chưa có đánh giá chuyên gia cho an toàn và đúng luật | Audit thủ công từng câu, kiểm thử đa lượt/injection đầy đủ | Chưa hoàn tất |
-| **Trung bình** | `benchmark/run_benchmark.py` phụ thuộc `benchmark.lib` nhưng bản `main` đã kiểm tra không có thư mục này | Đồng bộ module thiếu hoặc sửa bộ benchmark chính | Chưa khắc phục |
+| **Trung bình** | `benchmark/run_benchmark.py` phụ thuộc `benchmark.lib` nhưng bản `main` đã kiểm tra không có thư mục này | Đồng bộ module thiếu hoặc sửa bộ benchmark chính | Đã khắc phục 07/11: `.gitignore` chặn `lib/`, đã mở cho `benchmark/lib` |
 
 ## 8. Dữ liệu bàn giao và cách tái lập
 

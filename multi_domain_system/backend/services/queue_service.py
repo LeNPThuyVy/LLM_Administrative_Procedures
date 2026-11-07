@@ -38,8 +38,8 @@ class QueueManager:
                 sub_queries, _ = detect_sub_queries(query, {}, cfg.DEFAULT_DOMAIN)
                 if len(sub_queries) >= 2:
                     return "multi_step"
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"[QUEUE] Multi-intent detection failed, dùng phân loại từ khóa: {exc}")
                 
         if any(keyword in query_lower for keyword in tool_keywords):
             return "tool"

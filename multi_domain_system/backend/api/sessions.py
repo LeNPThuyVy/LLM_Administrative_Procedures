@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Request, Response
 from sqlalchemy import select, delete, func
 
+from backend.session_access import COOKIE_SECURE, parse_user_cookie
 from context.database import AsyncSessionLocal
 from context.models import ChatSession, Message, StructuredContext, User
 
@@ -18,28 +19,12 @@ COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 ngày
 USER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 ngày
 
 
-async def _resolve_user_id(request: Request, db) -> uuid.UUID | None:
-    """Xác định user_id từ cookie user_id hoặc tra cứu từ session_id hiện tại."""
-    cookie_user_id = request.cookies.get(USER_COOKIE_NAME)
-    if cookie_user_id:
-        try:
-            return uuid.UUID(cookie_user_id)
-        except ValueError:
-            pass
-
-    # Fallback: tra cứu từ session_id hiện tại
-    cookie_session_id = request.cookies.get(COOKIE_NAME)
-    if cookie_session_id:
-        try:
-            s_uuid = uuid.UUID(cookie_session_id)
-            res = await db.execute(
-                select(ChatSession.user_id).where(ChatSession.id == s_uuid)
-            )
-            return res.scalar_one_or_none()
-        except ValueError:
-            pass
-
-    return None
+def _resolve_user_id(request: Request) -> uuid.UUID | None:
+    """
+    Xác định user_id từ cookie user_id.
+    session_id không được dùng làm bằng chứng định danh.
+    """
+    return parse_user_cookie(request.cookies.get(USER_COOKIE_NAME))
 
 
 
@@ -60,9 +45,8 @@ async def _require_authenticated_user_id(
             detail="Thieu thong tin dinh danh nguoi dung",
         )
 
-    try:
-        user_id = uuid.UUID(raw_user_id)
-    except (ValueError, TypeError):
+    user_id = parse_user_cookie(raw_user_id)
+    if user_id is None:
         raise HTTPException(
             status_code=401,
             detail="Thong tin dinh danh nguoi dung khong hop le",
@@ -88,7 +72,7 @@ async def list_user_sessions(request: Request):
     Mỗi phiên kèm theo tiêu đề tóm tắt (từ câu hỏi đầu tiên của user) và thời gian tạo.
     """
     async with AsyncSessionLocal() as db:
-        user_id = await _resolve_user_id(request, db)
+        user_id = _resolve_user_id(request)
         if not user_id:
             return []
 
@@ -144,7 +128,15 @@ async def create_new_session(request: Request, response: Response):
     Tạo phiên trò chuyện mới cho user hiện tại và cập nhật cookie session_id.
     """
     async with AsyncSessionLocal() as db:
-        user_id = await _resolve_user_id(request, db)
+        user_id = _resolve_user_id(request)
+        if user_id:
+            # Cookie có thể trỏ tới user đã mất khỏi DB: cấp user mới thay vì lỗi khóa ngoại.
+            known_user = await db.execute(
+                select(User.id).where(User.id == user_id)
+            )
+            if known_user.scalar_one_or_none() is None:
+                user_id = None
+
         if not user_id:
             user = User(id=uuid.uuid4(), name=None, email=None)
             db.add(user)
@@ -154,7 +146,7 @@ async def create_new_session(request: Request, response: Response):
                 key=USER_COOKIE_NAME,
                 value=str(user_id),
                 httponly=True,
-                secure=False,
+                secure=COOKIE_SECURE,
                 samesite="lax",
                 max_age=USER_COOKIE_MAX_AGE,
             )
@@ -171,7 +163,7 @@ async def create_new_session(request: Request, response: Response):
             key=COOKIE_NAME,
             value=str(new_session_id),
             httponly=True,
-            secure=False,
+            secure=COOKIE_SECURE,
             samesite="lax",
             max_age=COOKIE_MAX_AGE,
         )
@@ -216,7 +208,7 @@ async def switch_session(
             key=COOKIE_NAME,
             value=str(session_id),
             httponly=True,
-            secure=False,
+            secure=COOKIE_SECURE,
             samesite="lax",
             max_age=COOKIE_MAX_AGE,
         )

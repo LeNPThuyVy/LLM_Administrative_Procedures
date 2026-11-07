@@ -29,8 +29,8 @@ class QdrantVectorStore:
             from rag.retrieval import _get_qdrant_client
             self.client = _get_qdrant_client()
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[vector_store] Không dùng lại được QdrantClient của rag.retrieval: {exc}")
 
         url = os.getenv("QDRANT_URL")
         api_key = os.getenv("QDRANT_API_KEY")

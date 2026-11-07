@@ -173,8 +173,8 @@ def classify_query_scope(
                         res = (in_scope, "llm_1_5b_scope_classifier")
                         _SCOPE_CACHE[cache_key] = res
                         return res
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"[scope] LLM scope classifier failed, dùng luật dự phòng: {exc}")
 
         if title_overlap >= 1 and overlap_ratio >= 0.50 and top_vector_score >= min_sem:
             res = (True, "title_partial_aligned")

@@ -18,6 +18,9 @@ from context.structured_context import (
 )
 
 
+ANONYMOUS_USER_ID = uuid.uuid5(uuid.NAMESPACE_DNS, "anonymous.local")
+
+
 def _ensure_uuid(val) -> uuid.UUID:
     if isinstance(val, uuid.UUID):
         return val
@@ -33,7 +36,7 @@ async def _ensure_session(db, session_id: uuid.UUID) -> ChatSession:
     )
     session = session_result.scalar_one_or_none()
     if session is None:
-        anonymous_user_id = uuid.uuid5(uuid.NAMESPACE_DNS, "anonymous.local")
+        anonymous_user_id = ANONYMOUS_USER_ID
         user_res = await db.execute(select(User).where(User.id == anonymous_user_id))
         if not user_res.scalar_one_or_none():
             db.add(User(id=anonymous_user_id, name="Anonymous", email=None))

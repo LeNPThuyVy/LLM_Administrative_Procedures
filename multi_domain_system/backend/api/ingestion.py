@@ -65,13 +65,6 @@ async def get_domains_details():
                 "domain_name": cfg.domain_name or cfg.domain_id,
                 "description": cfg.description,
                 "mode": cfg.mode,
-                "risk_level": cfg.risk_level,
-                "collection_name": cfg.collection_name,
-                "assistant_role": cfg.assistant_role,
-                "persona": cfg.persona,
-                "supported_locations": cfg.supported_locations,
-                "risk_keywords": cfg.risk_keywords,
-                "sources": cfg.sources,
             })
         except Exception as e:
             print(f"[api/domains] Error reading domain {d_id}: {e}")
@@ -182,10 +175,56 @@ async def ingest_domain_data(
             detail=f"Domain '{domain_id}' không tồn tại.",
         )
 
+    if _ingestion_semaphore.locked():
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "Hệ thống đang xử lý một tác vụ ingestion khác. "
+                "Vui lòng thử lại sau."
+            ),
+        )
+
+    async with _ingestion_semaphore:
+        return await _ingest_domain_data(
+            domain_id=domain_id,
+            file=file,
+            raw_json=raw_json,
+            force_reindex=force_reindex,
+        )
+
+
+def _rollback_ingest(
+    saved_path: Optional[Path],
+    previous_input: Optional[bytes],
+    config_path: Path,
+    previous_config: Optional[bytes],
+) -> None:
+    """Đưa tệp nguồn và config.yaml về trạng thái trước lần nạp thất bại."""
+    if saved_path is None:
+        return
+
+    if previous_input is None:
+        saved_path.unlink(missing_ok=True)
+    else:
+        saved_path.write_bytes(previous_input)
+
+    if previous_config is not None:
+        config_path.write_bytes(previous_config)
+
+
+async def _ingest_domain_data(
+    domain_id: str,
+    file: Optional[UploadFile],
+    raw_json: Optional[str],
+    force_reindex: bool,
+):
     data_dir = Path("data") / "sources"
     data_dir.mkdir(parents=True, exist_ok=True)
     source_type = "json"
     saved_file_path = None
+    previous_input = None
+    previous_config = None
+    config_path = DOMAINS_DIR / domain_id / "config.yaml"
 
     if file and file.filename:
         stored_upload = await save_and_validate_upload(
@@ -213,6 +252,8 @@ async def ingest_domain_data(
             )
 
         saved_file_path = data_dir / f"{domain_id}_raw_input.json"
+        if saved_file_path.exists():
+            previous_input = saved_file_path.read_bytes()
         with open(saved_file_path, "w", encoding="utf-8") as f:
             json.dump(parsed, f, ensure_ascii=False, indent=2)
         source_type = "json"
@@ -228,8 +269,8 @@ async def ingest_domain_data(
 
     # Cập nhật source vào config.yaml nếu có file mới được nạp
     if saved_file_path:
-        config_path = DOMAINS_DIR / domain_id / "config.yaml"
-        current_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        previous_config = config_path.read_bytes()
+        current_cfg = yaml.safe_load(previous_config.decode("utf-8")) or {}
         new_source = {
             "type": source_type,
             "path": str(saved_file_path).replace("\\", "/"),
@@ -255,29 +296,14 @@ async def ingest_domain_data(
             pipeline = IngestionPipeline(domain_id)
             return pipeline.run(force_reindex=force_reindex)
 
-        try:
-            await asyncio.wait_for(
-                _ingestion_semaphore.acquire(),
-                timeout=0.1,
-            )
-        except asyncio.TimeoutError:
-            raise HTTPException(
-                status_code=429,
-                detail=(
-                    "Hệ thống đang xử lý một tác vụ ingestion khác. "
-                    "Vui lòng thử lại sau."
-                ),
-            )
-
-        try:
-            result = await asyncio.to_thread(
-                _run_pipeline
-            )
-        finally:
-            _ingestion_semaphore.release()
-    except HTTPException:
-        raise
+        result = await asyncio.to_thread(_run_pipeline)
     except Exception as exc:
+        _rollback_ingest(
+            saved_file_path,
+            previous_input,
+            config_path,
+            previous_config,
+        )
         import traceback
         traceback.print_exc()
         raise HTTPException(
@@ -292,13 +318,13 @@ async def ingest_domain_data(
     try:
         from rag.retrieval import _ALIAS_CATALOG
         _ALIAS_CATALOG.pop(domain_id, None)
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"[api/domains] Warning clearing alias catalog for '{domain_id}': {exc}")
     try:
         from rag.pipeline import _PIPELINE_ANSWER_CACHE
         _PIPELINE_ANSWER_CACHE.clear()
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"[api/domains] Warning clearing answer cache: {exc}")
 
     return {
         "status": "ok",
@@ -312,6 +338,27 @@ async def ingest_domain_data(
         "elapsed_seconds": elapsed,
         "message": f"Nạp thành công {result.total_chunks} chunks cho domain '{domain_id}' trong {elapsed}s.",
     }
+
+
+def _is_domain_data_file(
+    path: Path,
+    domain_id: str,
+    all_domains: list[str],
+) -> bool:
+    """
+    Kiểm tra tệp có đúng quy ước tên của domain hay không.
+
+    Domain khác có tên dài hơn và cùng tiền tố (abc và abc_khac) được ưu tiên,
+    để xóa domain abc không xóa nhầm dữ liệu của abc_khac.
+    """
+    def matches(name: str) -> bool:
+        return path.stem == name or path.name.startswith(f"{name}_")
+
+    return matches(domain_id) and not any(
+        matches(other)
+        for other in all_domains
+        if other != domain_id and len(other) > len(domain_id)
+    )
 
 
 @router.delete("/{domain_id}")
@@ -354,8 +401,8 @@ async def delete_domain(
             for src in other_cfg.sources:
                 if src.get("path"):
                     other_used_paths.add(Path(src["path"]).resolve())
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[api/domains] Warning reading config of domain '{other_id}', tệp nguồn của domain này có thể không được bảo vệ khỏi xóa: {exc}")
 
     # 1. Xóa collection trên Qdrant
     qdrant_deleted = False
@@ -383,10 +430,12 @@ async def delete_domain(
             candidate_paths.add(Path(src["path"]))
     if data_dir.exists():
         for p in data_dir.glob(f"{d_id}*"):
-            candidate_paths.add(p)
+            if _is_domain_data_file(p, d_id, current_domains):
+                candidate_paths.add(p)
     if sources_dir.exists():
         for p in sources_dir.glob(f"{d_id}*"):
-            candidate_paths.add(p)
+            if _is_domain_data_file(p, d_id, current_domains):
+                candidate_paths.add(p)
 
     for file_path in candidate_paths:
         try:
@@ -413,13 +462,13 @@ async def delete_domain(
     try:
         from rag.retrieval import _ALIAS_CATALOG
         _ALIAS_CATALOG.pop(d_id, None)
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"[api/domains] Warning clearing alias catalog for '{d_id}': {exc}")
     try:
         from rag.pipeline import _PIPELINE_ANSWER_CACHE
         _PIPELINE_ANSWER_CACHE.clear()
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"[api/domains] Warning clearing answer cache: {exc}")
 
     remaining = list_domains()
     return {

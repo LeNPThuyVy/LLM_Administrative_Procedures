@@ -161,6 +161,9 @@ def main():
 
     unsupported_leak_cases = 0
     evaluated_answer_cases = 0
+    keyword_hits = 0
+    keyword_total = 0
+    incomplete_answer_cases = 0
 
     eval_details = []
 
@@ -226,6 +229,21 @@ def main():
                 if any(getattr(c, "status", "") == "unsupported" for c in claims):
                     has_unsupported_leak = True
                     unsupported_leak_cases += 1
+
+                # Bộ lọc strict bỏ cả claim `partial`, nên đo xem câu trả lời
+                # còn đủ ý kỳ vọng hay đã bị cắt thiếu.
+                expected_keywords = q.get("expected_keywords") or []
+                if expected_keywords and exp_docs is not None:
+                    from rag.text_normalizer import fold_accents
+                    folded_answer = fold_accents(resp.answer or "").lower()
+                    found = sum(
+                        1 for keyword in expected_keywords
+                        if fold_accents(str(keyword)).lower() in folded_answer
+                    )
+                    keyword_hits += found
+                    keyword_total += len(expected_keywords)
+                    if found < len(expected_keywords):
+                        incomplete_answer_cases += 1
 
         retrieved_ids = []
         for r in results:
@@ -342,6 +360,9 @@ def main():
     print(f"In-Scope False Rej   : {in_scope_false_reject}/{in_scope_total} ({false_rej_pct:.1f}%)", flush=True)
     if args.mode == "pipeline":
         print(f"Unsupported Claim Ca : {unsupported_leak_cases}/{evaluated_answer_cases}", flush=True)
+        if keyword_total:
+            print(f"Keyword Coverage     : {keyword_hits}/{keyword_total} ({keyword_hits / keyword_total * 100:.1f}%)", flush=True)
+            print(f"Thiếu từ khóa kỳ vọng: {incomplete_answer_cases}/{evaluated_answer_cases} ca", flush=True)
     print("=" * 70, flush=True)
 
     if args.save_report:
@@ -364,6 +385,9 @@ def main():
             "out_scope_rejection_acc": rej_pct,
             "in_scope_false_rejection_pct": false_rej_pct,
             "unsupported_leak_cases": unsupported_leak_cases,
+            "keyword_hits": keyword_hits,
+            "keyword_total": keyword_total,
+            "incomplete_answer_cases": incomplete_answer_cases,
             "details": eval_details,
         }
         out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -43,6 +43,8 @@ from backend.api.sessions import router as sessions_router
 from backend.api.socket import router as socket_router
 from backend.api.chat import router as chat_router
 from backend.api.ingestion import router as ingestion_router
+from backend.body_limit import DomainWriteGuardMiddleware
+from backend.services.context_service import drain_memory_updates
 
 llama_process_3b = None
 llama_process_1_5b = None
@@ -191,6 +193,8 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    await drain_memory_updates()
+
     # Cleanup tiến trình khi tắt server
     for proc, name in [(llama_process_3b, "3B (8080)"), (llama_process_1_5b, "1.5B (8081)")]:
         if proc:
@@ -207,6 +211,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+app.add_middleware(DomainWriteGuardMiddleware)
 
 # --- REST / WebSocket routes ---
 app.include_router(sessions_router)

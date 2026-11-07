@@ -19,6 +19,10 @@ VIETNAMESE_STOPWORDS = {
 }
 
 
+# Khớp đúng dạng mà _extract_numbers_from_text bỏ qua ở đầu dòng.
+_LIST_MARKER_ONLY = re.compile(r'^(?:-\s*)?\d{1,2}[.)]$')
+
+
 def _split_into_claims(answer: str) -> list[str]:
     """
     Split the generated answer into simple claims.
@@ -40,6 +44,7 @@ def _split_into_claims(answer: str) -> list[str]:
     raw_sentences = re.split(r'(?<=[.!?])\s+|\n+', text)
 
     claims: list[str] = []
+    pending_marker = ""
     for sentence in raw_sentences:
         # Restore abbreviations and number dots
         for idx, abb in enumerate(abbrevs):
@@ -47,8 +52,17 @@ def _split_into_claims(answer: str) -> list[str]:
         sentence = sentence.replace("__DOT__", ".")
 
         claim = sentence.strip()
-        if claim:
-            claims.append(claim)
+        if not claim:
+            continue
+
+        # "2. Giấy tờ" bị tách tại dấu chấm: nếu để "2." thành claim riêng,
+        # số thứ tự sẽ bị coi là số liệu sai và làm mất cả câu trả lời.
+        if _LIST_MARKER_ONLY.match(claim):
+            pending_marker = claim
+            continue
+
+        claims.append(f"{pending_marker} {claim}" if pending_marker else claim)
+        pending_marker = ""
 
     return claims
 

@@ -52,6 +52,7 @@ Toàn bộ nằm ở mục `slo:` trong `config.yaml`. Đây là **giá trị kh
 
 ## Giới hạn cần biết
 
+- Server giới hạn 60 câu hỏi/phút mỗi IP. Khi chạy `load` hoặc `soak`, khởi động server với `CHAT_RATE_LIMIT_PER_MINUTE=0`, nếu không request vượt mức sẽ nhận 429 và bị tính là lỗi.
 - `doc_hit` suy ra từ `document_id` trong evidence/citation trả về; câu trả lời đúng nhưng thiếu citation tính là trượt.
 - Kiểm tra "nâng strict khi gặp visa/thuốc" cần server trả `mode` trong event `done`. Hiện `chat.py` chưa gửi nên check này được **bỏ qua (SKIP)**, không tính trượt. Thêm `"mode": result.get("mode")` vào `done_data` là thay đổi cộng thêm, không phá UI.
 - Kiểm tra giọng điệu `friendly` chỉ là heuristic từ khoá; nên bổ sung chấm tay ~20 câu.

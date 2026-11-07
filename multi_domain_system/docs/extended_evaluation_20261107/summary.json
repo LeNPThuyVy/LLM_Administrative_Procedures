@@ -1,0 +1,15 @@
+{
+  "source": "fresh real API execution",
+  "endpoint": "http://127.0.0.1:8012",
+  "time": "2026-11-07 12:05:08",
+  "cases": 12,
+  "http200_done": 12,
+  "error_count": 0,
+  "latency_mean_s": 1.371,
+  "latency_p50_s": 1.55,
+  "latency_p95_s": 1.956,
+  "unsupported_leak_cases": 0,
+  "expected_doc_hit_over_scored_cases": 7,
+  "scored_cases": 7,
+  "scope_note": "Không phải đánh giá chính xác pháp lý"
+}

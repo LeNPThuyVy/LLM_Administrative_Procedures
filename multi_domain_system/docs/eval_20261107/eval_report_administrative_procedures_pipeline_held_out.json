@@ -1,0 +1,817 @@
+{
+  "timestamp": "2026-11-07T12:04:28.630163",
+  "domain": "administrative_procedures",
+  "mode": "pipeline",
+  "split": "held_out",
+  "total": 60,
+  "in_scope_total": 20,
+  "out_scope_total": 40,
+  "retrieval_at_1": 85.0,
+  "retrieval_at_3": 90.0,
+  "retrieval_at_5": 90.0,
+  "mrr": 0.8666666666666666,
+  "field_match_pct": 84.21052631578947,
+  "out_scope_rejection_acc": 92.5,
+  "in_scope_false_rejection_pct": 20.0,
+  "unsupported_leak_cases": 0,
+  "keyword_hits": 0,
+  "keyword_total": 0,
+  "incomplete_answer_cases": 0,
+  "details": [
+    {
+      "id": "HO_OOS_01",
+      "type": "out_of_scope",
+      "question": "Thủ tục nhận con nuôi trong nước cần những giấy tờ gì?",
+      "expected_document_id": null,
+      "top_score": 3.0460091,
+      "rejected": false,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_02",
+      "type": "out_of_scope",
+      "question": "Xin cấp lại sổ hộ khẩu khi bị mất như thế nào?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_03",
+      "type": "out_of_scope",
+      "question": "Đăng ký tạm trú cho người thuê trọ cần gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_04",
+      "type": "out_of_scope",
+      "question": "Đăng ký nghĩa vụ quân sự lần đầu ở đâu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_05",
+      "type": "out_of_scope",
+      "question": "Thủ tục sáp nhập doanh nghiệp tư nhân như thế nào?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_06",
+      "type": "out_of_scope",
+      "question": "Đăng ký thành lập công ty TNHH một thành viên cần hồ sơ gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_07",
+      "type": "out_of_scope",
+      "question": "Xin giấy phép bán lẻ rượu cần điều kiện gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_08",
+      "type": "out_of_scope",
+      "question": "Thủ tục cấp thẻ bảo hiểm y tế cho trẻ dưới 6 tuổi?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_09",
+      "type": "out_of_scope",
+      "question": "Đăng ký sáng chế cho thiết bị mới làm thế nào?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_10",
+      "type": "out_of_scope",
+      "question": "Chuyển đổi mục đích sử dụng đất nông nghiệp sang đất ở cần gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_11",
+      "type": "out_of_scope",
+      "question": "Thủ tục tách thửa đất tốn bao nhiêu tiền?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_12",
+      "type": "out_of_scope",
+      "question": "Bồi thường khi nhà nước thu hồi đất được tính thế nào?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_13",
+      "type": "out_of_scope",
+      "question": "Xin giấy phép lao động cho người nước ngoài cần hồ sơ gì?",
+      "expected_document_id": null,
+      "top_score": 3.0182262,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_14",
+      "type": "out_of_scope",
+      "question": "Thủ tục nhập quốc tịch Việt Nam gồm những bước nào?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_15",
+      "type": "out_of_scope",
+      "question": "Xin thôi quốc tịch Việt Nam nộp hồ sơ ở đâu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_16",
+      "type": "out_of_scope",
+      "question": "Đăng ký xe máy mới mua ở đâu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_17",
+      "type": "out_of_scope",
+      "question": "Đóng thuế đất phi nông nghiệp hằng năm ở đâu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_18",
+      "type": "out_of_scope",
+      "question": "Cách tính thuế môn bài năm nay như thế nào?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_19",
+      "type": "out_of_scope",
+      "question": "Thủ tục cấp phép tổ chức biểu diễn nghệ thuật?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_20",
+      "type": "out_of_scope",
+      "question": "Thành lập trường mầm non tư thục cần điều kiện gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_21",
+      "type": "out_of_scope",
+      "question": "Bài thuốc nam nào chữa đau dạ dày hiệu quả?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_22",
+      "type": "out_of_scope",
+      "question": "Tỷ số trận Việt Nam gặp Thái Lan tối qua là bao nhiêu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_23",
+      "type": "out_of_scope",
+      "question": "Viết giúp tôi đoạn code Python đọc file CSV.",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_24",
+      "type": "out_of_scope",
+      "question": "Làm bánh flan cần những nguyên liệu gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_25",
+      "type": "out_of_scope",
+      "question": "Giá bitcoin hôm nay bao nhiêu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_26",
+      "type": "out_of_scope",
+      "question": "Công thức tính diện tích hình tròn là gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_27",
+      "type": "out_of_scope",
+      "question": "Mua vé máy bay đi Đà Nẵng ở đâu rẻ nhất?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_28",
+      "type": "out_of_scope",
+      "question": "Nên đầu tư chứng khoán hay gửi tiết kiệm?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_29",
+      "type": "out_of_scope",
+      "question": "Tư vấn giúp tôi laptop nào phù hợp cho sinh viên?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_30",
+      "type": "out_of_scope",
+      "question": "Cách chăm sóc mèo con mới đẻ?",
+      "expected_document_id": null,
+      "top_score": 2.05380655,
+      "rejected": false,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_31",
+      "type": "out_of_scope",
+      "question": "Điểm chuẩn đại học Bách khoa năm ngoái là bao nhiêu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_32",
+      "type": "out_of_scope",
+      "question": "Lịch cúp nước quận 7 tuần này thế nào?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_33",
+      "type": "out_of_scope",
+      "question": "Bệnh tiểu đường nên kiêng ăn gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_34",
+      "type": "out_of_scope",
+      "question": "Mai Sài Gòn có mưa không?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_35",
+      "type": "out_of_scope",
+      "question": "Kể cho tôi một câu chuyện cười đi.",
+      "expected_document_id": null,
+      "top_score": 1.18758426,
+      "rejected": false,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_36",
+      "type": "out_of_scope",
+      "question": "Dịch câu này sang tiếng Anh giúp tôi: tôi yêu Việt Nam.",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_37",
+      "type": "out_of_scope",
+      "question": "thu tuc xin cap the tam tru cho nguoi nuoc ngoai",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_38",
+      "type": "out_of_scope",
+      "question": "dang ky hien tang noi tang sau khi mat o dau",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_39",
+      "type": "out_of_scope",
+      "question": "xin phep bay flycam quay phim can giay to gi",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_OOS_40",
+      "type": "out_of_scope",
+      "question": "cach dang ky mo tai khoan ngan hang cho tre em",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "HO_IN_01",
+      "type": "in_scope",
+      "question": "be moi sinh thi lam giay khai sinh can gi",
+      "expected_document_id": [
+        "PROC_002"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_003",
+        "PROC_005"
+      ],
+      "top_score": 2.60192185,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_02",
+      "type": "in_scope",
+      "question": "bố tôi mất rồi thì đi báo tử cần mang giấy tờ gì",
+      "expected_document_id": [
+        "PROC_003"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_030",
+        "PROC_014"
+      ],
+      "top_score": 2.85828697,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_03",
+      "type": "in_scope",
+      "question": "cưới vợ người Hàn thì đăng ký kết hôn cần giấy gì",
+      "expected_document_id": [
+        "PROC_006"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "general",
+      "field_match": false,
+      "rank": 0,
+      "retrieved_top3": [
+        "PROC_004"
+      ],
+      "top_score": 4.248222299999999,
+      "r1": false,
+      "r5": false,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_04",
+      "type": "in_scope",
+      "question": "muốn xin giấy độc thân thì cần chuẩn bị gì",
+      "expected_document_id": [
+        "PROC_001"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_013",
+        "PROC_003"
+      ],
+      "top_score": 2.0368066000000002,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_05",
+      "type": "in_scope",
+      "question": "làm giấy khai tử mất mấy ngày",
+      "expected_document_id": [
+        "PROC_003"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "required_documents",
+      "field_match": false,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_014",
+        "PROC_002"
+      ],
+      "top_score": 3.0020429,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_06",
+      "type": "in_scope",
+      "question": "phí đăng ký kết hôn hết bao nhiêu tiền",
+      "expected_document_id": [
+        "PROC_004"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_006",
+        "PROC_002"
+      ],
+      "top_score": 4.794003169999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_07",
+      "type": "in_scope",
+      "question": "xin phep xay nha cap 4 can ho so gi",
+      "expected_document_id": [
+        "PROC_025",
+        "PROC_027"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_025",
+        "PROC_033"
+      ],
+      "top_score": 2.46652874,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_08",
+      "type": "in_scope",
+      "question": "mo tiem tap hoa nho thi dang ky ho kinh doanh can gi",
+      "expected_document_id": [
+        "PROC_036"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_040",
+        "PROC_037"
+      ],
+      "top_score": 3.1458749800000003,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_09",
+      "type": "in_scope",
+      "question": "muốn đóng cửa hộ kinh doanh luôn thì cần hồ sơ gì",
+      "expected_document_id": [
+        "PROC_039"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 3,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_039",
+        "PROC_038"
+      ],
+      "top_score": 3.3581932500000002,
+      "r1": false,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_10",
+      "type": "in_scope",
+      "question": "tôi làm mất giấy chứng nhận hộ kinh doanh, xin cấp lại cần gì",
+      "expected_document_id": [
+        "PROC_040"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_040",
+        "PROC_036",
+        "PROC_037"
+      ],
+      "top_score": 4.794824899999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_11",
+      "type": "in_scope",
+      "question": "tạm nghỉ bán hàng vài tháng thì hộ kinh doanh phải báo thế nào",
+      "expected_document_id": [
+        "PROC_038"
+      ],
+      "expected_field": null,
+      "got_field": "general",
+      "field_match": null,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_038"
+      ],
+      "top_score": 4.3298163,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_12",
+      "type": "in_scope",
+      "question": "con học lớp 7 chuyển sang trường khác cần giấy tờ gì",
+      "expected_document_id": [
+        "PROC_029"
+      ],
+      "expected_field": "required_documents",
+      "got_field": null,
+      "field_match": false,
+      "rank": 0,
+      "retrieved_top3": [],
+      "top_score": 0.0,
+      "r1": false,
+      "r5": false,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_13",
+      "type": "in_scope",
+      "question": "xin số nhà mới mất bao lâu",
+      "expected_document_id": [
+        "PROC_033"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_033",
+        "PROC_035",
+        "PROC_034"
+      ],
+      "top_score": 3.32647166,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_14",
+      "type": "in_scope",
+      "question": "chứng thực di chúc thì làm ở đâu",
+      "expected_document_id": [
+        "PROC_042"
+      ],
+      "expected_field": "submission_method",
+      "got_field": "submission_method",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_040",
+        "PROC_020"
+      ],
+      "top_score": 4.4670764,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_15",
+      "type": "in_scope",
+      "question": "đất chưa có sổ, đăng ký lần đầu cần gì",
+      "expected_document_id": [
+        "PROC_031"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_031"
+      ],
+      "top_score": 4.7635635,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_16",
+      "type": "in_scope",
+      "question": "người già trên 75 tuổi nhận trợ cấp hưu trí xã hội cần hồ sơ gì",
+      "expected_document_id": [
+        "PROC_008",
+        "PROC_020"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_008",
+        "PROC_020",
+        "PROC_021"
+      ],
+      "top_score": 5.347645829999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_17",
+      "type": "in_scope",
+      "question": "xin giấy xác nhận khuyết tật cho con cần gì",
+      "expected_document_id": [
+        "PROC_009",
+        "PROC_023"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_009",
+        "PROC_023",
+        "PROC_005"
+      ],
+      "top_score": 4.7760337999999996,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_18",
+      "type": "in_scope",
+      "question": "được hỗ trợ tiền hỏa táng thì làm hồ sơ gì",
+      "expected_document_id": [
+        "PROC_010",
+        "PROC_016"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_016",
+        "PROC_010",
+        "PROC_017"
+      ],
+      "top_score": 4.8951082999999995,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_19",
+      "type": "in_scope",
+      "question": "vay von quy viec lam de mo rong xuong can gi",
+      "expected_document_id": [
+        "PROC_028",
+        "PROC_032"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_028",
+        "PROC_032",
+        "PROC_026"
+      ],
+      "top_score": 2.88358895,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "HO_IN_20",
+      "type": "in_scope",
+      "question": "xin học bổng chính sách cần những gì",
+      "expected_document_id": [
+        "PROC_041"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_041",
+        "PROC_022",
+        "PROC_029"
+      ],
+      "top_score": 4.749684499999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    }
+  ]
+}

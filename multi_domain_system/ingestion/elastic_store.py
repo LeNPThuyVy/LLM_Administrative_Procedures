@@ -485,6 +485,6 @@ class ElasticTabularStore:
                     res = client.get(f"{self.es_url}/{self.collection_name}/_count", headers=self._headers())
                     if res.status_code == 200:
                         return int(res.json().get("count", 0))
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"[elastic_store] Không đọc được số tài liệu, dùng dữ liệu cục bộ: {exc}")
         return len(self._load_local_docs())

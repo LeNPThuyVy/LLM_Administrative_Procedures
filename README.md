@@ -6,7 +6,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Qdrant](https://img.shields.io/badge/Vector%20DB-Qdrant%20Cloud%20%2F%20Local-DC2626.svg?style=flat)](https://qdrant.tech/)
 [![Elasticsearch](https://img.shields.io/badge/Elasticsearch-8.x-005571.svg?style=flat&logo=elasticsearch&logoColor=white)](https://www.elastic.co/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-AsyncPG%20%2F%20Supabase-336791.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-AsyncPG-336791.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![llama.cpp](https://img.shields.io/badge/Inference-llama.cpp%20(GGUF%20Q4__K__M)-FF6F00.svg?style=flat)](https://github.com/ggerganov/llama.cpp)
 [![Embedding](https://img.shields.io/badge/Embedding-BAAI%2Fbge--m3-blue.svg?style=flat)](https://huggingface.co/BAAI/bge-m3)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -212,7 +212,7 @@ LLM_Administrative_Procedures/ (Root Repository)
 - **Hệ điều hành**: Windows 10/11, macOS, hoặc Linux (Ubuntu 20.04 trở lên).
 - **Python**: Phiên bản **`Python 3.12.x`** *(Khuyến nghị dùng `py -3.12` trên Windows)*.
 - **Vector Database**: Cụm **Qdrant Cloud** (miễn phí hoặc tự host) hoặc chạy Qdrant Local.
-- **Relational Database**: **PostgreSQL** (PostgreSQL 14+ cục bộ hoặc Supabase Cloud).
+- **Relational Database**: **PostgreSQL** (PostgreSQL 14+).
 - **Elasticsearch (Tuỳ chọn cho phân hệ đa domain)**: Elasticsearch 8.x (chạy qua Docker).
 - **Phần cứng khuyến nghị**:
   - RAM: Tối thiểu 8 GB (Khuyến nghị **16 GB** để chạy đồng thời cả hai mô hình LLM và backend).

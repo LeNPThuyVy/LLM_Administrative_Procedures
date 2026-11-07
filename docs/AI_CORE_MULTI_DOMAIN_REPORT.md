@@ -31,7 +31,7 @@ Hệ thống được thiết kế theo mô hình phân lớp rõ ràng, đảm 
 [Backend Layer: FastAPI (WebSocket /ws/chat & SSE /api/chat)]
        │
        ▼
-[Session & Context Management: Supabase PostgreSQL (get_context / update_memory)]
+[Session & Context Management: PostgreSQL (get_context / update_memory)]
        │
        ▼
 [Domain Runtime: get_domain_runtime(domain) -> DomainConfig]

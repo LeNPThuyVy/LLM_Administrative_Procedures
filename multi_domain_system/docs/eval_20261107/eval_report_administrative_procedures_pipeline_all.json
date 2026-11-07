@@ -1,0 +1,2156 @@
+{
+  "timestamp": "2026-11-07T11:58:28.365587",
+  "domain": "administrative_procedures",
+  "mode": "pipeline",
+  "split": "all",
+  "total": 100,
+  "in_scope_total": 95,
+  "out_scope_total": 5,
+  "retrieval_at_1": 94.73684210526315,
+  "retrieval_at_3": 100.0,
+  "retrieval_at_5": 100.0,
+  "mrr": 0.9649122807017543,
+  "field_match_pct": 100.0,
+  "out_scope_rejection_acc": 100.0,
+  "in_scope_false_rejection_pct": 10.526315789473683,
+  "unsupported_leak_cases": 0,
+  "keyword_hits": 96,
+  "keyword_total": 105,
+  "incomplete_answer_cases": 7,
+  "details": [
+    {
+      "id": "GS_001",
+      "type": "in_scope",
+      "question": "Tôi cần chuẩn bị những giấy tờ gì để xin xác nhận tình trạng hôn nhân?",
+      "expected_document_id": [
+        "PROC_001"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_035",
+        "PROC_013"
+      ],
+      "top_score": 5.7610195,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_002",
+      "type": "in_scope",
+      "question": "Xác nhận tình trạng hôn nhân mất bao lâu?",
+      "expected_document_id": [
+        "PROC_001"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_035",
+        "PROC_013"
+      ],
+      "top_score": 5.7701740599999995,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_003",
+      "type": "in_scope",
+      "question": "Đăng ký khai sinh cần những hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_002"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_003",
+        "PROC_004"
+      ],
+      "top_score": 4.118051,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_004",
+      "type": "in_scope",
+      "question": "Lệ phí đăng ký khai sinh là bao nhiêu?",
+      "expected_document_id": [
+        "PROC_002"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_003",
+        "PROC_006"
+      ],
+      "top_score": 4.14645845,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_005",
+      "type": "in_scope",
+      "question": "Tôi đăng ký khai tử thì cần chuẩn bị giấy tờ nào?",
+      "expected_document_id": [
+        "PROC_003"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_002",
+        "PROC_004"
+      ],
+      "top_score": 4.5301101,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_006",
+      "type": "in_scope",
+      "question": "Khai tử được giải quyết trong bao lâu?",
+      "expected_document_id": [
+        "PROC_003"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_019",
+        "PROC_028"
+      ],
+      "top_score": 3.0176040000000004,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_007",
+      "type": "in_scope",
+      "question": "Đăng ký kết hôn cần hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_004"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_006",
+        "PROC_002"
+      ],
+      "top_score": 4.7953062,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_008",
+      "type": "in_scope",
+      "question": "Đăng ký kết hôn có mất phí không?",
+      "expected_document_id": [
+        "PROC_004"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_006",
+        "PROC_002"
+      ],
+      "top_score": 4.77500127,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_009",
+      "type": "in_scope",
+      "question": "Thủ tục nhận cha mẹ con mất bao lâu?",
+      "expected_document_id": [
+        "PROC_005"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_005",
+        "PROC_013",
+        "PROC_001"
+      ],
+      "top_score": 4.1461929,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_010",
+      "type": "in_scope",
+      "question": "Hồ sơ nhận cha mẹ con gồm những gì?",
+      "expected_document_id": [
+        "PROC_005"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_005",
+        "PROC_023",
+        "PROC_013"
+      ],
+      "top_score": 4.1642018,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_011",
+      "type": "in_scope",
+      "question": "Kết hôn có yếu tố nước ngoài cần những giấy tờ nào?",
+      "expected_document_id": [
+        "PROC_006"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_006"
+      ],
+      "top_score": 6.115452159999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_012",
+      "type": "in_scope",
+      "question": "Kết hôn với người nước ngoài giải quyết trong mấy ngày?",
+      "expected_document_id": [
+        "PROC_006"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_006",
+        "PROC_004",
+        "PROC_028"
+      ],
+      "top_score": 4.81015036,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_013",
+      "type": "in_scope",
+      "question": "Đăng ký nội quy lao động cần hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_007"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_007",
+        "PROC_037",
+        "PROC_006"
+      ],
+      "top_score": 4.21126133,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_014",
+      "type": "in_scope",
+      "question": "Hưởng trợ cấp hưu trí xã hội cần nộp giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_020",
+        "PROC_008"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_008",
+        "PROC_020",
+        "PROC_021"
+      ],
+      "top_score": 6.067671199999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_015",
+      "type": "in_scope",
+      "question": "Trợ cấp hưu trí xã hội xử lý trong bao lâu?",
+      "expected_document_id": [
+        "PROC_020"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_020",
+        "PROC_008",
+        "PROC_021"
+      ],
+      "top_score": 5.410298539999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_016",
+      "type": "in_scope",
+      "question": "Hỗ trợ mai táng cho người hưởng trợ cấp hưu trí xã hội cần hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_021"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_021",
+        "PROC_020",
+        "PROC_008"
+      ],
+      "top_score": 7.469373199999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_017",
+      "type": "in_scope",
+      "question": "Hỗ trợ chi phí mai táng cho người hưởng hưu trí xã hội mất bao lâu?",
+      "expected_document_id": [
+        "PROC_021"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_021",
+        "PROC_020",
+        "PROC_008"
+      ],
+      "top_score": 7.803316999999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_018",
+      "type": "in_scope",
+      "question": "Hồ sơ xác định mức độ khuyết tật cần những gì?",
+      "expected_document_id": [
+        "PROC_023"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 3,
+      "retrieved_top3": [
+        "PROC_009",
+        "PROC_023",
+        "PROC_024"
+      ],
+      "top_score": 6.105466949999999,
+      "r1": false,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_019",
+      "type": "in_scope",
+      "question": "Xác định mức độ khuyết tật mất bao nhiêu ngày?",
+      "expected_document_id": [
+        "PROC_023"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 3,
+      "retrieved_top3": [
+        "PROC_009",
+        "PROC_023",
+        "PROC_022"
+      ],
+      "top_score": 6.091765399999999,
+      "r1": false,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_020",
+      "type": "in_scope",
+      "question": "Tôi muốn cấp giấy phép xây dựng thì cần chuẩn bị hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_027"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_025",
+        "PROC_030"
+      ],
+      "top_score": 4.08722973,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_021",
+      "type": "in_scope",
+      "question": "Nộp hồ sơ cấp giấy phép xây dựng bằng hình thức nào?",
+      "expected_document_id": [
+        "PROC_027",
+        "PROC_025"
+      ],
+      "expected_field": "submission_method",
+      "got_field": "submission_method",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_025",
+        "PROC_027",
+        "PROC_012"
+      ],
+      "top_score": 4.08637906,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_022",
+      "type": "in_scope",
+      "question": "Xin thông tin quy hoạch cần giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_026"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_026",
+        "PROC_030",
+        "PROC_038"
+      ],
+      "top_score": 4.1386762,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_023",
+      "type": "in_scope",
+      "question": "Thủ tục cung cấp thông tin quy hoạch mất bao lâu?",
+      "expected_document_id": [
+        "PROC_026"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_026",
+        "PROC_030",
+        "PROC_038"
+      ],
+      "top_score": 4.03566117,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_024",
+      "type": "in_scope",
+      "question": "Cơ sở sản xuất kinh doanh vay vốn tạo việc làm cần hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_032"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_032",
+        "PROC_028",
+        "PROC_022"
+      ],
+      "top_score": 6.7697199,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_025",
+      "type": "in_scope",
+      "question": "Vay vốn tạo việc làm cho cơ sở sản xuất kinh doanh xử lý trong bao lâu?",
+      "expected_document_id": [
+        "PROC_032"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_032",
+        "PROC_028",
+        "PROC_022"
+      ],
+      "top_score": 6.8383009,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_026",
+      "type": "in_scope",
+      "question": "Xin cấp số nhà cần chuẩn bị những giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_033"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_033",
+        "PROC_035",
+        "PROC_034"
+      ],
+      "top_score": 3.4845498499999996,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_027",
+      "type": "in_scope",
+      "question": "Hồ sơ xác nhận vị trí nhà đất gồm những gì?",
+      "expected_document_id": [
+        "PROC_034"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_034",
+        "PROC_035",
+        "PROC_001"
+      ],
+      "top_score": 6.144781799999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_028",
+      "type": "in_scope",
+      "question": "Xác nhận vị trí nhà đất nộp theo hình thức nào?",
+      "expected_document_id": [
+        "PROC_034"
+      ],
+      "expected_field": "submission_method",
+      "got_field": "submission_method",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_034",
+        "PROC_035",
+        "PROC_023"
+      ],
+      "top_score": 6.044643399999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_029",
+      "type": "in_scope",
+      "question": "Đăng ký đất đai và tài sản gắn liền với đất lần đầu cần hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_031"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_031"
+      ],
+      "top_score": 9.3800662,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_030",
+      "type": "in_scope",
+      "question": "Thông báo khởi công nhà ở riêng lẻ cần những giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_030"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_030",
+        "PROC_038",
+        "PROC_035"
+      ],
+      "top_score": 4.985926839999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_031",
+      "type": "in_scope",
+      "question": "Hồ sơ thôi hưởng trợ cấp hưu trí xã hội gồm những gì?",
+      "expected_document_id": [
+        "PROC_020"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 3,
+      "retrieved_top3": [
+        "PROC_008",
+        "PROC_020",
+        "PROC_021"
+      ],
+      "top_score": 6.732679739999999,
+      "r1": false,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_032",
+      "type": "in_scope",
+      "question": "Thủ tục cấp lại giấy xác nhận khuyết tật cần giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_023"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 3,
+      "retrieved_top3": [
+        "PROC_009",
+        "PROC_023",
+        "PROC_013"
+      ],
+      "top_score": 5.473899899999999,
+      "r1": false,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_033",
+      "type": "in_scope",
+      "question": "Thời gian xác định lại mức độ khuyết tật là bao nhiêu ngày?",
+      "expected_document_id": [
+        "PROC_023"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 3,
+      "retrieved_top3": [
+        "PROC_009",
+        "PROC_023",
+        "PROC_022"
+      ],
+      "top_score": 6.7875898999999995,
+      "r1": false,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_034",
+      "type": "in_scope",
+      "question": "Thủ tục hỗ trợ chi phí khuyến khích hỏa táng tại TP.HCM cần giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_010",
+        "PROC_016"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_010",
+        "PROC_016",
+        "PROC_017"
+      ],
+      "top_score": 8.16624116,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_035",
+      "type": "in_scope",
+      "question": "Thời gian giải quyết hỗ trợ chi phí hỏa táng cho người dân TP.HCM mất bao lâu?",
+      "expected_document_id": [
+        "PROC_010"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_010",
+        "PROC_016",
+        "PROC_017"
+      ],
+      "top_score": 8.13147154,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_036",
+      "type": "in_scope",
+      "question": "Hồ sơ giải quyết chế độ trợ cấp thờ cúng liệt sĩ gồm những gì?",
+      "expected_document_id": [
+        "PROC_011"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_011",
+        "PROC_015",
+        "PROC_022"
+      ],
+      "top_score": 6.82179644,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_037",
+      "type": "in_scope",
+      "question": "Thời hạn giải quyết trợ cấp thờ cúng liệt sĩ là bao lâu?",
+      "expected_document_id": [
+        "PROC_011"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_011",
+        "PROC_015",
+        "PROC_019"
+      ],
+      "top_score": 5.4744893999999995,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_038",
+      "type": "in_scope",
+      "question": "Thủ tục cấp đổi Bằng Tổ quốc ghi công cần chuẩn bị những giấy tờ nào?",
+      "expected_document_id": [
+        "PROC_012"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_012",
+        "PROC_024",
+        "PROC_013"
+      ],
+      "top_score": 5.773433359999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_039",
+      "type": "in_scope",
+      "question": "Thời gian cấp đổi Bằng Tổ quốc ghi công mất bao nhiêu ngày?",
+      "expected_document_id": [
+        "PROC_012"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_012",
+        "PROC_024",
+        "PROC_028"
+      ],
+      "top_score": 5.797653799999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_040",
+      "type": "in_scope",
+      "question": "Hồ sơ xin cấp giấy xác nhận thân nhân của người có công gồm những gì?",
+      "expected_document_id": [
+        "PROC_013"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_013",
+        "PROC_001",
+        "PROC_019"
+      ],
+      "top_score": 5.5412270999999995,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_041",
+      "type": "in_scope",
+      "question": "Thời hạn giải quyết cấp giấy xác nhận thân nhân người có công là bao lâu?",
+      "expected_document_id": [
+        "PROC_013"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_013",
+        "PROC_001",
+        "PROC_014"
+      ],
+      "top_score": 5.8437594,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_042",
+      "type": "in_scope",
+      "question": "Thủ tục hưởng trợ cấp mai táng khi người có công từ trần cần những giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_014"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_014",
+        "PROC_019",
+        "PROC_021"
+      ],
+      "top_score": 6.2066042999999995,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_043",
+      "type": "in_scope",
+      "question": "Chế độ trợ cấp thờ cúng liệt sĩ nộp hồ sơ ở đâu?",
+      "expected_document_id": [
+        "PROC_011"
+      ],
+      "expected_field": "submission_method",
+      "got_field": "submission_method",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_011",
+        "PROC_015",
+        "PROC_022"
+      ],
+      "top_score": 6.80123975,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_044",
+      "type": "in_scope",
+      "question": "Lệ phí làm thủ tục hỗ trợ chi phí khuyến khích hỏa táng là bao nhiêu?",
+      "expected_document_id": [
+        "PROC_016"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_016",
+        "PROC_010",
+        "PROC_017"
+      ],
+      "top_score": 6.115730999999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_045",
+      "type": "in_scope",
+      "question": "Hồ sơ hỗ trợ chi phí mai táng cho đối tượng bảo trợ xã hội gồm những gì?",
+      "expected_document_id": [
+        "PROC_017"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_017",
+        "PROC_021",
+        "PROC_018"
+      ],
+      "top_score": 7.837944069999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_046",
+      "type": "in_scope",
+      "question": "Thời gian giải quyết hỗ trợ mai táng đối tượng bảo trợ xã hội mất bao lâu?",
+      "expected_document_id": [
+        "PROC_017"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_017",
+        "PROC_021",
+        "PROC_018"
+      ],
+      "top_score": 7.827616459999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_047",
+      "type": "in_scope",
+      "question": "Hồ sơ đề nghị hưởng trợ cấp xã hội hàng tháng gồm những giấy tờ nào?",
+      "expected_document_id": [
+        "PROC_018"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_018"
+      ],
+      "top_score": 6.24611805,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_048",
+      "type": "in_scope",
+      "question": "Thời hạn giải quyết hưởng trợ cấp xã hội hàng tháng là bao lâu?",
+      "expected_document_id": [
+        "PROC_018"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_018",
+        "PROC_019",
+        "PROC_020"
+      ],
+      "top_score": 6.115688999999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_049",
+      "type": "in_scope",
+      "question": "Thủ tục hưởng trợ cấp một lần khi người có công từ trần cần chuẩn bị gì?",
+      "expected_document_id": [
+        "PROC_014",
+        "PROC_019"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_014",
+        "PROC_019",
+        "PROC_028"
+      ],
+      "top_score": 6.160156699999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_050",
+      "type": "in_scope",
+      "question": "Hồ sơ xin miễn giảm học phí và hỗ trợ học tập đến đại học gồm giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_022"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_022",
+        "PROC_016",
+        "PROC_018"
+      ],
+      "top_score": 5.0705490399999995,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_051",
+      "type": "in_scope",
+      "question": "Thời gian giải quyết chế độ hỗ trợ học đại học cho con người có công mất bao lâu?",
+      "expected_document_id": [
+        "PROC_022"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_022",
+        "PROC_014",
+        "PROC_019"
+      ],
+      "top_score": 5.800412949999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_052",
+      "type": "in_scope",
+      "question": "Hồ sơ giải quyết chế độ người hoạt động kháng chiến giải phóng dân tộc gồm những gì?",
+      "expected_document_id": [
+        "PROC_024"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_024",
+        "PROC_022",
+        "PROC_015"
+      ],
+      "top_score": 8.7655984,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_053",
+      "type": "in_scope",
+      "question": "Thời gian xử lý chế độ người hoạt động kháng chiến là bao lâu?",
+      "expected_document_id": [
+        "PROC_024"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_024",
+        "PROC_015",
+        "PROC_022"
+      ],
+      "top_score": 6.7446752,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_054",
+      "type": "in_scope",
+      "question": "Hồ sơ xin cấp giấy phép xây dựng nhà ở gồm những tài liệu nào?",
+      "expected_document_id": [
+        "PROC_025",
+        "PROC_027"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_025",
+        "PROC_035"
+      ],
+      "top_score": 4.2680282,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_055",
+      "type": "in_scope",
+      "question": "Người lao động muốn vay vốn hỗ trợ tạo việc làm từ Quỹ quốc gia cần hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_028"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_028",
+        "PROC_032",
+        "PROC_024"
+      ],
+      "top_score": 8.7914256,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_056",
+      "type": "in_scope",
+      "question": "Thời gian giải quyết hồ sơ vay vốn tạo việc làm cho người lao động là bao lâu?",
+      "expected_document_id": [
+        "PROC_028"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_028",
+        "PROC_032",
+        "PROC_024"
+      ],
+      "top_score": 5.165130899999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_057",
+      "type": "in_scope",
+      "question": "Thủ tục chuyển trường cho học sinh THCS cần những giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_029"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_029",
+        "PROC_041",
+        "PROC_022"
+      ],
+      "top_score": 4.530771199999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_058",
+      "type": "in_scope",
+      "question": "Chuyển trường học sinh THCS mất bao nhiêu ngày làm việc?",
+      "expected_document_id": [
+        "PROC_029"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_029",
+        "PROC_041",
+        "PROC_022"
+      ],
+      "top_score": 4.4881965,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_059",
+      "type": "in_scope",
+      "question": "Nộp hồ sơ chuyển trường THCS ở đâu?",
+      "expected_document_id": [
+        "PROC_029"
+      ],
+      "expected_field": "submission_method",
+      "got_field": "submission_method",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_029",
+        "PROC_042",
+        "PROC_041"
+      ],
+      "top_score": 3.8085627000000004,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_060",
+      "type": "in_scope",
+      "question": "Hồ sơ xin xác nhận tình trạng nhà ở gồm những giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_035"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_035",
+        "PROC_001",
+        "PROC_034"
+      ],
+      "top_score": 5.501069599999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_061",
+      "type": "in_scope",
+      "question": "Thời gian giải quyết xác nhận tình trạng nhà ở mất bao lâu?",
+      "expected_document_id": [
+        "PROC_035"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_035",
+        "PROC_001",
+        "PROC_034"
+      ],
+      "top_score": 5.503018749999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_062",
+      "type": "in_scope",
+      "question": "Hồ sơ đăng ký thành lập hộ kinh doanh cá thể gồm những gì?",
+      "expected_document_id": [
+        "PROC_036"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_037",
+        "PROC_040"
+      ],
+      "top_score": 6.111502299999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_063",
+      "type": "in_scope",
+      "question": "Lệ phí đăng ký thành lập hộ kinh doanh là bao nhiêu tiền?",
+      "expected_document_id": [
+        "PROC_036"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_037",
+        "PROC_040"
+      ],
+      "top_score": 6.104482639999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_064",
+      "type": "in_scope",
+      "question": "Đăng ký hộ kinh doanh mất bao nhiêu ngày làm việc?",
+      "expected_document_id": [
+        "PROC_036"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_040",
+        "PROC_037"
+      ],
+      "top_score": 4.800590999999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_065",
+      "type": "in_scope",
+      "question": "Thủ tục thay đổi nội dung đăng ký hộ kinh doanh cần giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_037"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_037",
+        "PROC_036",
+        "PROC_040"
+      ],
+      "top_score": 6.805165199999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_066",
+      "type": "in_scope",
+      "question": "Thời hạn giải quyết thay đổi thông tin hộ kinh doanh là bao lâu?",
+      "expected_document_id": [
+        "PROC_037",
+        "PROC_038"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_037",
+        "PROC_038",
+        "PROC_036"
+      ],
+      "top_score": 3.8721055,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_067",
+      "type": "in_scope",
+      "question": "Thông báo tạm ngừng kinh doanh của hộ kinh doanh cần chuẩn bị hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_038"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_038",
+        "PROC_036",
+        "PROC_039"
+      ],
+      "top_score": 6.110449099999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_068",
+      "type": "in_scope",
+      "question": "Thời gian giải quyết thông báo tạm ngừng kinh doanh là bao lâu?",
+      "expected_document_id": [
+        "PROC_038"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_038",
+        "PROC_030",
+        "PROC_039"
+      ],
+      "top_score": 5.440908739999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_069",
+      "type": "in_scope",
+      "question": "Thủ tục chấm dứt hoạt động hộ kinh doanh cần những giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_039"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_039",
+        "PROC_036",
+        "PROC_038"
+      ],
+      "top_score": 6.030769999999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_070",
+      "type": "in_scope",
+      "question": "Thời gian giải quyết chấm dứt hoạt động hộ kinh doanh là bao nhiêu ngày?",
+      "expected_document_id": [
+        "PROC_039"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_039",
+        "PROC_036",
+        "PROC_038"
+      ],
+      "top_score": 6.157239399999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_071",
+      "type": "in_scope",
+      "question": "Bị mất giấy chứng nhận hộ kinh doanh thì xin cấp lại cần hồ sơ gì?",
+      "expected_document_id": [
+        "PROC_040"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_040",
+        "PROC_036",
+        "PROC_037"
+      ],
+      "top_score": 4.8072744,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_072",
+      "type": "in_scope",
+      "question": "Lệ phí cấp lại giấy chứng nhận đăng ký hộ kinh doanh là bao nhiêu?",
+      "expected_document_id": [
+        "PROC_040"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_040",
+        "PROC_036",
+        "PROC_037"
+      ],
+      "top_score": 6.81034895,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_073",
+      "type": "in_scope",
+      "question": "Hồ sơ xét cấp học bổng chính sách gồm những giấy tờ nào?",
+      "expected_document_id": [
+        "PROC_041"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_041",
+        "PROC_022",
+        "PROC_029"
+      ],
+      "top_score": 5.438437529999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_074",
+      "type": "in_scope",
+      "question": "Thời hạn giải quyết cấp học bổng chính sách là bao lâu?",
+      "expected_document_id": [
+        "PROC_041"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_041",
+        "PROC_022",
+        "PROC_029"
+      ],
+      "top_score": 4.735464199999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_075",
+      "type": "in_scope",
+      "question": "Chứng thực chữ ký trên giấy tờ văn bản cần xuất trình giấy tờ gì?",
+      "expected_document_id": [
+        "PROC_042"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_040",
+        "PROC_004"
+      ],
+      "top_score": 5.0289088,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_076",
+      "type": "in_scope",
+      "question": "Mức thu lệ phí chứng thực chữ ký là bao nhiêu một trường hợp?",
+      "expected_document_id": [
+        "PROC_042"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_040",
+        "PROC_004"
+      ],
+      "top_score": 5.51794405,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_077",
+      "type": "in_scope",
+      "question": "Chứng thực hợp đồng giao dịch di chúc giải quyết trong bao lâu?",
+      "expected_document_id": [
+        "PROC_042"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_040",
+        "PROC_018"
+      ],
+      "top_score": 6.79819073,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_078",
+      "type": "in_scope",
+      "question": "thu tuc dang ky ket hon can nhung giay to gi?",
+      "expected_document_id": [
+        "PROC_004"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_004",
+        "PROC_006",
+        "PROC_002"
+      ],
+      "top_score": 3.0502763999999996,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_079",
+      "type": "in_scope",
+      "question": "thoi gian giai quyet khai sinh mat bao lau?",
+      "expected_document_id": [
+        "PROC_002"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_003",
+        "PROC_029"
+      ],
+      "top_score": 2.4199427599999996,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_080",
+      "type": "in_scope",
+      "question": "thu tuc xin cap giay xac nhan tinh trang hon nhan can nhung giay to gi?",
+      "expected_document_id": [
+        "PROC_001"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_001",
+        "PROC_035",
+        "PROC_013"
+      ],
+      "top_score": 3.40557318,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_081",
+      "type": "in_scope",
+      "question": "dang ky khai tu co mat phi khong?",
+      "expected_document_id": [
+        "PROC_003"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_003",
+        "PROC_002",
+        "PROC_006"
+      ],
+      "top_score": 2.98122636,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_082",
+      "type": "in_scope",
+      "question": "xin cap so nha o dau va can giay to gi?",
+      "expected_document_id": [
+        "PROC_033"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_033",
+        "PROC_034",
+        "PROC_035"
+      ],
+      "top_score": 2.1088016400000003,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_083",
+      "type": "in_scope",
+      "question": "le phi xin cap giay phep xay dung nha o rieng le la bao nhieu?",
+      "expected_document_id": [
+        "PROC_027",
+        "PROC_025"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_025",
+        "PROC_033"
+      ],
+      "top_score": 2.6957284,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_084",
+      "type": "in_scope",
+      "question": "thu tuc chuyen truong hoc sinh thcs can ho so gi?",
+      "expected_document_id": [
+        "PROC_029"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_029",
+        "PROC_041",
+        "PROC_022"
+      ],
+      "top_score": 3.4661290000000005,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_085",
+      "type": "in_scope",
+      "question": "thoi gian giai quyet cap lai giay chung nhan ho kinh doanh?",
+      "expected_document_id": [
+        "PROC_040"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_040",
+        "PROC_036",
+        "PROC_038"
+      ],
+      "top_score": 2.8684111000000003,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_086",
+      "type": "in_scope",
+      "question": "dang ky bien dong dat dai lan dau can giay to gi?",
+      "expected_document_id": [
+        "PROC_031"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_031"
+      ],
+      "top_score": 2.7708309699999996,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_087",
+      "type": "in_scope",
+      "question": "xac nhan vi tri nha dat tai quan huyen nop theo hinh thuc nao?",
+      "expected_document_id": [
+        "PROC_034"
+      ],
+      "expected_field": "submission_method",
+      "got_field": "submission_method",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_034",
+        "PROC_035",
+        "PROC_009"
+      ],
+      "top_score": 3.7255410299999996,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_088",
+      "type": "in_scope",
+      "question": "nop ho so de nghi xac dinh muc do khuyet tat o dau?",
+      "expected_document_id": [
+        "PROC_009",
+        "PROC_023"
+      ],
+      "expected_field": "submission_method",
+      "got_field": "submission_method",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_009",
+        "PROC_023",
+        "PROC_011"
+      ],
+      "top_score": 3.66549385,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_089",
+      "type": "in_scope",
+      "question": "chung thuc chu ky tren giay to co lay ngay trong ngay duoc khong?",
+      "expected_document_id": [
+        "PROC_042"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_004",
+        "PROC_040"
+      ],
+      "top_score": 2.72664262,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_090",
+      "type": "in_scope",
+      "question": "thủ tục đk kết hôn với người nước ngoài cần j?",
+      "expected_document_id": [
+        "PROC_006"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_006"
+      ],
+      "top_score": 6.167809899999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": true,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_091",
+      "type": "in_scope",
+      "question": "lệ pí đk thành lập hộ kinh doanh là bn?",
+      "expected_document_id": [
+        "PROC_036"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_036",
+        "PROC_037",
+        "PROC_040"
+      ],
+      "top_score": 5.995355949999999,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_092",
+      "type": "in_scope",
+      "question": "hồ sơ xin cấp gpxd nhà ở riêng lẻ gồm những j?",
+      "expected_document_id": [
+        "PROC_027",
+        "PROC_025"
+      ],
+      "expected_field": "required_documents",
+      "got_field": "required_documents",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_027",
+        "PROC_025",
+        "PROC_035"
+      ],
+      "top_score": 4.2603256,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_093",
+      "type": "in_scope",
+      "question": "thời zan giải quyết khai sih cho bé mất mấy ngày?",
+      "expected_document_id": [
+        "PROC_002"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_002",
+        "PROC_003",
+        "PROC_005"
+      ],
+      "top_score": 2.6955586599999997,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_094",
+      "type": "in_scope",
+      "question": "xin cấp số nhà mất bn ngày làm việc?",
+      "expected_document_id": [
+        "PROC_033"
+      ],
+      "expected_field": "processing_time",
+      "got_field": "processing_time",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_033",
+        "PROC_035",
+        "PROC_034"
+      ],
+      "top_score": 3.3406323999999996,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_095",
+      "type": "in_scope",
+      "question": "chứng thực cccd và chữ ký ở ubnd xã phường mất bn tiền?",
+      "expected_document_id": [
+        "PROC_042"
+      ],
+      "expected_field": "fee",
+      "got_field": "fee",
+      "field_match": true,
+      "rank": 1,
+      "retrieved_top3": [
+        "PROC_042",
+        "PROC_040",
+        "PROC_013"
+      ],
+      "top_score": 4.4108605999999995,
+      "r1": true,
+      "r5": true,
+      "false_rejected": false,
+      "unsupported_leak": false
+    },
+    {
+      "id": "GS_096",
+      "type": "out_of_scope",
+      "question": "Thủ tục xin visa đi Mỹ diện du lịch cần những giấy tờ gì?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "GS_097",
+      "type": "out_of_scope",
+      "question": "Làm thế nào để đăng ký kinh doanh dịch vụ hàng không vũ trụ?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "GS_098",
+      "type": "out_of_scope",
+      "question": "Tôi muốn đổi giấy phép lái xe ô tô hạng B2 ở đâu?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "GS_099",
+      "type": "out_of_scope",
+      "question": "Giá xăng Ron 95 hôm nay tăng hay giảm bao nhiêu tiền một lít?",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    },
+    {
+      "id": "GS_100",
+      "type": "out_of_scope",
+      "question": "Cho tôi hỏi về quy định thủ tục hành chính của nhà nước",
+      "expected_document_id": null,
+      "top_score": 0.0,
+      "rejected": true,
+      "min_score_threshold": 0.5
+    }
+  ]
+}

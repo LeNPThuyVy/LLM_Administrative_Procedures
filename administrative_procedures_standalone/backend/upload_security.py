@@ -1,3 +1,4 @@
+import codecs
 import json
 import os
 import zipfile
@@ -15,6 +16,12 @@ MAX_UPLOAD_SIZE_MB = max(
 MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
 UPLOAD_CHUNK_SIZE = 1024 * 1024
+
+MAX_UNZIPPED_SIZE_BYTES = max(
+    1,
+    int(os.getenv("MAX_UNZIPPED_SIZE_MB", "200")),
+) * 1024 * 1024
+MAX_ZIP_ENTRIES = 10000
 
 EXTENSION_TO_TYPE = {
     ".json": "json",
@@ -125,15 +132,19 @@ def _validate_json(path: Path) -> None:
 
 
 def _validate_csv(path: Path) -> None:
-    sample = path.read_bytes()[:65536]
-
-    if b"\x00" in sample:
-        raise ValueError(
-            "Tệp CSV chứa dữ liệu nhị phân không hợp lệ."
-        )
+    decoder = codecs.getincrementaldecoder("utf-8-sig")()
 
     try:
-        sample.decode("utf-8-sig")
+        with path.open("rb") as fp:
+            while chunk := fp.read(UPLOAD_CHUNK_SIZE):
+                if b"\x00" in chunk:
+                    raise ValueError(
+                        "Tệp CSV chứa dữ liệu nhị phân không hợp lệ."
+                    )
+
+                decoder.decode(chunk)
+
+        decoder.decode(b"", final=True)
     except UnicodeDecodeError as exc:
         raise ValueError(
             "Tệp CSV phải là văn bản UTF-8 hợp lệ."
@@ -150,14 +161,36 @@ def _validate_pdf(path: Path) -> None:
         )
 
 
-def _validate_xlsx(path: Path) -> None:
+def _read_zip_names(path: Path, label: str) -> set[str]:
+    """
+    Trả về tên các entry sau khi chặn zip bomb.
+
+    Có thể tin file_size khai báo trong header vì zipfile không đọc vượt
+    quá giá trị này khi giải nén.
+    """
     if not zipfile.is_zipfile(path):
         raise ValueError(
-            "Nội dung tệp không phải XLSX hợp lệ."
+            f"Nội dung tệp không phải {label} hợp lệ."
         )
 
     with zipfile.ZipFile(path) as archive:
-        names = set(archive.namelist())
+        entries = archive.infolist()
+
+    if len(entries) > MAX_ZIP_ENTRIES:
+        raise ValueError(
+            f"Tệp {label} chứa quá nhiều thành phần."
+        )
+
+    if sum(entry.file_size for entry in entries) > MAX_UNZIPPED_SIZE_BYTES:
+        raise ValueError(
+            f"Dung lượng giải nén của tệp {label} vượt quá giới hạn."
+        )
+
+    return {entry.filename for entry in entries}
+
+
+def _validate_xlsx(path: Path) -> None:
+    names = _read_zip_names(path, "XLSX")
 
     if (
         "[Content_Types].xml" not in names
@@ -169,13 +202,7 @@ def _validate_xlsx(path: Path) -> None:
 
 
 def _validate_docx(path: Path) -> None:
-    if not zipfile.is_zipfile(path):
-        raise ValueError(
-            "Nội dung tệp không phải DOCX hợp lệ."
-        )
-
-    with zipfile.ZipFile(path) as archive:
-        names = set(archive.namelist())
+    names = _read_zip_names(path, "DOCX")
 
     if (
         "[Content_Types].xml" not in names

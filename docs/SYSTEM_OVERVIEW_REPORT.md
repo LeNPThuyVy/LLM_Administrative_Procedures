@@ -103,7 +103,7 @@ LLM_Administrative_Procedures/
 │   ├── guardrails/ input.py | risk.py | output.py
 │   ├── mcp_layer/ server.py | client.py | registry.py | bridge.py
 │   ├── benchmark/ run_benchmark.py | config.yaml | README.md
-│   ├── scripts/  eval_golden_set.py | calibrate_threshold.py | run_ingestion.py | backup_supabase_memory.py | cleanup_deprecated_tables.py
+│   ├── scripts/  eval_golden_set.py | calibrate_threshold.py | run_ingestion.py | cleanup_deprecated_tables.py
 │   ├── tests_multi/ | tests_tang1/ | tests_tang2/
 │   ├── ui/  web_ui.html | static/js/{app.js, api.js}
 │   ├── data/ procedures.json | cuisine_demo.json | sources/ | qdrant_db/ | elastic_local/ | .ingestion_versions.json
@@ -131,7 +131,7 @@ LLM_Administrative_Procedures/
 | Embedding | `BAAI/bge-m3` (SentenceTransformer, 1024 chiều, `max_seq_length=512`, `batch_size=32`) | Vector hóa truy vấn & tài liệu |
 | Vector DB | Qdrant Cloud hoặc Qdrant Local (`data/qdrant_db`) | Dense retrieval (cosine) |
 | Tabular search | Elasticsearch 8.x (`:9200`) hoặc **Local Okapi BM25** (`data/elastic_local/`) | Truy xuất dữ liệu bảng không cần embedding |
-| Context DB | PostgreSQL (local hoặc Supabase) qua SQLAlchemy Async + asyncpg | Sessions, messages, evidence |
+| Context DB | PostgreSQL qua SQLAlchemy Async + asyncpg | Sessions, messages, evidence |
 | Tool protocol | Model Context Protocol (`mcp`) | Công cụ ngoài (tra cứu thủ tục, thời tiết) |
 | Ingestion | llama-index readers, openpyxl, docx2txt | Đọc PDF/DOCX/CSV/XLSX/Web |
 | UI | HTML5 + Vanilla JS + CSS | SPA chat, không cần build |
@@ -153,7 +153,7 @@ LLM_Administrative_Procedures/
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
 | `DATABASE_URL` | — | `postgresql+asyncpg://user:pass@host:5432/db` |
-| `DB_SSL` | `require` (mẫu) | SSL cho Supabase |
+| `DB_SSL` | `false` | Đặt `true` nếu máy chủ PostgreSQL yêu cầu SSL |
 | `QDRANT_URL`, `QDRANT_API_KEY` | rỗng → Qdrant Local | Kết nối Qdrant Cloud |
 | `DEFAULT_COLLECTION` | `administrative_procedures` | Collection mặc định |
 | `ELASTICSEARCH_URL`, `ELASTICSEARCH_API_KEY` | `http://127.0.0.1:9200` | Tabular search; offline → BM25 local |

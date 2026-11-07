@@ -8,6 +8,36 @@ class APIClient {
         this.onCloseCallback = null;
         this.reconnectTimer = null;
         this.isExplicitDisconnect = false;
+        this.adminKey = null;
+        this.accessRecoveryUsed = false;
+    }
+
+    getAdminHeaders() {
+        if (!this.adminKey) {
+            const key = window.prompt("Nhập khóa quản trị (INGESTION_ADMIN_KEY):");
+            if (!key || !key.trim()) {
+                throw new Error("Cần khóa quản trị để thực hiện thao tác này.");
+            }
+            // Chỉ giữ trong bộ nhớ của trang, không lưu xuống trình duyệt.
+            this.adminKey = key.trim();
+        }
+        return { 'X-Admin-Key': this.adminKey };
+    }
+
+    clearRejectedAdminKey(res) {
+        if (res.status === 401 || res.status === 403) {
+            this.adminKey = null;
+        }
+    }
+
+    async recoverSessionAccess() {
+        if (this.accessRecoveryUsed) {
+            console.error("[WS] Vẫn bị từ chối quyền truy cập phiên sau khi khởi tạo lại.");
+            return;
+        }
+        this.accessRecoveryUsed = true;
+        const sessionId = await this.bootstrapSession();
+        if (sessionId) this.connectWebSocket();
     }
 
     async bootstrapSession() {
@@ -51,9 +81,10 @@ class APIClient {
         try {
             const res = await fetch('/api/domains/create', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...this.getAdminHeaders() },
                 body: JSON.stringify(domainData)
             });
+            this.clearRejectedAdminKey(res);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.detail || "Không thể tạo domain mới");
@@ -69,8 +100,10 @@ class APIClient {
         try {
             const res = await fetch(`/api/domains/${domainId}/ingest`, {
                 method: 'POST',
+                headers: this.getAdminHeaders(),
                 body: formData
             });
+            this.clearRejectedAdminKey(res);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.detail || "Không thể nạp dữ liệu vào domain");
@@ -85,8 +118,10 @@ class APIClient {
     async deleteDomain(domainId) {
         try {
             const res = await fetch(`/api/domains/${encodeURIComponent(domainId)}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getAdminHeaders()
             });
+            this.clearRejectedAdminKey(res);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.detail || "Không thể xóa domain");
@@ -190,6 +225,7 @@ class APIClient {
             this.socket.onmessage = (event) => {
                 try {
                     const payload = JSON.parse(event.data);
+                    if (payload.type === 'connected') this.accessRecoveryUsed = false;
                     if (this.onMessageCallback) this.onMessageCallback(payload);
                 } catch (e) {
                     console.error("Error parsing WS message", e);
@@ -207,6 +243,12 @@ class APIClient {
                 if (badge) badge.style.color = 'var(--text-muted)';
 
                 if (this.onCloseCallback) this.onCloseCallback(event);
+
+                // 4403: phiên không thuộc người dùng, reconnect cùng phiên sẽ lặp vô hạn
+                if (event.code === 4403) {
+                    this.recoverSessionAccess();
+                    return;
+                }
 
                 // Auto-reconnect nếu không phải do người dùng ngắt kết nối chủ động
                 if (!this.isExplicitDisconnect) {

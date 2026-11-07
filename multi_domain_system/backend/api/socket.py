@@ -1,5 +1,4 @@
 import json
-import asyncio
 import uuid
 from sqlalchemy import select
 
@@ -16,13 +15,21 @@ from fastapi.encoders import jsonable_encoder
 
 from backend.services.context_service import (
     get_context,
-    update_memory,
+    schedule_memory_update,
 )
 from backend.services.ai_service import (
     generate_answer,
     generate_answer_stream,
 )
 from backend.services.queue_service import queue_manager
+from backend.session_access import (
+    COOKIE_SECURE,
+    SessionAccessDenied,
+    assert_session_access,
+    parse_user_cookie,
+)
+from backend.rate_limit import chat_rate_limiter
+from backend.schemas.chat import MAX_QUERY_CHARS
 
 
 
@@ -107,12 +114,8 @@ async def bootstrap_session(
     Nếu đã có thì giữ nguyên.
     """
 
-    user_id = request.cookies.get(USER_COOKIE_NAME)
-    if user_id:
-        try:
-            uuid.UUID(user_id)
-        except ValueError:
-            user_id = None
+    parsed_user_id = parse_user_cookie(request.cookies.get(USER_COOKIE_NAME))
+    user_id = str(parsed_user_id) if parsed_user_id else None
 
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -120,7 +123,7 @@ async def bootstrap_session(
             key=USER_COOKIE_NAME,
             value=user_id,
             httponly=True,
-            secure=False,
+            secure=COOKIE_SECURE,
             samesite="lax",
             max_age=USER_COOKIE_MAX_AGE,
         )
@@ -140,7 +143,7 @@ async def bootstrap_session(
             key=COOKIE_NAME,
             value=session_id,
             httponly=True,
-            secure=False,
+            secure=COOKIE_SECURE,
             samesite="lax",
             max_age=COOKIE_MAX_AGE,
         )
@@ -149,7 +152,22 @@ async def bootstrap_session(
     else:
         created = False
 
-    await ensure_anonymous_session(session_id, user_id=user_id)
+    _, owner_id = await ensure_anonymous_session(session_id, user_id=user_id)
+
+    if owner_id != user_id:
+        # Cookie session không thuộc user hiện tại (cookie user đã hết hạn
+        # hoặc bị sửa): cấp phiên mới thay vì giữ quyền trên phiên đó.
+        session_id = str(uuid.uuid4())
+        await ensure_anonymous_session(session_id, user_id=user_id)
+        response.set_cookie(
+            key=COOKIE_NAME,
+            value=session_id,
+            httponly=True,
+            secure=COOKIE_SECURE,
+            samesite="lax",
+            max_age=COOKIE_MAX_AGE,
+        )
+        created = True
 
     return {
         "session_id": session_id,
@@ -202,6 +220,20 @@ async def websocket_chat(
         await websocket.close(
             code=4400,
             reason="Invalid session_id cookie",
+        )
+        return
+
+    try:
+        await assert_session_access(
+            session_id,
+            websocket.cookies.get(USER_COOKIE_NAME),
+        )
+    except SessionAccessDenied:
+        # Phải accept trước thì trình duyệt mới nhận được mã 4403.
+        await websocket.accept()
+        await websocket.close(
+            code=4403,
+            reason="Session access denied",
         )
         return
 
@@ -258,6 +290,26 @@ async def websocket_chat(
                     },
                 })
 
+                continue
+
+            if not chat_rate_limiter.allow(websocket.client.host if websocket.client else "unknown"):
+                await _send_json_safe(websocket, {
+                    "type": "error",
+                    "data": {
+                        "code": 429,
+                        "message": "Bạn gửi quá nhiều câu hỏi. Vui lòng thử lại sau ít phút.",
+                    },
+                })
+                continue
+
+            if len(query) > MAX_QUERY_CHARS:
+                await _send_json_safe(websocket, {
+                    "type": "error",
+                    "data": {
+                        "code": 413,
+                        "message": f"Câu hỏi vượt quá {MAX_QUERY_CHARS} ký tự.",
+                    },
+                })
                 continue
 
             # Queue giống SSE cũ
@@ -345,12 +397,10 @@ async def websocket_chat(
                                         })
                                     )
 
-                                asyncio.create_task(
-                                    update_memory(
-                                        session_id=session_id,
-                                        query=query,
-                                        final_result=final_result_data,
-                                    )
+                                schedule_memory_update(
+                                    session_id=session_id,
+                                    query=query,
+                                    final_result=final_result_data,
                                 )
                                 print(f"[WS QUEUE] session={session_id} DONE (Multi)")
                                 continue
@@ -437,12 +487,10 @@ async def websocket_chat(
                         )
 
                         # Update memory theo session_id
-                        asyncio.create_task(
-                            update_memory(
-                                session_id=session_id,
-                                query=query,
-                                final_result=result,
-                            )
+                        schedule_memory_update(
+                            session_id=session_id,
+                            query=query,
+                            final_result=result,
                         )
 
                         print(
@@ -494,12 +542,10 @@ async def websocket_chat(
 
                     # Truyền đúng session_id
                     # xuống Long-term Memory
-                    asyncio.create_task(
-                        update_memory(
-                            session_id=session_id,
-                            query=query,
-                            final_result=result,
-                        )
+                    schedule_memory_update(
+                        session_id=session_id,
+                        query=query,
+                        final_result=result,
                     )
 
                     print(

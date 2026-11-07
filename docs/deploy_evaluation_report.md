@@ -159,7 +159,7 @@ Hệ thống sử dụng:
 - AsyncSession;
 - asyncpg.
 
-Trong môi trường triển khai thực tế có thể sử dụng PostgreSQL trên cloud như Supabase thông qua cùng cấu trúc `DATABASE_URL`.
+Trong môi trường triển khai thực tế có thể sử dụng PostgreSQL trên cloud thông qua cùng cấu trúc `DATABASE_URL`.
 
 ---
 

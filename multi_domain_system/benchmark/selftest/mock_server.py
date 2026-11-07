@@ -27,7 +27,7 @@ DISCLAIMER = "Đây là thông tin tư vấn tự động. Vui lòng liên hệ 
 
 def load():
     for dom, p in [("administrative_procedures", "domains/administrative_procedures/golden_set.json"),
-                   ("tourism_demo", "domains/tourism_demo/golden_set.json")]:
+                   ("cuisine_demo", "domains/cuisine_demo/golden_set.json")]:
         for c in json.loads((ROOT / p).read_text(encoding="utf-8")):
             d = c.get("expected_document_id") or []
             d = [d] if isinstance(d, str) else d
@@ -52,7 +52,7 @@ def compute(domain, q):
         return "Hồ sơ kết hôn gồm tờ khai, CCCD... [EC_001]\n\n" + DISCLAIMER, ["PROC_004"], False, "strict"
     if "giá vé" in ql and "hạ long" in ql:
         return "Vé tuyến 1 là 290.000đ nhé bạn!", ["TD001"], False, "friendly"
-    if domain == "tourism_demo":
+    if domain == "cuisine_demo":
         return "Xin lỗi bạn, mình chưa có thông tin về địa điểm này nhé!", [], False, "friendly"
     return "Tôi chưa có đủ thông tin để trả lời câu hỏi này.\n\n" + DISCLAIMER, [], False, "strict"
 

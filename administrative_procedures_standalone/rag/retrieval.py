@@ -81,8 +81,8 @@ def close_vector_store():
     if _qdrant_client is not None:
         try:
             _qdrant_client.close()
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[retrieval] Warning closing Qdrant client: {exc}")
         _qdrant_client = None
 
 
