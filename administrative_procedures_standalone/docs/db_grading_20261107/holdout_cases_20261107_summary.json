@@ -1,0 +1,15 @@
+{
+  "total": 60,
+  "counts": {
+    "LOT_NGOAI_PHAM_VI": 3,
+    "TU_CHOI_DUNG": 37,
+    "DUNG": 15,
+    "SAI": 3,
+    "TU_CHOI_NHAM": 2
+  },
+  "in_scope": 20,
+  "correct_pct": 75.0,
+  "out_of_scope": 40,
+  "correct_rejection_pct": 92.5,
+  "scope_note": "Đối chiếu với dữ liệu nguồn, không phải kiểm định pháp lý"
+}

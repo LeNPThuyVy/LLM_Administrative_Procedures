@@ -1,0 +1,14 @@
+{
+  "total": 100,
+  "counts": {
+    "DUNG": 90,
+    "THIEU": 4,
+    "TU_CHOI_NHAM": 1,
+    "TU_CHOI_DUNG": 5
+  },
+  "in_scope": 95,
+  "correct_pct": 94.7,
+  "out_of_scope": 5,
+  "correct_rejection_pct": 100.0,
+  "scope_note": "Đối chiếu với dữ liệu nguồn, không phải kiểm định pháp lý"
+}

@@ -22,19 +22,26 @@ class ChatRateLimiter:
     Bộ đếm nằm trong tiến trình, nên mỗi worker có giới hạn riêng.
     """
 
-    def __init__(self, clock=time.monotonic):
+    def __init__(
+        self,
+        clock=time.monotonic,
+        limit: int | None = None,
+        window_seconds: float = WINDOW_SECONDS,
+    ):
         self._clock = clock
+        self._limit = limit
+        self._window_seconds = window_seconds
         self._hits: dict[str, deque[float]] = defaultdict(deque)
 
     def allow(self, client_key: str) -> bool:
-        limit = _limit_per_minute()
+        limit = _limit_per_minute() if self._limit is None else self._limit
         if limit <= 0:
             return True
 
         now = self._clock()
         hits = self._hits[client_key]
 
-        while hits and now - hits[0] >= WINDOW_SECONDS:
+        while hits and now - hits[0] >= self._window_seconds:
             hits.popleft()
 
         if len(hits) >= limit:
@@ -54,7 +61,7 @@ class ChatRateLimiter:
         idle = [
             key
             for key, hits in self._hits.items()
-            if not hits or now - hits[-1] >= WINDOW_SECONDS
+            if not hits or now - hits[-1] >= self._window_seconds
         ]
         for key in idle:
             del self._hits[key]

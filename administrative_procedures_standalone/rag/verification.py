@@ -123,7 +123,8 @@ def _extract_numbers_from_text(text: str) -> set[str]:
     cleaned = re.sub(r'\bbước\s+\d+\b', ' ', cleaned, flags=re.IGNORECASE)
 
     # Find sequences of digits, possibly with separators
-    raw_nums = re.findall(r'\b\d+(?:[.,]\d+)*\b', cleaned)
+    # Không dùng \b ở cuối: "8.500đ" có chữ dính sau số, \b sẽ cắt còn "8".
+    raw_nums = re.findall(r'\b\d+(?:[.,]\d+)*(?!\d)', cleaned)
     normalized = set()
     for num_str in raw_nums:
         pure_digits = num_str.replace('.', '').replace(',', '')

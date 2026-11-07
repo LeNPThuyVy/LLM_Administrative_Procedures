@@ -1,11 +1,15 @@
-﻿import os
+﻿import asyncio
+import os
+import uuid
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException, UploadFile
 from starlette.datastructures import Headers
 
+import backend.admin_auth as admin_auth
 from backend.security import require_ingestion_admin
 import backend.upload_security as upload_security
 
@@ -14,41 +18,40 @@ import backend.upload_security as upload_security
 # LỖI 2 - Authentication / Authorization
 # ============================================================
 
-def test_admin_key_not_configured_returns_503(monkeypatch):
-    monkeypatch.delenv("INGESTION_ADMIN_KEY", raising=False)
+def admin_request(cookies):
+    return SimpleNamespace(state=SimpleNamespace(), cookies=cookies)
 
+
+def test_missing_admin_session_returns_401():
     with pytest.raises(HTTPException) as exc:
-        require_ingestion_admin(x_admin_key=None)
-
-    assert exc.value.status_code == 503
-
-
-def test_missing_admin_key_returns_401(monkeypatch):
-    monkeypatch.setenv("INGESTION_ADMIN_KEY", "server-secret")
-
-    with pytest.raises(HTTPException) as exc:
-        require_ingestion_admin(x_admin_key=None)
+        asyncio.run(require_ingestion_admin(admin_request({})))
 
     assert exc.value.status_code == 401
 
 
-def test_wrong_admin_key_returns_403(monkeypatch):
-    monkeypatch.setenv("INGESTION_ADMIN_KEY", "server-secret")
+def test_invalid_admin_session_returns_401(monkeypatch):
+    async def reject(_token):
+        return None
+
+    monkeypatch.setattr(admin_auth, "authenticate", reject)
+    request = admin_request({admin_auth.ADMIN_COOKIE_NAME: "sai"})
 
     with pytest.raises(HTTPException) as exc:
-        require_ingestion_admin(x_admin_key="wrong-secret")
+        asyncio.run(require_ingestion_admin(request))
 
-    assert exc.value.status_code == 403
+    assert exc.value.status_code == 401
 
 
-def test_correct_admin_key_is_accepted(monkeypatch):
-    monkeypatch.setenv("INGESTION_ADMIN_KEY", "server-secret")
+def test_valid_admin_session_is_accepted(monkeypatch):
+    admin = admin_auth.AdminIdentity(id=uuid.uuid4(), username="quantri")
 
-    result = require_ingestion_admin(
-        x_admin_key="server-secret"
-    )
+    async def accept(_token):
+        return admin
 
-    assert result is None
+    monkeypatch.setattr(admin_auth, "authenticate", accept)
+    request = admin_request({admin_auth.ADMIN_COOKIE_NAME: "dung"})
+
+    assert asyncio.run(require_ingestion_admin(request)) is admin
 
 
 # ============================================================

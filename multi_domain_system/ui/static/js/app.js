@@ -659,6 +659,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const btnAdminLogout = document.getElementById('btn-admin-logout');
+    if (btnAdminLogout) {
+        btnAdminLogout.addEventListener('click', async () => {
+            await api.adminLogout();
+            showToast("Đã đăng xuất quản trị");
+        });
+    }
+
     if (btnCloseIngestModal && ingestModal) {
         btnCloseIngestModal.addEventListener('click', () => {
             ingestModal.style.display = 'none';

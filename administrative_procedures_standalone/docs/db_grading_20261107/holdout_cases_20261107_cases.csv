@@ -1,0 +1,223 @@
+﻿id,verdict,reasons,grounded,completeness,expected_document_id,expected_field,question,answer
+HO_OOS_01,LOT_NGOAI_PHAM_VI,trả lời câu ngoài phạm vi,,,CLARIFY/NONE,,Thủ tục nhận con nuôi trong nước cần những giấy tờ gì?,"Tên: Thủ tục nhận cha mẹ con
+Thành phần hồ sơ:
+- Giấy xác nhận thông tin cư trú của Công an cấp (thay thế Hộ khẩu): 01 Bản photo (Xuất trình bản chính)
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu): 01 bản photo của người yêu cầu.
+- Tờ khai nhận cha, mẹ con (phải ghi ý kiến của người hiện đang là mẹ hoặc cha); “Tôi đồng ý cho Ông/Bà………..nhận bé………..là con.” Ký ghi rõ họ và tên.
+- Văn bản của cơ quan y tế, cơ quan giám định xác nhận quan hệ, cha, mẹ, con (bản chính) nếu có.
+- Cam kết con chung có ít nhất 02 người làm chứng về mối quan hệ cha, mẹ, con khi không có chứng cứ chứng minh quan hệ cha, mẹ, con theo quy định.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_OOS_02,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Xin cấp lại sổ hộ khẩu khi bị mất như thế nào?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_03,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Đăng ký tạm trú cho người thuê trọ cần gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_04,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Đăng ký nghĩa vụ quân sự lần đầu ở đâu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_05,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Thủ tục sáp nhập doanh nghiệp tư nhân như thế nào?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_06,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Đăng ký thành lập công ty TNHH một thành viên cần hồ sơ gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_07,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Xin giấy phép bán lẻ rượu cần điều kiện gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_08,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Thủ tục cấp thẻ bảo hiểm y tế cho trẻ dưới 6 tuổi?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_09,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Đăng ký sáng chế cho thiết bị mới làm thế nào?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_10,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Chuyển đổi mục đích sử dụng đất nông nghiệp sang đất ở cần gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_11,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Thủ tục tách thửa đất tốn bao nhiêu tiền?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_12,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Bồi thường khi nhà nước thu hồi đất được tính thế nào?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_13,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Xin giấy phép lao động cho người nước ngoài cần hồ sơ gì?,"Thủ tục hoặc thông tin bạn hỏi (hộ chiếu, visa, giấy phép lái xe, thuế, v.v.) hiện không thuộc thẩm quyền giải quyết của bộ phận một cửa cấp xã/phường hoặc không có trong cơ sở dữ liệu.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_OOS_14,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Thủ tục nhập quốc tịch Việt Nam gồm những bước nào?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_15,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Xin thôi quốc tịch Việt Nam nộp hồ sơ ở đâu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_16,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Đăng ký xe máy mới mua ở đâu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_17,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Đóng thuế đất phi nông nghiệp hằng năm ở đâu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_18,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Cách tính thuế môn bài năm nay như thế nào?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_19,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Thủ tục cấp phép tổ chức biểu diễn nghệ thuật?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_20,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Thành lập trường mầm non tư thục cần điều kiện gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_21,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Bài thuốc nam nào chữa đau dạ dày hiệu quả?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_22,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Tỷ số trận Việt Nam gặp Thái Lan tối qua là bao nhiêu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_23,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Viết giúp tôi đoạn code Python đọc file CSV.,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_24,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Làm bánh flan cần những nguyên liệu gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_25,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Giá bitcoin hôm nay bao nhiêu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_26,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Công thức tính diện tích hình tròn là gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_27,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Mua vé máy bay đi Đà Nẵng ở đâu rẻ nhất?,Hiện tại hệ thống chỉ hỗ trợ tra cứu các thủ tục hành chính công áp dụng tại Thành phố Hồ Chí Minh.
+HO_OOS_28,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Nên đầu tư chứng khoán hay gửi tiết kiệm?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_29,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Tư vấn giúp tôi laptop nào phù hợp cho sinh viên?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_30,LOT_NGOAI_PHAM_VI,trả lời câu ngoài phạm vi,,,CLARIFY/NONE,,Cách chăm sóc mèo con mới đẻ?,"Thủ tục trên đều liên quan đến việc thực hiện, điều chỉnh hoặc thôi hưởng trợ cấp xã hội hàng tháng, hỗ trợ kinh phí chăm sóc và nuôi dưỡng người bảo trợ xã hội.
+Bạn muốn hỏi thêm về thông tin thủ tục nào không?
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_OOS_31,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Điểm chuẩn đại học Bách khoa năm ngoái là bao nhiêu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_32,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Lịch cúp nước quận 7 tuần này thế nào?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_33,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Bệnh tiểu đường nên kiêng ăn gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_34,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Mai Sài Gòn có mưa không?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_35,LOT_NGOAI_PHAM_VI,trả lời câu ngoài phạm vi,,,CLARIFY/NONE,,Kể cho tôi một câu chuyện cười đi.,"Xin lỗi vì đã gây hiểu lầm, nhưng bạn đã yêu cầu tôi trả lời về thủ tục hành chính.
+Tôi sẽ đáp ứng yêu cầu của bạn ngay sau đây:
+[EC_002] [TỔNG QUAN] Chuyển trường đối với học sinh THCS
+Tên thủ tục: Chuyển trường đối với học sinh THCS
+- Hình thức nộp: Trực tiếp
+- Thành phần hồ sơ:
+- Đơn xin chuyển trường (có xác nhận của trường đi)
+- Giấy giới thiệu của phường đi
+- Giấy giới thiệu của trường đi
+- Giấy xác nhận nơi cư trú hoặc giấy xác nhận mã định danh (bản photo)
+- Bản sao khai sinh.
+- Học bạ (bản photo); khi đến nhận giấy giới thiệu thì mang bản chính.
+- Các giấy tờ khác liên quan (nếu có)
+- Lệ phí: không có
+- Thời gian giải quyết: 3–5 ngày làm việc kể từ khi nhận đủ hồ sơ hợp lệ.
+- Địa chỉ cơ quan tiếp nhận hồ sơ: Trung tâm Phục vụ hành chính công Phường Tăng Nhơn Phú, Địa chỉ: 29 Lê Văn Việt, Phường Tăng Nhơn Phú, Thành phố Hồ Chí Minh
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_OOS_36,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Dịch câu này sang tiếng Anh giúp tôi: tôi yêu Việt Nam.,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_37,TU_CHOI_DUNG,,,,CLARIFY/NONE,,thu tuc xin cap the tam tru cho nguoi nuoc ngoai,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_38,TU_CHOI_DUNG,,,,CLARIFY/NONE,,dang ky hien tang noi tang sau khi mat o dau,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_39,TU_CHOI_DUNG,,,,CLARIFY/NONE,,xin phep bay flycam quay phim can giay to gi,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_OOS_40,TU_CHOI_DUNG,,,,CLARIFY/NONE,,cach dang ky mo tai khoan ngan hang cho tre em,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_IN_01,DUNG,,1.0,1.0,PROC_002,required_documents,be moi sinh thi lam giay khai sinh can gi,"Tên: Thủ tục đăng ký khai sinh
+Thành phần hồ sơ:
+- Giấy chứng sinh (Bản chính)
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) của
+2 vợ chồng (01 bản photo)
+- Giấy chứng nhận kết hôn (01 bản photo)
+(xuất trình bản chính để đối chiếu) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_02,DUNG,,1.0,1.0,PROC_003,required_documents,bố tôi mất rồi thì đi báo tử cần mang giấy tờ gì,"Tên: Thủ tục đăng ký khai tử
+Thành phần hồ sơ:
+- Chứng minh nhân dân hoặc căn cước công dân, hộ chiếu của người chết và người yêu cầu: 01 bản photo (có mối quan hệ nhân thân với người đã chết).
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) 01 bản photo của hai người làm chứng (Lưu ý: vợ; chồng; con không được làm chứng trong đơn)
+Trường hợp: người đã chết có hộ khẩu thường trú tại địa phương nhưng đã chết và được tổ chức tang lễ ở nơi khác thì phải đăng ký giấy báo tử tại UBND phường, xã nơi tổ chức tang lễ.
+Nộp giấy báo tử (bản chính) để đăng ký khai tử tại UBND phường, xã nơi thường trú.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_03,SAI,sai thủ tục: ['PROC_004']; số không có trong DB: ['15'],1.0,0.312,PROC_006,required_documents,cưới vợ người Hàn thì đăng ký kết hôn cần giấy gì,"Bạn muốn hỏi thêm về thông tin thủ tục nào không?
+Tên thủ tục: Thủ tục đăng ký kết hôn
+- Hình thức nộp: Cả hai
+- Thành phần hồ sơ:
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) của bên nam và bên nữ 01 bản photo (Xuất trình bản chính).
+- Trường hợp bên nam hoặc bên nữ thường trú tại địa phương (nếu đã ly hôn thì kèm bản photo của quyết định ly hôn, nếu có chồng/vợ đã chết thì cung cấp đăng ký khai tử của chồng/vợ) không cần xác nhận tình trạng hôn nhân để đăng ký kết hôn.
+- Giấy tờ chứng minh thông tin cư trú: thông báo đăng ký tạm trú (do công an phường cấp).
+- Lệ phí: Bản chính: Không thu phí Bản sao: 8.000đ/bản
+- Thời gian giải quyết: Trong ngày làm việc (nếu nhận hồ sơ sau 15 giờ thì trả kết quả vào ngày hôm sau).
+- Địa chỉ cơ quan tiếp nhận hồ sơ: Trung tâm Phục vụ hành chính công phường Tăng Nhơn Phú
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_04,SAI,sai thủ tục: ['PROC_013']; nội dung ngoài DB: 75% dòng có căn cứ,0.75,0.125,PROC_001,required_documents,muốn xin giấy độc thân thì cần chuẩn bị gì,"Tên: Cấp giấy xác nhận thân nhân của người có công
+Thành phần hồ sơ:
+Đơn đề nghị cấp giấy xác nhận thân nhân của người có công.
+Bản sao được chứng thực từ một trong các giấy tờ sau:
++ Giấy chứng nhận người có công hoặc Kỷ niệm chương người hoạt động cách mạng, kháng chiến, bảo vệ Tổ quốc, làm nghĩa vụ quốc tế bị địch bắt tù, đày; Huân chương, Huy chương kháng chiến; Huân chương, Huy chương chiến thắng; kỷ niệm chương “Tổ quốc ghi công”; bằng “Có công với nước”.
++ Giấy tờ do cơ quan có thẩm quyền ban hành, xác nhận mối quan hệ với người có công gồm: căn cước công dân.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_05,DUNG,,1.0,1.0,PROC_003,processing_time,làm giấy khai tử mất mấy ngày,"Tên: Thủ tục đăng ký khai tử
+Thành phần hồ sơ:
+- Chứng minh nhân dân hoặc căn cước công dân, hộ chiếu của người chết và người yêu cầu: 01 bản photo (có mối quan hệ nhân thân với người đã chết).
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) 01 bản photo của hai người làm chứng (Lưu ý: vợ; chồng; con không được làm chứng trong đơn)
+Trường hợp: người đã chết có hộ khẩu thường trú tại địa phương nhưng đã chết và được tổ chức tang lễ ở nơi khác thì phải đăng ký giấy báo tử tại UBND phường, xã nơi tổ chức tang lễ.
+Nộp giấy báo tử (bản chính) để đăng ký khai tử tại UBND phường, xã nơi thường trú.
+Tên: Thủ tục đăng ký khai tử
+Thời gian giải quyết:
+trong ngày làm việc (nếu nhận hồ sơ sau 15 giờ thì trả kết quả vào hôm sau) [EC_002]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_06,DUNG,,1.0,1.0,PROC_004,fee,phí đăng ký kết hôn hết bao nhiêu tiền,"Tên: Thủ tục đăng ký kết hôn
+Lệ phí:
+Bản chính: Không thu phí Bản sao: 8.000đ/bản [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_07,DUNG,,1.0,0.9,"PROC_025, PROC_027",required_documents,xin phep xay nha cap 4 can ho so gi,"Tên: CẤP GIẤY PHÉP XÂY DỰNG
+Thành phần hồ sơ:
+1. Thành phần hồ sơ cấp giấy phép xây dựng, giấp phép sửa chữa cải tạo nhà ở riêng lẻ (tất cả hồ sơ đều phải sao y điện tử trừ bản vẽ thiết kế xây dựng và đơn đề nghị cấp phép xây dựng) – Thời gian giải quyết 20 ngày đối với công trình và 15 ngày đối với nhà ở riêng lẻ.
+- Đơn đề nghị cấp giấy phép xây dựng, sửa chữa, cải tạo công trình theo Mẫu số 1 Phụ lục số II Nghị định số 175/2024/NĐ-CP ngày 30/12/2024 của Chính phủ.
+- Một trong những giấy tờ hợp pháp về đất đai chứng minh sự phù hợp mục đích sử dụng đất và sở hữu công trình để cấp phép xây dựng theo quy định tại Điều 53 của Nghị định số 175/2024/NĐ-CP. Trường hợp giấy chứng nhận cũ không có tọa độ theo tài liệu 02/CT-UB phải có bản vẽ hiện trạng có duyệt kiểm định kèm theo.
+- Bản vẽ thiết kế xây dựng.
+- Cam kết đảm bảo an toàn cho các công trình liền kề (có chứng thực chữ ký).
+- Cam kết tháo dỡ toàn bộ nhà cũ trước khi xây dựng công trình theo giấy phép xây dựng (có chứng thực chữ ký) – áp dụng đối với thửa đất có nhà hiện hữu.
+- Hồ sơ năng lực của đơn vị tư vấn thiết kế.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_08,DUNG,,1.0,1.0,PROC_036,required_documents,mo tiem tap hoa nho thi dang ky ho kinh doanh can gi,"Tên: Thủ tục Đăng ký thành lập hộ kinh doanh
+Thành phần hồ sơ:
+1. Giấy đề nghị đăng ký hộ kinh doanh
+2. Bản sao văn bản ủy quyền của thành viên hộ gia đình cho một thành viên làm chủ hộ kinh doanh đối với trường hợp hộ kinh doanh do các thành viên hộ gia đình đăng ký thành lập.
+Văn bản ủy quyền này phải được công chứng hoặc chứng thực theo quy định của pháp luật [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_09,SAI,sai thủ tục: ['PROC_036']; nội dung ngoài DB: 50% dòng có căn cứ,0.5,0.0,PROC_039,required_documents,muốn đóng cửa hộ kinh doanh luôn thì cần hồ sơ gì,"Tên: Thủ tục Đăng ký thành lập hộ kinh doanh
+Thành phần hồ sơ:
+1. Giấy đề nghị đăng ký hộ kinh doanh
+2. Bản sao văn bản ủy quyền của thành viên hộ gia đình cho một thành viên làm chủ hộ kinh doanh đối với trường hợp hộ kinh doanh do các thành viên hộ gia đình đăng ký thành lập.
+Văn bản ủy quyền này phải được công chứng hoặc chứng thực theo quy định của pháp luật [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_10,DUNG,,1.0,1.0,PROC_040,required_documents,"tôi làm mất giấy chứng nhận hộ kinh doanh, xin cấp lại cần gì","Tên: Cấp lại Giấy chứng nhận đăng ký hộ kinh doanh
+Thành phần hồ sơ:
+Giấy đề nghị cấp lại Giấy chứng nhận đăng ký hộ kinh doanh [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_11,DUNG,,1.0,1.0,PROC_038,,tạm nghỉ bán hàng vài tháng thì hộ kinh doanh phải báo thế nào,"Tên thủ tục: Tạm ngừng kinh doanh/tiếp tục kinh doanh trước thời hạn đã thông báo của hộ kinh doanh
+- Hình thức nộp: Trực tuyến
+- Thành phần hồ sơ: Giấy đề nghị đăng ký tạm ngừng kinh doanh/tiếp tục kinh doanh trước thời hạn đã đăng ký
+- Lệ phí: 0
+- Thời gian giải quyết: 03 ngày làm việc
+- Địa chỉ cơ quan tiếp nhận hồ sơ: TTPVHCC phường Tăng Nhơn Phú
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_12,TU_CHOI_NHAM,từ chối câu hợp lệ,,,PROC_029,required_documents,con học lớp 7 chuyển sang trường khác cần giấy tờ gì,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+HO_IN_13,DUNG,,1.0,1.0,PROC_033,processing_time,xin số nhà mới mất bao lâu,"Tên: HỒ SƠ CẤP SỐ NHÀ
+Thời gian giải quyết:
+theo quy định [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_14,DUNG,,1.0,1.0,PROC_042,submission_method,chứng thực di chúc thì làm ở đâu,"Tên: chứng thực chữ ký - chứng thực Hợp đồng giao dịch/Di chúc
+Hình thức và nơi nộp hồ sơ:
+Cả hai
+Việc chứng thực được thực hiện tại Trung tâm Phục vụ hành chính công, trừ trường hợp người yêu cầu chứng thực thuộc diện già yếu, không thể đi lại được, đang bị tạm giữ, tạm giam, thi hành án phạt tù hoặc có lý do chính đáng khác.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_15,TU_CHOI_NHAM,từ chối câu hợp lệ,,,PROC_031,required_documents,"đất chưa có sổ, đăng ký lần đầu cần gì","Thủ tục hoặc thông tin bạn hỏi (hộ chiếu, visa, giấy phép lái xe, thuế, v.v.) hiện không thuộc thẩm quyền giải quyết của bộ phận một cửa cấp xã/phường hoặc không có trong cơ sở dữ liệu.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_16,DUNG,,1.0,1.0,"PROC_008, PROC_020",required_documents,người già trên 75 tuổi nhận trợ cấp hưu trí xã hội cần hồ sơ gì,"Tên: Thực hiện, điều chỉnh, thôi hưởng trợ cấp hưu trí xã hội (Văn hóa - xã hội - 2)
+Thành phần hồ sơ:
+Bản chính Văn bản đề nghị hưởng trợ cấp hưu trí xã hội (theo Mẫu số 01 ban hành kèm theo Nghị định số 176/2025/NĐ-CP) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_17,DUNG,,1.0,1.0,"PROC_009, PROC_023",required_documents,xin giấy xác nhận khuyết tật cho con cần gì,"Tên: Xác định, xác định lại mức độ khuyết tật và cấp giấy xác nhận khuyết tật
+Thành phần hồ sơ:
+I.
+Đơn đề nghị xác định, xác định lại mức độ khuyết tật và cấp, cấp đổi, cấp lại giáy xác nhận khuyết tật (theo mẫu số 01 ban hành kèm theo Thông tư 01/2019/TT-BLĐTBXH)
+II.
+Đối với trường hợp xác định mức độ khuyết tật:
+1/ Các giấy tờ y tế chứng minh về khuyết tật: bệnh án, giấy tờ khám, điều trị, phẫu thuật hoặc các giấy tờ liên quan khác (nếu có).
+2/ Kết luận của Hội đồng Giám định y khoa về khả năng tự phục vụ, mức độ suy giảm khả năng lao động đối với trường hợp người khuyết tật đã có kết luận của Hội đồng giám định y khoa trước ngày 01/6/2012.
+III.
+Đối với trường hợp xác định lại khuyết tật: Các giấy tờ y tế chứng minh về khuyết tật: bệnh án, giấy tờ khám, điều trị, phẫu thuật, Giáy xác nhận khuyết tật cũ hoặc các giấy tờ liên quan khác (nếu có).
+IV.
+Các giấy tờ khác kèm theo (đối với trường hợp nộp trực tiếp) dùng đẻ đối chiếu các thông tin trên Tờ khai
+1/ Giấy xác nhận thông tin về cư trú hoặc Giấy thông báo số định danh cá nhân và thông tin trong Cơ sở dữ liệu quốc gia về dân cư; chứng minh thư nhân dân hoặc thẻ căn cước công dân của đối tượng, người đại diện hợp pháp.
+2/ Bản chính, bản sao hoặc bản chụp Giấy khai sinh đối với trẻ em.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_18,DUNG,,1.0,0.833,"PROC_010, PROC_016",required_documents,được hỗ trợ tiền hỏa táng thì làm hồ sơ gì,"Tên: Hỗ trợ chi phí khuyến khích hỏa táng
+Thành phần hồ sơ:
+1/ Bản chính tờ khai thông tin gia đình, cá nhân, tổ chức nhận chi phí hỗ trợ khuyến khích hỏa táng; 2/ Bản photo (kèm bản chính để đố chiếu) hoặc bản sao giấy chứng từ của người được hỏa táng; 3/Bản chính hóa đơn đã được thanh toán của cơ sở hỏa táng theo quy định của Bộ Tài chính; 4/ Đối với cá nhân thực hiện thủ tục thông qua ủy quyền hoặc đại diện tổ chức, đoàn thể thực hiện thủ tục: xuất trình văn bản ủy quyền hoặc giấy giới thiệu theo quy định.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_19,DUNG,,1.0,1.0,"PROC_028, PROC_032",required_documents,vay von quy viec lam de mo rong xuong can gi,"Tên: Vay vốn hỗ trợ tạo việc làm, duy trì và mở rộng việc làm từ Quỹ quốc gia về việc làm đối với cơ sở sản xuất, kinh doanh.
+Thành phần hồ sơ:
+Giấy đề nghị vay vốn
+Danh sách đề nghị vay vốn
+Biên bản họp [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+HO_IN_20,DUNG,,1.0,1.0,PROC_041,required_documents,xin học bổng chính sách cần những gì,"Tên: Thủ tục xét, cấp học bổng chính sách
+Thành phần hồ sơ:
+- Đơn đề nghị miễn, giảm học phí dành cho học sinh, sinh viên đang học tại các cơ sở giáo dục nghề nghiệp, giáo dục đại học (theo Phụ lục IV của Nghị định 238/2025/NĐ-CP);
+- Giấy xác nhận và dự toán kinh phí của các cơ sở giáo dục nghề nghiệp, giáo dục đại học (theo Phụ lục V, VI của Nghị định 238/2025/NĐ-CP);
+- Bản sao chứng thực văn bằng tốt nghiệp hoặc xác nhận tốt nghiệp tạm thời hoặc xác nhận học bạ việc hoàn thành chương trình trung học cơ sở (quy định đối tượng tại điểm 1.1 mục 1 Thông báo này)/trung học phổ thông (quy định đối tượng tại điểm 1.3 mục 1 Thông báo này) của hiệu trưởng xác nhận;
+- Bản sao chứng thực của cơ quan quản lý trong các trường hợp thuộc nhóm đối tượng tại điểm 1.4 mục 1 Thông báo này;
+- Hóa đơn hoặc biên lai đóng tiền học phí;
+- Bản sao Căn cước công dân của sinh viên;
+- Bản sao Căn cước công dân của cha/mẹ, người có tên trong Đơn đề nghị chi trả tiền miễn, giảm học phí;
+- Thông tin chuyển khoản (ATM) của người học hoặc tài khoản của cha hoặc mẹ hoặc người giám hộ;
+- Giấy xác nhận nơi cư trú của công an hoặc bản chụp màn hình thể hiện thông tin nơi cư trú trên ứng dụng VNeID (in kèm hồ sơ).
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."

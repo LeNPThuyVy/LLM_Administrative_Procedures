@@ -1,9 +1,11 @@
 from fastapi import HTTPException, status
 from starlette.datastructures import Headers
+from starlette.requests import HTTPConnection
 from starlette.responses import JSONResponse
 
+import backend.admin_auth as admin_auth
 import backend.upload_security as upload_security
-from backend.security import require_ingestion_admin
+from backend.security import resolve_admin
 
 
 DOMAIN_WRITE_PREFIX = "/api/domains/"
@@ -48,6 +50,8 @@ class DomainWriteGuardMiddleware:
     FastAPI parse form trước khi chạy dependency, nên riêng
     require_ingestion_admin không ngăn được upload từ người chưa xác thực.
     Dependency vẫn được giữ lại như một lớp bảo vệ thứ hai.
+
+    Mỗi thao tác đã xác thực được ghi audit kèm mã phản hồi cuối cùng.
     """
 
     def __init__(self, app):
@@ -62,10 +66,13 @@ class DomainWriteGuardMiddleware:
             await self.app(scope, receive, send)
             return
 
+        connection = HTTPConnection(scope)
         headers = Headers(scope=scope)
 
         try:
-            require_ingestion_admin(headers.get("x-admin-key"))
+            admin = await resolve_admin(
+                connection.cookies.get(admin_auth.ADMIN_COOKIE_NAME)
+            )
             _check_declared_length(headers.get("content-length"))
         except HTTPException as exc:
             response = JSONResponse(
@@ -75,7 +82,16 @@ class DomainWriteGuardMiddleware:
             await response(scope, receive, send)
             return
 
+        scope.setdefault("state", {})["admin"] = admin
+
         received_bytes = 0
+        response_status = None
+
+        async def audited_send(message):
+            nonlocal response_status
+            if message["type"] == "http.response.start":
+                response_status = message["status"]
+            await send(message)
 
         async def limited_receive():
             nonlocal received_bytes
@@ -89,4 +105,12 @@ class DomainWriteGuardMiddleware:
 
             return message
 
-        await self.app(scope, limited_receive, send)
+        try:
+            await self.app(scope, limited_receive, audited_send)
+        finally:
+            await admin_auth.record_audit(
+                f"{scope['method']} {scope['path']}",
+                admin.username,
+                connection.client.host if connection.client else "unknown",
+                response_status,
+            )

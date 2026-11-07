@@ -1,42 +1,41 @@
-﻿import os
-import secrets
-from typing import Optional
+from fastapi import HTTPException, Request, status
+from sqlalchemy.exc import SQLAlchemyError
 
-from fastapi import Header, HTTPException, status
-
-
-# Giá trị mẫu trong .env.example, được coi như chưa cấu hình.
-PLACEHOLDER_ADMIN_KEYS = {"change-this-to-a-long-random-secret"}
+import backend.admin_auth as admin_auth
 
 
-def require_ingestion_admin(
-    x_admin_key: Optional[str] = Header(default=None, alias="X-Admin-Key"),
-) -> None:
+async def resolve_admin(token: str | None) -> admin_auth.AdminIdentity:
+    """Trả về quản trị viên của phiên, hoặc từ chối request."""
+    try:
+        admin = await admin_auth.authenticate(token)
+    except (SQLAlchemyError, OSError) as exc:
+        print(f"[ADMIN] không kiểm tra được phiên đăng nhập: {exc!r}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Hệ thống đăng nhập tạm thời không khả dụng.",
+        ) from exc
+
+    if admin is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Cần đăng nhập quản trị để thực hiện thao tác này.",
+        )
+
+    return admin
+
+
+async def require_ingestion_admin(
+    request: Request,
+) -> admin_auth.AdminIdentity:
     """
     Bảo vệ các API có khả năng thay đổi domain/dataset.
 
-    INGESTION_ADMIN_KEY phải được cấu hình ở môi trường server.
-    Client quản trị gửi key qua header X-Admin-Key.
+    Middleware đã xác thực thì dùng lại kết quả, tránh truy vấn DB hai lần.
     """
-    expected_key = os.getenv("INGESTION_ADMIN_KEY", "").strip()
+    admin = getattr(request.state, "admin", None)
+    if admin is not None:
+        return admin
 
-    if not expected_key or expected_key in PLACEHOLDER_ADMIN_KEYS:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="API quản trị dữ liệu chưa được cấu hình khóa bảo mật.",
-        )
-
-    if not x_admin_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Thiếu khóa xác thực quản trị.",
-        )
-
-    if not secrets.compare_digest(
-        x_admin_key.encode("utf-8"),
-        expected_key.encode("utf-8"),
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Khóa xác thực quản trị không hợp lệ.",
-        )
+    return await resolve_admin(
+        request.cookies.get(admin_auth.ADMIN_COOKIE_NAME)
+    )

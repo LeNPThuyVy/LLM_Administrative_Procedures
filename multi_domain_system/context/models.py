@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     func
@@ -145,4 +147,92 @@ class LongTermMemory(Base):
     data: Mapped[dict] = mapped_column(
         JSONB,
         default=dict
+    )
+
+
+class AdminUser(Base):
+    __tablename__ = "admin_users"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    username: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        unique=True
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+
+class AdminSession(Base):
+    __tablename__ = "admin_sessions"
+
+    # Chỉ lưu hash: lộ DB không làm lộ token đang dùng.
+    token_hash: Mapped[str] = mapped_column(
+        String(64),
+        primary_key=True
+    )
+
+    admin_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("admin_users.id"),
+        nullable=False
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+
+class AdminAuditLog(Base):
+    __tablename__ = "admin_audit_log"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    action: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    username: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False
+    )
+
+    ip_address: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False
+    )
+
+    status_code: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
     )

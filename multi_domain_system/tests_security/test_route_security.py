@@ -15,6 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
+import backend.admin_auth as admin_auth
 import backend.api.chat as chat_api
 import backend.api.ingestion as ingestion_api
 import backend.api.sessions as sessions_api
@@ -25,7 +26,10 @@ from backend.schemas.chat import MAX_QUERY_CHARS
 import my_config
 from context.models import ChatSession, User
 
-ADMIN_KEY = "test-admin-key-for-route-tests"
+ADMIN_TOKEN = "test-admin-session-token"
+ADMIN_COOKIE = f"{admin_auth.ADMIN_COOKIE_NAME}={ADMIN_TOKEN}"
+ADMIN_HEADERS = {"Cookie": ADMIN_COOKIE}
+ADMIN_ASGI_HEADER = (b"cookie", ADMIN_COOKIE.encode())
 ALICE = uuid.uuid4()
 BOB = uuid.uuid4()
 ANONYMOUS = uuid.uuid5(uuid.NAMESPACE_DNS, "anonymous.local")
@@ -168,7 +172,16 @@ def chat_calls(monkeypatch):
 @pytest.fixture
 def admin_env(monkeypatch):
     """Không test nào được chạy pipeline thật, kể cả khi guard thất bại."""
-    monkeypatch.setenv("INGESTION_ADMIN_KEY", ADMIN_KEY)
+    async def fake_authenticate(token):
+        if token != ADMIN_TOKEN:
+            return None
+        return admin_auth.AdminIdentity(id=uuid.uuid4(), username="quantri")
+
+    async def fake_audit(*_args):
+        return None
+
+    monkeypatch.setattr(admin_auth, "authenticate", fake_authenticate)
+    monkeypatch.setattr(admin_auth, "record_audit", fake_audit)
 
     class ForbiddenPipeline:
         def __init__(self, *_args):
@@ -324,27 +337,24 @@ def test_domain_details_hides_internal_fields():
         } & set(item)
 
 
-def test_non_ascii_admin_key_is_forbidden_not_server_error(admin_env):
-    client = TestClient(main.app, raise_server_exceptions=False)
-
-    response = client.delete(
+def test_unknown_admin_cookie_is_rejected(admin_env):
+    response = make_client().delete(
         "/api/domains/khong_ton_tai",
-        headers={"X-Admin-Key": "caf\xe9".encode("latin-1")},
+        headers={"Cookie": f"{admin_auth.ADMIN_COOKIE_NAME}=sai"},
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
-def test_placeholder_admin_key_is_treated_as_unconfigured(monkeypatch):
-    placeholder = "change-this-to-a-long-random-secret"
-    monkeypatch.setenv("INGESTION_ADMIN_KEY", placeholder)
+def test_old_admin_key_header_no_longer_grants_access(admin_env, monkeypatch):
+    monkeypatch.setenv("INGESTION_ADMIN_KEY", "khoa-cu")
 
     response = make_client().delete(
         "/api/domains/khong_ton_tai",
-        headers={"X-Admin-Key": placeholder},
+        headers={"X-Admin-Key": "khoa-cu"},
     )
 
-    assert response.status_code == 503
+    assert response.status_code == 401
 
 
 # ============================================================
@@ -403,13 +413,13 @@ def test_unauthenticated_upload_is_rejected_before_reading_body(admin_env):
     assert call.body_reads == 0
 
 
-def test_wrong_key_upload_is_rejected_before_reading_body(admin_env):
+def test_wrong_session_upload_is_rejected_before_reading_body(admin_env):
     call = AsgiCall(
-        [MULTIPART, (b"x-admin-key", b"wrong")],
+        [MULTIPART, (b"cookie", b"khong-dung=1")],
         [b"--x\r\n" + b"a" * 1024],
     ).run()
 
-    assert call.status == 403
+    assert call.status == 401
     assert call.body_reads == 0
 
 
@@ -419,7 +429,7 @@ def test_declared_oversize_body_is_rejected_before_reading_body(admin_env):
     call = AsgiCall(
         [
             MULTIPART,
-            (b"x-admin-key", ADMIN_KEY.encode()),
+            ADMIN_ASGI_HEADER,
             (b"content-length", str(too_large).encode()),
         ],
         [b""],
@@ -440,7 +450,7 @@ def test_chunked_body_over_limit_is_stopped(admin_env, monkeypatch):
     )
 
     call = AsgiCall(
-        [MULTIPART, (b"x-admin-key", ADMIN_KEY.encode())],
+        [MULTIPART, ADMIN_ASGI_HEADER],
         [file_part, megabyte, megabyte, megabyte, megabyte],
     ).run()
 
@@ -452,7 +462,7 @@ def test_invalid_content_length_is_rejected(admin_env):
     call = AsgiCall(
         [
             MULTIPART,
-            (b"x-admin-key", ADMIN_KEY.encode()),
+            ADMIN_ASGI_HEADER,
             (b"content-length", b"abc"),
         ],
         [b""],
@@ -578,7 +588,7 @@ def domain_sandbox(tmp_path, monkeypatch, admin_env):
 def post_ingest(payload=b'[{"id": 1}]'):
     return TestClient(main.app).post(
         "/api/domains/demo/ingest",
-        headers={"X-Admin-Key": ADMIN_KEY},
+        headers=ADMIN_HEADERS,
         files={"file": ("data.json", io.BytesIO(payload), "application/json")},
     )
 
@@ -614,7 +624,7 @@ def test_failed_raw_json_ingest_restores_previous_input(domain_sandbox):
 
     response = TestClient(main.app).post(
         "/api/domains/demo/ingest",
-        headers={"X-Admin-Key": ADMIN_KEY},
+        headers=ADMIN_HEADERS,
         data={"raw_json": json.dumps([{"id": 1}])},
     )
 
@@ -628,7 +638,7 @@ def test_raw_json_over_limit_is_rejected(domain_sandbox, monkeypatch):
 
     response = TestClient(main.app).post(
         "/api/domains/demo/ingest",
-        headers={"X-Admin-Key": ADMIN_KEY},
+        headers=ADMIN_HEADERS,
         data={"raw_json": json.dumps([{"id": 1, "title": "dài hơn 5 byte"}])},
     )
 
@@ -732,7 +742,7 @@ def test_delete_domain_removes_only_its_own_data(
 
     response = make_client().delete(
         f"/api/domains/{domain}",
-        headers={"X-Admin-Key": ADMIN_KEY},
+        headers=ADMIN_HEADERS,
     )
 
     assert response.status_code == 200

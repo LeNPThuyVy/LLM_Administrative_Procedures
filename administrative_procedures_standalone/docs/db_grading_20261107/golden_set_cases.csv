@@ -1,0 +1,740 @@
+﻿id,verdict,reasons,grounded,completeness,expected_document_id,expected_field,question,answer
+GS_001,DUNG,,1.0,1.0,PROC_001,required_documents,Tôi cần chuẩn bị những giấy tờ gì để xin xác nhận tình trạng hôn nhân?,"Tên: Thủ tục xác nhận tình trạng hôn nhân
+Thành phần hồ sơ:
+- Xuất trình giấy tờ chứng minh thông tin cư trú ( bản photo hộ khẩu bản chính nếu có, hoặc giấy xác nhận thông tin cư trú CT07 có mốc thời gian do Công an phường cấp)
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu):
+01 bản photo của người yêu cầu.
+Trường hợp chưa đăng ký kết hôn với ai và có hộ khẩu thường trú tại nhiều nơi: người yêu cầu phải về những nơi thường trú trước đây để xác nhận tình trạng hôn nhân giai đoạn nữ từ đủ 18 tuổi, nam từ đủ 20 tuổi.
+Nếu người yêu cầu không thể chứng minh tình trạng hôn nhân của mình thì UBND phường, xã nơi thường trú sẽ hỗ trợ xác minh.
+Sau thời hạn 20 ngày kể từ ngày gửi văn bản yêu cầu xác minh mà không nhận được văn bản trả lời, thì UBND phường, xã nơi thường trú cho phép người yêu cầu có văn bản cam đoan về tình trạng hôn nhân của mình và tiếp tục giải quyết hồ sơ theo quy định.
+Trường hợp đã ly hôn thì kèm Quyết định ly hôn.
+Trường hợp vợ hoặc chồng đã chết thì kèm trích lục khai tử [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_002,DUNG,,1.0,1.0,PROC_001,processing_time,Xác nhận tình trạng hôn nhân mất bao lâu?,"Tên: Thủ tục xác nhận tình trạng hôn nhân
+Thời gian giải quyết:
+Trong 03 ngày làm việc (nếu nhận hồ sơ sau 15 giờ thì trả kết quả vào ngày hôm sau) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_003,DUNG,,1.0,1.0,PROC_002,required_documents,Đăng ký khai sinh cần những hồ sơ gì?,"Tên: Thủ tục đăng ký khai sinh
+Thành phần hồ sơ:
+- Giấy chứng sinh (Bản chính)
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) của
+2 vợ chồng (01 bản photo)
+- Giấy chứng nhận kết hôn (01 bản photo)
+(xuất trình bản chính để đối chiếu) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_004,DUNG,,1.0,1.0,PROC_002,fee,Lệ phí đăng ký khai sinh là bao nhiêu?,"Tên: Thủ tục đăng ký khai sinh
+Lệ phí:
+Bản chính: Không thu phí Bản sao: 8.000đ/bản [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_005,DUNG,,1.0,1.0,PROC_003,required_documents,Tôi đăng ký khai tử thì cần chuẩn bị giấy tờ nào?,"Tên: Thủ tục đăng ký khai tử
+Thành phần hồ sơ:
+- Chứng minh nhân dân hoặc căn cước công dân, hộ chiếu của người chết và người yêu cầu: 01 bản photo (có mối quan hệ nhân thân với người đã chết).
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) 01 bản photo của hai người làm chứng (Lưu ý: vợ; chồng; con không được làm chứng trong đơn)
+Trường hợp: người đã chết có hộ khẩu thường trú tại địa phương nhưng đã chết và được tổ chức tang lễ ở nơi khác thì phải đăng ký giấy báo tử tại UBND phường, xã nơi tổ chức tang lễ.
+Nộp giấy báo tử (bản chính) để đăng ký khai tử tại UBND phường, xã nơi thường trú.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_006,DUNG,,1.0,1.0,PROC_003,processing_time,Khai tử được giải quyết trong bao lâu?,"Tên: Thủ tục đăng ký khai tử
+Thời gian giải quyết:
+trong ngày làm việc (nếu nhận hồ sơ sau 15 giờ thì trả kết quả vào hôm sau) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_007,DUNG,,1.0,1.0,PROC_004,required_documents,Đăng ký kết hôn cần hồ sơ gì?,"Tên: Thủ tục đăng ký kết hôn
+Thành phần hồ sơ:
+Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) của bên nam và bên nữ 01 bản photo (Xuất trình bản chính).
+Trường hợp bên nam hoặc bên nữ thường trú tại địa phương (nếu đã ly hôn thì kèm bản photo của quyết định ly hôn, nếu có chồng/vợ đã chết thì cung cấp đăng ký khai tử của chồng/vợ) không cần xác nhận tình trạng hôn nhân để đăng ký kết hôn.
+Giấy tờ chứng minh thông tin cư trú: thông báo đăng ký tạm trú (do công an phường cấp).
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_008,DUNG,,1.0,1.0,PROC_004,fee,Đăng ký kết hôn có mất phí không?,"Tên: Thủ tục đăng ký kết hôn
+Lệ phí:
+Bản chính: Không thu phí Bản sao: 8.000đ/bản [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_009,DUNG,,1.0,1.0,PROC_005,processing_time,Thủ tục nhận cha mẹ con mất bao lâu?,"Tên: Thủ tục nhận cha mẹ con
+Thời gian giải quyết:
+Trong 07 ngày làm việc.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_010,DUNG,,1.0,1.0,PROC_005,required_documents,Hồ sơ nhận cha mẹ con gồm những gì?,"Tên: Thủ tục nhận cha mẹ con
+Thành phần hồ sơ:
+- Giấy xác nhận thông tin cư trú của Công an cấp (thay thế Hộ khẩu): 01 Bản photo (Xuất trình bản chính)
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu): 01 bản photo của người yêu cầu.
+- Tờ khai nhận cha, mẹ con (phải ghi ý kiến của người hiện đang là mẹ hoặc cha); “Tôi đồng ý cho Ông/Bà………..nhận bé………..là con.” Ký ghi rõ họ và tên.
+- Văn bản của cơ quan y tế, cơ quan giám định xác nhận quan hệ, cha, mẹ, con (bản chính) nếu có.
+- Cam kết con chung có ít nhất 02 người làm chứng về mối quan hệ cha, mẹ, con khi không có chứng cứ chứng minh quan hệ cha, mẹ, con theo quy định.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_011,DUNG,,1.0,0.938,PROC_006,required_documents,Kết hôn có yếu tố nước ngoài cần những giấy tờ nào?,"Tên thủ tục: Đăng ký kết hôn có yếu tố nước ngoài
+- Hình thức nộp: Cả hai
+- Thành phần hồ sơ:
+1. Tờ khai theo quy định (có mẫu sẵn)
+2. Giấy tờ tùy thân (CMND, CCCD, Hộ chiếu, thẻ ID ....).
+Phải dịch thuật sang tiếng Việt Nam nếu các giấy tờ trên do cơ quan nước ngoài cấp.
+3. Giấy tờ chứng minh nơi cư trú của người đăng ký kết hôn (Hộ khẩu, sổ tạm trú, Đơn xin xác nhận tạm trú, thẻ ID, bằng lái xe chứng minh nơi cư trú bên nước ngoài...) tại phường Tăng Nhơn Phú.
+Phải dịch thuật sang tiếng Việt Nam nếu các giấy tờ trên do cơ quan nước ngoài cấp.
+4. Giấy xác nhận của tổ chức y tế có thẩm quyền xác nhận các bên không mắc bệnh tâm thần (Khám ở Bệnh viện Tâm thần.
+Địa chỉ: 766 Võ Văn Kiệt, (Phường 1, Quận 5) nay là phường Chợ Quán, TP.HCM)
+5. Giấy tờ xác nhận tình trạng hôn nhân của vợ và chồng
++ Nếu có ly hôn phải nộp thêm bản quyết định ly hôn của Tòa án cấp
++ Tuyên thệ độc thân hoặc văn bản chứng minh độc thân của vợ hoặc chồng bên nước ngoài cấp.
+Khi về sử dụng tại Việt Nam phải được hợp pháp hóa lãnh sự văn bản đó và dịch thuật sang tiếng Việt Nam và được công chứng.
+6. Bản sao trích lục hộ tịch về việc đã ghi vào sổ ly hôn hoặc hủy việc kết hôn (nếu có)
+- Nếu là công dân nước ngoài (đã bỏ quốc tịch Việt Nam) thì không cẩn làm thủ tục ghi chú ly hôn
+- Nếu là công dân Việt Nam khi ly hôn ở nước ngoài thì phải làm thủ tục ghi chú ly hôn tại nơi đăng ký ly hôn hoặc nơi trước khi xuất cảnh
+Lệ phí: Bản chính: Không thu phí Bản sao: 8.000đ/bản sao
+Thời gian giải quyết: 5 ngày làm việc
+Địa chỉ cơ quan tiếp nhận hồ sơ: Trung tâm Phục vụ hành chính công phường Tăng Nhơn Phú
+Bạn muốn hỏi thêm về thông tin thủ tục nào không?
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_012,DUNG,,1.0,1.0,PROC_006,processing_time,Kết hôn với người nước ngoài giải quyết trong mấy ngày?,"Tên: Đăng ký kết hôn có yếu tố nước ngoài
+Thời gian giải quyết:
+5 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_013,DUNG,,1.0,1.0,PROC_007,required_documents,Đăng ký nội quy lao động cần hồ sơ gì?,"Tên: Nội quy lao động
+Thành phần hồ sơ:
+Công văn đăng ký; Biên bản họp thông qua nội quy lao động; Nội quy lao động [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_014,DUNG,,1.0,1.0,"PROC_020, PROC_008",required_documents,Hưởng trợ cấp hưu trí xã hội cần nộp giấy tờ gì?,"Tên: Thực hiện, điều chỉnh, thôi hưởng trợ cấp hưu trí xã hội (Văn hóa - xã hội - 1)
+Thành phần hồ sơ:
+(Mẫu 01) Văn bản đề nghị hưởng trợ cấp hưu trí xã hội, căn cước công dân [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_015,DUNG,,1.0,1.0,PROC_020,processing_time,Trợ cấp hưu trí xã hội xử lý trong bao lâu?,"Tên: Thực hiện, điều chỉnh, thôi hưởng trợ cấp hưu trí xã hội (Văn hóa - xã hội - 2)
+Thời gian giải quyết:
+Mười (10) ngày làm việc, kể từ ngày nhận đủ hồ sơ và hợp lệ [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_016,DUNG,,1.0,1.0,PROC_021,required_documents,Hỗ trợ mai táng cho người hưởng trợ cấp hưu trí xã hội cần hồ sơ gì?,"Tên: Hỗ trợ chi phí mai táng đối với đối tượng hưởng trợ cấp hưu trí xã hội
+Thành phần hồ sơ:
+Bản chính Tờ khai đề nghị hỗ trợ chi phí mai táng (theo Mẫu số 02 ban hành kèm theo Nghị định số 176/2025/NĐ-CP) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_017,DUNG,,1.0,1.0,PROC_021,processing_time,Hỗ trợ chi phí mai táng cho người hưởng hưu trí xã hội mất bao lâu?,"Tên: Hỗ trợ chi phí mai táng đối với đối tượng hưởng trợ cấp hưu trí xã hội
+Thời gian giải quyết:
+Ba (3) ngày làm việc, kể từ ngày nhận đủ hồ sơ và hợp lệ [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_018,DUNG,,1.0,1.0,PROC_023,required_documents,Hồ sơ xác định mức độ khuyết tật cần những gì?,"Tên: Xác định, xác định lại mức độ khuyết tật và cấp giấy xác nhận khuyết tật
+Thành phần hồ sơ:
+I.
+Đơn đề nghị xác định, xác định lại mức độ khuyết tật và cấp, cấp đổi, cấp lại giáy xác nhận khuyết tật (theo mẫu số 01 ban hành kèm theo Thông tư 01/2019/TT-BLĐTBXH)
+II.
+Đối với trường hợp xác định mức độ khuyết tật:
+1/ Các giấy tờ y tế chứng minh về khuyết tật: bệnh án, giấy tờ khám, điều trị, phẫu thuật hoặc các giấy tờ liên quan khác (nếu có).
+2/ Kết luận của Hội đồng Giám định y khoa về khả năng tự phục vụ, mức độ suy giảm khả năng lao động đối với trường hợp người khuyết tật đã có kết luận của Hội đồng giám định y khoa trước ngày 01/6/2012.
+III.
+Đối với trường hợp xác định lại khuyết tật: Các giấy tờ y tế chứng minh về khuyết tật: bệnh án, giấy tờ khám, điều trị, phẫu thuật, Giáy xác nhận khuyết tật cũ hoặc các giấy tờ liên quan khác (nếu có).
+IV.
+Các giấy tờ khác kèm theo (đối với trường hợp nộp trực tiếp) dùng đẻ đối chiếu các thông tin trên Tờ khai
+1/ Giấy xác nhận thông tin về cư trú hoặc Giấy thông báo số định danh cá nhân và thông tin trong Cơ sở dữ liệu quốc gia về dân cư; chứng minh thư nhân dân hoặc thẻ căn cước công dân của đối tượng, người đại diện hợp pháp.
+2/ Bản chính, bản sao hoặc bản chụp Giấy khai sinh đối với trẻ em.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_019,DUNG,,1.0,1.0,PROC_023,processing_time,Xác định mức độ khuyết tật mất bao nhiêu ngày?,"Tên: Xác định, xác định lại mức độ khuyết tật và cấp giấy xác nhận khuyết tật
+Thời gian giải quyết:
+25 ngày làm việc, kể từ ngày nhận đủ hồ sơ và hợp lệ; [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_020,DUNG,,1.0,1.0,PROC_027,required_documents,Tôi muốn cấp giấy phép xây dựng thì cần chuẩn bị hồ sơ gì?,"Tên: CẤP GIẤY PHÉP XÂY DỰNG
+Thành phần hồ sơ:
+1. Thành phần hồ sơ cấp giấy phép xây dựng, giấp phép sửa chữa cải tạo nhà ở riêng lẻ (tất cả hồ sơ đều phải sao y điện tử trừ bản vẽ thiết kế xây dựng và đơn đề nghị cấp phép xây dựng) – Thời gian giải quyết 20 ngày đối với công trình và 15 ngày đối với nhà ở riêng lẻ.
+- Đơn đề nghị cấp giấy phép xây dựng, sửa chữa, cải tạo công trình theo Mẫu số 1 Phụ lục số II Nghị định số 175/2024/NĐ-CP ngày 30/12/2024 của Chính phủ.
+- Một trong những giấy tờ hợp pháp về đất đai chứng minh sự phù hợp mục đích sử dụng đất và sở hữu công trình để cấp phép xây dựng theo quy định tại Điều 53 của Nghị định số 175/2024/NĐ-CP. Trường hợp giấy chứng nhận cũ không có tọa độ theo tài liệu 02/CT-UB phải có bản vẽ hiện trạng có duyệt kiểm định kèm theo.
+- Bản vẽ thiết kế xây dựng.
+- Cam kết đảm bảo an toàn cho các công trình liền kề (có chứng thực chữ ký).
+- Cam kết tháo dỡ toàn bộ nhà cũ trước khi xây dựng công trình theo giấy phép xây dựng (có chứng thực chữ ký) – áp dụng đối với thửa đất có nhà hiện hữu.
+- Hồ sơ năng lực của đơn vị tư vấn thiết kế.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_021,DUNG,,1.0,1.0,"['PROC_027', 'PROC_025']",submission_method,Nộp hồ sơ cấp giấy phép xây dựng bằng hình thức nào?,"Tên: HỒ SƠ CẤP GIẤY PHÉP XÂY DỰNG
+Hình thức và nơi nộp hồ sơ:
+Trực tuyến
+Bộ phận Tiếp nhận và Trả kết quả của cơ quan có thẩm quyền.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_022,DUNG,,1.0,1.0,PROC_026,required_documents,Xin thông tin quy hoạch cần giấy tờ gì?,"Tên: THÔNG TIN QUY HOẠCH
+Thành phần hồ sơ:
+1. Đơn đề nghị cung cấp thông tin quy hoạch;
+2. Giấy chứng nhận quyền sử dụng đất, quyền sở hữu nhà ở & tài sản gắn liền với đất hoặc giấy tờ pháp lý liên quan đến nhà đất;
+3. Trường hợp nộp thay (yêu cầu có giấy ủy quyền) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_023,DUNG,,1.0,1.0,PROC_026,processing_time,Thủ tục cung cấp thông tin quy hoạch mất bao lâu?,"Tên: THÔNG TIN QUY HOẠCH
+Thời gian giải quyết:
+10 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_024,DUNG,,1.0,1.0,PROC_032,required_documents,Cơ sở sản xuất kinh doanh vay vốn tạo việc làm cần hồ sơ gì?,"Tên: Vay vốn hỗ trợ tạo việc làm, duy trì và mở rộng việc làm từ Quỹ quốc gia về việc làm đối với cơ sở sản xuất, kinh doanh.
+Thành phần hồ sơ:
+Giấy đề nghị vay vốn
+Danh sách đề nghị vay vốn
+Biên bản họp [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_025,DUNG,,1.0,1.0,PROC_032,processing_time,Vay vốn tạo việc làm cho cơ sở sản xuất kinh doanh xử lý trong bao lâu?,"Tên: Vay vốn hỗ trợ tạo việc làm, duy trì và mở rộng việc làm từ Quỹ quốc gia về việc làm đối với cơ sở sản xuất, kinh doanh.
+Thời gian giải quyết:
+5 ngày [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_026,DUNG,,1.0,1.0,PROC_033,required_documents,Xin cấp số nhà cần chuẩn bị những giấy tờ gì?,"Tên: HỒ SƠ CẤP SỐ NHÀ
+Thành phần hồ sơ:
+* Đối với nhà chưa hoàn công:
+1-        Đơn xin cấp số nhà;
+2-        Giấy chứng nhận Quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất;
+3-        Giấy phép Xây dựng (nếu có) và bản vẽ thiết kế;
+4-        Biên bản lần cuối của Thanh tra xây dựng;
+5-        Hình ảnh hiện trạng căn nhà;
+6-        Căn cước công dân;
+7-        Giấy uỷ quyền (Nếu đi nộp thay)./.
+* Đối với nhà đã hoàn công:
+1- Đơn xin cấp số nhà;
+2- Giấy chứng nhận Quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất;
+3- Hình ảnh hiện trạng căn nhà;
+4- Căn cước công dân;
+5- Giấy uỷ quyền (Nếu đi nộp thay) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_027,DUNG,,1.0,1.0,PROC_034,required_documents,Hồ sơ xác nhận vị trí nhà đất gồm những gì?,"Tên: XÁC NHẬN VỊ TRÍ NHÀ - ĐẤT
+Thành phần hồ sơ:
+* Hồ sơ xác nhận vị trí nhà - đất:
+1. Đơn xin xác nhận vị trí nhà – đất;
+2. Giấy chứng nhận quyền sử dụng đất, Sổ hộ khẩu tại địa chỉ mong muốn xác nhận (nếu có);
+3. Các căn cứ tài liệu chứng minh khác;
+4. Trường hợp người sử dụng đất, chủ sở hữu tài sản gắn liền với đất thực hiện thủ tục thông qua người đại diện theo quy định của pháp luật về dân sự thì phải có văn bản về việc ủy quyền theo quy định của pháp luật về dân sự;
+5. CCCD (bản sao) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_028,DUNG,,1.0,1.0,PROC_034,submission_method,Xác nhận vị trí nhà đất nộp theo hình thức nào?,"Tên: XÁC NHẬN VỊ TRÍ NHÀ - ĐẤT
+Hình thức và nơi nộp hồ sơ:
+Trực tuyến
+Bộ phận Tiếp nhận và Trả kết quả của cơ quan có thẩm quyền.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_029,THIEU,đủ 7/11 mục của trường,1.0,0.636,PROC_031,required_documents,Đăng ký đất đai và tài sản gắn liền với đất lần đầu cần hồ sơ gì?,"Tên thủ tục: ĐĂNG KÝ ĐẤT ĐAI, TÀI SẢN GẮN LIỀN VỚI ĐẤT LẦN ĐẦU
+- Hình thức nộp: Trực tuyến
+- Thành phần hồ sơ:
+1. Đối với người đang sử dụng đất, chủ sở hữu tài sản gắn liền với đất là tổ chức trong nước, tổ chức tôn giáo, tổ chức tôn giáo trực thuộc, tổ chức nước ngoài có chức năng ngoại giao, tổ chức kinh tế có vốn đầu tư nước ngoài (sau đây gọi chung là tổ chức), người gốc Việt Nam định cư ở nước ngoài nhận thừa kế quyền sử dụng đất theo quy định tại điểm h khoản 1 Điều 28 Luật Đất đai thì hồ sơ nộp gồm:
+a) Đơn đăng ký đất đai, tài sản gắn liền với đất theo Mẫu số 15 ban hành kèm theo Nghị định này;
+b) Một trong các loại giấy tờ quy định tại Điều 137, khoản 4, khoản 5 Điều 148, khoản 4, khoản 5 Điều 149 Luật Đất đai (nếu có);
+c) Giấy tờ về việc nhận thừa kế quyền sử dụng đất theo quy định của pháp luật về dân sự đối với người gốc Việt Nam định cư ở nước ngoài;
+d) Sơ đồ hoặc bản trích lục bản đồ địa chính hoặc mảnh trích đo bản đồ địa chính thửa đất (nếu có); mảnh trích đo bản đồ địa chính thửa đất (nếu có) đối với người gốc Việt Nam định cư ở nước ngoài;
+- Lệ phí: THEO QUY ĐỊNH
+- Thời gian giải quyết: THEO QUY ĐỊNH
+- Địa chỉ cơ quan tiếp nhận hồ sơ: [Địa chỉ cụ thể]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_030,DUNG,,1.0,1.0,PROC_030,required_documents,Thông báo khởi công nhà ở riêng lẻ cần những giấy tờ gì?,"Tên: THÔNG BÁO KHỞI CÔNG
+Thành phần hồ sơ:
+1. Thông báo khởi công xây dựng nhà ở riêng lẻ (bản chính)
+2. Giấy phép xây dựng (kèm bản vẽ thiết kế) bản sao);
+3. Biên bản cắm mốc ranh (bản chính);
+4. Giấy chứng nhận quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất (bản sao);
+5. Hợp đồng thi công công trình hoặc đơn vị thi công (bảo sao);
+6. CCCD (bản sao) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_031,DUNG,,1.0,1.0,PROC_020,required_documents,Hồ sơ thôi hưởng trợ cấp hưu trí xã hội gồm những gì?,"Tên: Thực hiện, điều chỉnh, thôi hưởng trợ cấp hưu trí xã hội (Văn hóa - xã hội - 2)
+Thành phần hồ sơ:
+Bản chính Văn bản đề nghị hưởng trợ cấp hưu trí xã hội (theo Mẫu số 01 ban hành kèm theo Nghị định số 176/2025/NĐ-CP) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_032,DUNG,,1.0,1.0,PROC_023,required_documents,Thủ tục cấp lại giấy xác nhận khuyết tật cần giấy tờ gì?,"Tên: Xác định, xác định lại mức độ khuyết tật và cấp giấy xác nhận khuyết tật
+Thành phần hồ sơ:
+I.
+Đơn đề nghị xác định, xác định lại mức độ khuyết tật và cấp, cấp đổi, cấp lại giáy xác nhận khuyết tật (theo mẫu số 01 ban hành kèm theo Thông tư 01/2019/TT-BLĐTBXH)
+II.
+Đối với trường hợp xác định mức độ khuyết tật:
+1/ Các giấy tờ y tế chứng minh về khuyết tật: bệnh án, giấy tờ khám, điều trị, phẫu thuật hoặc các giấy tờ liên quan khác (nếu có).
+2/ Kết luận của Hội đồng Giám định y khoa về khả năng tự phục vụ, mức độ suy giảm khả năng lao động đối với trường hợp người khuyết tật đã có kết luận của Hội đồng giám định y khoa trước ngày 01/6/2012.
+III.
+Đối với trường hợp xác định lại khuyết tật: Các giấy tờ y tế chứng minh về khuyết tật: bệnh án, giấy tờ khám, điều trị, phẫu thuật, Giáy xác nhận khuyết tật cũ hoặc các giấy tờ liên quan khác (nếu có).
+IV.
+Các giấy tờ khác kèm theo (đối với trường hợp nộp trực tiếp) dùng đẻ đối chiếu các thông tin trên Tờ khai
+1/ Giấy xác nhận thông tin về cư trú hoặc Giấy thông báo số định danh cá nhân và thông tin trong Cơ sở dữ liệu quốc gia về dân cư; chứng minh thư nhân dân hoặc thẻ căn cước công dân của đối tượng, người đại diện hợp pháp.
+2/ Bản chính, bản sao hoặc bản chụp Giấy khai sinh đối với trẻ em.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_033,DUNG,,1.0,1.0,PROC_023,processing_time,Thời gian xác định lại mức độ khuyết tật là bao nhiêu ngày?,"Tên: Xác định, xác định lại mức độ khuyết tật và cấp giấy xác nhận khuyết tật
+Thời gian giải quyết:
+25 ngày làm việc, kể từ ngày nhận đủ hồ sơ và hợp lệ; [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_034,THIEU,đủ 3/6 mục của trường,1.0,0.5,"['PROC_010', 'PROC_016']",required_documents,Thủ tục hỗ trợ chi phí khuyến khích hỏa táng tại TP.HCM cần giấy tờ gì?,"Tên: Thủ tục hỗ trợ chi phí khuyến khích hoả táng đối với người dân có hộ khẩu Thành phố Hồ Chí Minh
+Thành phần hồ sơ:
+Tờ khai thông tin hộ gia đình, cá nhân, tổ chức nhận chi phí hỗ trợ khuyến khích hỏa táng, hóa đơn VAT của đơn vị cung cấp dịch vụ hỏa táng (bản chính).
+Căn cước công dân của người đứng đơn.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_035,DUNG,,1.0,1.0,PROC_010,processing_time,Thời gian giải quyết hỗ trợ chi phí hỏa táng cho người dân TP.HCM mất bao lâu?,"Tên: Thủ tục hỗ trợ chi phí khuyến khích hoả táng đối với người dân có hộ khẩu Thành phố Hồ Chí Minh
+Thời gian giải quyết:
+12 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_036,DUNG,,1.0,1.0,PROC_011,required_documents,Hồ sơ giải quyết chế độ trợ cấp thờ cúng liệt sĩ gồm những gì?,"Tên: Giải quyết chế độ trợ cấp thờ cúng liệt sĩ.
+Thành phần hồ sơ:
+Cá nhân làm đơn đề nghị theo Mẫu số 18 Phụ lục I Nghị định số 131/2021/NĐ-CP,  văn bản ủy quyền của những người cùng hàng thừa kế (xác nhận chữ ký của cơ quan có thẩm quyền) và bản sao được chứng thực Bằng “Tổ quốc ghi công”.
+Tường trình thân nhân của liệt sĩ.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_037,DUNG,,1.0,1.0,PROC_011,processing_time,Thời hạn giải quyết trợ cấp thờ cúng liệt sĩ là bao lâu?,"Tên: Giải quyết chế độ trợ cấp thờ cúng liệt sĩ.
+Thời gian giải quyết:
+17 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_038,DUNG,,1.0,1.0,PROC_012,required_documents,Thủ tục cấp đổi Bằng Tổ quốc ghi công cần chuẩn bị những giấy tờ nào?,"Tên: Cấp đổi Bằng “Tổ quốc ghi công”
+Thành phần hồ sơ:
+Đơn đề nghị theo Mẫu số 16 Phụ lục I Nghị định số 131/2021/NĐ-CP; Bản gốc Bằng “Tổ quốc ghi công”; Một trong các giấy tờ chứng minh thân nhân đã được giải quyết chế độ ưu đãi: Quyết định hưởng trợ cấp; sổ nhận trợ cấp ưu đãi; danh sách chi trả trợ cấp hằng tháng hoặc trợ cấp một lần khi báo tử có ký nhận của người hưởng trợ cấp; giấy tờ khác do cơ quan có thẩm quyền ban hành, xác nhận được lập từ ngày 31 tháng 12 năm 1994 trở về trước.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_039,DUNG,,1.0,1.0,PROC_012,processing_time,Thời gian cấp đổi Bằng Tổ quốc ghi công mất bao nhiêu ngày?,"Tên: Cấp đổi Bằng “Tổ quốc ghi công”
+Thời gian giải quyết:
+129 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_040,DUNG,,1.0,1.0,PROC_013,required_documents,Hồ sơ xin cấp giấy xác nhận thân nhân của người có công gồm những gì?,"Tên: Cấp giấy xác nhận thân nhân của người có công
+Thành phần hồ sơ:
+Đơn đề nghị cấp giấy xác nhận thân nhân của người có công.
+Bản sao được chứng thực từ một trong các giấy tờ sau:
++ Giấy chứng nhận người có công hoặc Kỷ niệm chương người hoạt động cách mạng, kháng chiến, bảo vệ Tổ quốc, làm nghĩa vụ quốc tế bị địch bắt tù, đày; Huân chương, Huy chương kháng chiến; Huân chương, Huy chương chiến thắng; kỷ niệm chương “Tổ quốc ghi công”; bằng “Có công với nước”.
++ Giấy tờ do cơ quan có thẩm quyền ban hành, xác nhận mối quan hệ với người có công gồm: căn cước công dân.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_041,DUNG,,1.0,1.0,PROC_013,processing_time,Thời hạn giải quyết cấp giấy xác nhận thân nhân người có công là bao lâu?,"Tên: Cấp giấy xác nhận thân nhân của người có công
+Thời gian giải quyết:
+05 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_042,DUNG,,1.0,1.0,PROC_014,required_documents,Thủ tục hưởng trợ cấp mai táng khi người có công từ trần cần những giấy tờ gì?,"Tên: Hưởng trợ cấp khi người có công đang hưởng trợ cấp ưu đãi từ trần (Văn hóa - xã hội - 1)
+Thành phần hồ sơ:
+Bản khai theo Mẫu số 12 Phụ lục I Nghị định số 131/2021/NĐ-CP. Bản sao được chứng thực từ giấy báo tử hoặc trích lục khai tử.
+Văn bản Ủy quyền làm hồ sơ mai táng phí và nhận tiền trợ cấp 1 lần (nếu có nhiều người cùng hàng thừa kế); Tường trình quan hệ thân nhân Căn cước công dân của người đứng đơn [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_043,DUNG,,1.0,1.0,PROC_011,submission_method,Chế độ trợ cấp thờ cúng liệt sĩ nộp hồ sơ ở đâu?,"Tên: Giải quyết chế độ trợ cấp thờ cúng liệt sĩ.
+Hình thức và nơi nộp hồ sơ:
+Cả hai
+Trung tâm Phục vụ hành chính công phường Tăng Nhơn Phú [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_044,DUNG,,1.0,1.0,PROC_016,fee,Lệ phí làm thủ tục hỗ trợ chi phí khuyến khích hỏa táng là bao nhiêu?,"Tên: Hỗ trợ chi phí khuyến khích hỏa táng
+Lệ phí:
+không [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_045,DUNG,,1.0,1.0,PROC_017,required_documents,Hồ sơ hỗ trợ chi phí mai táng cho đối tượng bảo trợ xã hội gồm những gì?,"Tên: Hỗ trợ chi phí mai táng cho đối tượng bảo trợ xã hội
+Thành phần hồ sơ:
+1/ Bản chínhTờ khai đề nghị hỗ trợ chi phí mai táng (theo mẫu số 04 ban hành kèm theo Phụ lục tại Nghị định số 20/2021/NĐ-CP ngày 15/3/2021); 2/ Bản sao Giấy chứng tử của đối tượng; 3/ Bản sao Quyết định đối với trường hợp người từ đủ 80 tuổi đang hưởng trợ cấp tuất bảo hiểm xã hội hàng tháng.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_046,DUNG,,1.0,1.0,PROC_017,processing_time,Thời gian giải quyết hỗ trợ mai táng đối tượng bảo trợ xã hội mất bao lâu?,"Tên: Hỗ trợ chi phí mai táng cho đối tượng bảo trợ xã hội
+Thời gian giải quyết:
+Ba (03) ngày làm việc, kể từ ngày nhận đủ hồ sơ và hợp lệ [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_047,DUNG,,1.0,1.0,PROC_018,required_documents,Hồ sơ đề nghị hưởng trợ cấp xã hội hàng tháng gồm những giấy tờ nào?,"Tên thủ tục: Thực hiện, điều chỉnh, thôi hưởng trợ cấp xã hội hàng tháng, hỗ trợ kinh phí chăm sóc, nuôi dưỡng hàng tháng
+Thành phần hồ sơ:
+I.
+Trường hợp đề nghị trợ cấp xã hội hàng tháng:
+- Bản chính Tờ khai của đối tượng (theo Mẫu số 1a, 1b, 1c, 1d, 1đ ban hành kèm theo Nghị định số 20/2021/NĐ-CP).
+II.
+Trường hợp đề nghị hỗ trợ kinh phí chăm sóc, nuôi dưỡng hàng tháng:
+1/ Bản chính Tờ khai nhận chăm sóc, nuôi dưỡng đối tượng bảo trợ xã hội (theo Mẫu số 2b ban hành kèm theo Nghị định số 20/2021/NĐ-CP)
+2/ Bản chính Tờ khai của đối tượng được nhận chăm sóc, nuôi dưỡng trong trường hợp đối tượng không hưởng trợ cấp xã hội hàng tháng (theo Mẫu số 03 ban hành kèm theo Nghị định số 20/2021/NĐ-CP)
+3/ Bản chính Tờ khai nhận chăm sóc, nuôi dưỡng đối tượng bảo trợ xã hội (theo Mẫu số 2b ban hành kèm theo Nghị định số 20/2021/NĐ-CP)
+III.
+Các giấy tờ khác kèm theo (đối với trường hợp nộp trực tiếp):
+1/ Giấy xác nhận thông tin về cư trú hoặc Giấy thông báo số định danh cá nhân và thông tin trong Cơ sở dữ liệu quốc gia về dân cư; chứng minh thư nhân dân hoặc thẻ căn cước công dân (Dùng để đối chiếu thông tin trên Tờ khai)
+2/ Giấy khai sinh của trẻ em đối với trường hợp xét trợ cấp xã hội đối với trẻ em, người đơn thân nghèo đang nuôi con, người khuyết tật đang nuôi con;
+3/ Giấy tờ xác nhận bị nhiễm HIV của cơ quan y tế có thẩm quyền đối với trường hợp bị nhiễm HIV;
+4/ Giấy tờ xác nhận đang mang thai của cơ quan y tế có thẩm quyền đối với trường hợp người khuyết tật đang mang thai;
+5/ Giấy xác nhận khuyết tật đối với trường hợp người khuyết tật.
+Bạn muốn hỏi thêm về thông tin thủ tục nào không?
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_048,DUNG,,1.0,1.0,PROC_018,processing_time,Thời hạn giải quyết hưởng trợ cấp xã hội hàng tháng là bao lâu?,"Tên: Thực hiện, điều chỉnh, thôi hưởng trợ cấp xã hội hàng tháng, hỗ trợ kinh phí chăm sóc, nuôi dưỡng hàng tháng
+Thời gian giải quyết:
+Mười (10) ngày làm việc, kể từ ngày nhận đủ hồ sơ và hợp lệ [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_049,THIEU,đủ 11/15 mục của trường,1.0,0.733,"PROC_014, PROC_019",required_documents,Thủ tục hưởng trợ cấp một lần khi người có công từ trần cần chuẩn bị gì?,"Tên: Hưởng trợ cấp khi người có công đang hưởng trợ cấp ưu đãi từ trần (Văn hóa - xã hội - 1)
+Thành phần hồ sơ:
+Bản khai theo Mẫu số 12 Phụ lục I Nghị định số 131/2021/NĐ-CP. Bản sao được chứng thực từ giấy báo tử hoặc trích lục khai tử.
+Văn bản Ủy quyền làm hồ sơ mai táng phí và nhận tiền trợ cấp 1 lần (nếu có nhiều người cùng hàng thừa kế); Tường trình quan hệ thân nhân Căn cước công dân của người đứng đơn [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_050,TU_CHOI_NHAM,từ chối câu hợp lệ,,,PROC_022,required_documents,Hồ sơ xin miễn giảm học phí và hỗ trợ học tập đến đại học gồm giấy tờ gì?,"Thủ tục hoặc thông tin bạn hỏi (hộ chiếu, visa, giấy phép lái xe, thuế, v.v.) hiện không thuộc thẩm quyền giải quyết của bộ phận một cửa cấp xã/phường hoặc không có trong cơ sở dữ liệu.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_051,DUNG,,1.0,1.0,PROC_022,processing_time,Thời gian giải quyết chế độ hỗ trợ học đại học cho con người có công mất bao lâu?,"Tên: Giải quyết chế độ hỗ trợ để theo học đến trình độ đại học tại các cơ sở giáo dục thuộc hệ thống giáo dục quốc dân
+Thời gian giải quyết:
+5 ngày [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_052,DUNG,,1.0,1.0,PROC_024,required_documents,Hồ sơ giải quyết chế độ người hoạt động kháng chiến giải phóng dân tộc gồm những gì?,"Tên: Giải quyết chế độ người hoạt động kháng chiến giải phóng dân tộc, bảo vệ tổ quốc và làm nghĩa vụ quốc tế
+Thành phần hồ sơ:
+Bản khai theo mẫu số 11 Phục lục I Nghi định số 131/2021/NĐ-CP (01 bản chính)
+Giấy báo tử hoặc trích lục khai tử ( đối với trường hợp chết mà chưa được hưởng chế độ ưu đãi) (01 bản chính)
+Huân chương Kháng chiến, Huân chương Chiến thắng, Huy chương kháng chiến, Huy chương Chiến thắng hoặc giấy chứng nhận đeo huân chương, huy chương.( 01 bản sao được chứng thực)
+Quyết định tặng thưởng Huân chương Kháng chiến, Huân chương chiến thắng, Huy chương kháng chiến, Huy chương chiến thắng ( 01 bản sao được chứng thực)
+Giấy xác nhận về khen thưởng tổng kết thành tích kháng chiến và thời gian hoạt động kháng chiến thực tế của cơ quan Thi đua - Khen thưởng cấp tỉnh trở lên ( 01 bản sao được chứng thực) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_053,DUNG,,1.0,1.0,PROC_024,processing_time,Thời gian xử lý chế độ người hoạt động kháng chiến là bao lâu?,"Tên: Giải quyết chế độ người hoạt động kháng chiến giải phóng dân tộc, bảo vệ tổ quốc và làm nghĩa vụ quốc tế
+Thời gian giải quyết:
+5 ngày [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_054,DUNG,,1.0,0.9,"['PROC_025', 'PROC_027']",required_documents,Hồ sơ xin cấp giấy phép xây dựng nhà ở gồm những tài liệu nào?,"Tên: CẤP GIẤY PHÉP XÂY DỰNG
+Thành phần hồ sơ:
+1. Thành phần hồ sơ cấp giấy phép xây dựng, giấp phép sửa chữa cải tạo nhà ở riêng lẻ (tất cả hồ sơ đều phải sao y điện tử trừ bản vẽ thiết kế xây dựng và đơn đề nghị cấp phép xây dựng) – Thời gian giải quyết 20 ngày đối với công trình và 15 ngày đối với nhà ở riêng lẻ.
+- Đơn đề nghị cấp giấy phép xây dựng, sửa chữa, cải tạo công trình theo Mẫu số 1 Phụ lục số II Nghị định số 175/2024/NĐ-CP ngày 30/12/2024 của Chính phủ.
+- Một trong những giấy tờ hợp pháp về đất đai chứng minh sự phù hợp mục đích sử dụng đất và sở hữu công trình để cấp phép xây dựng theo quy định tại Điều 53 của Nghị định số 175/2024/NĐ-CP. Trường hợp giấy chứng nhận cũ không có tọa độ theo tài liệu 02/CT-UB phải có bản vẽ hiện trạng có duyệt kiểm định kèm theo.
+- Bản vẽ thiết kế xây dựng.
+- Cam kết đảm bảo an toàn cho các công trình liền kề (có chứng thực chữ ký).
+- Cam kết tháo dỡ toàn bộ nhà cũ trước khi xây dựng công trình theo giấy phép xây dựng (có chứng thực chữ ký) – áp dụng đối với thửa đất có nhà hiện hữu.
+- Hồ sơ năng lực của đơn vị tư vấn thiết kế.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_055,DUNG,,1.0,1.0,PROC_028,required_documents,Người lao động muốn vay vốn hỗ trợ tạo việc làm từ Quỹ quốc gia cần hồ sơ gì?,"Tên: Vay vốn hỗ trợ tạo việc làm, duy trì và mở rộng việc làm từ Quỹ quốc gia về việc làm đối với người lao động
+Thành phần hồ sơ:
+Danh sách đề nghị vay vốn
+Giấy đề nghị vay vốn
+CCCD
+Biên bản họp [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_056,DUNG,,1.0,1.0,PROC_028,processing_time,Thời gian giải quyết hồ sơ vay vốn tạo việc làm cho người lao động là bao lâu?,"Tên: Vay vốn hỗ trợ tạo việc làm, duy trì và mở rộng việc làm từ Quỹ quốc gia về việc làm đối với người lao động
+Thời gian giải quyết:
+5 ngày [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_057,DUNG,,1.0,1.0,PROC_029,required_documents,Thủ tục chuyển trường cho học sinh THCS cần những giấy tờ gì?,"Tên: Chuyển trường đối với học sinh THCS
+Thành phần hồ sơ:
+1. Thành phần hồ sơ chuyển trường ĐẾN:
+- Đơn xin chuyển trường (có xác nhận của trường đi)
+- Giấy giới thiệu của phường đi
+- Giấy giới thiệu của trường đi
+- Giấy xác nhận nơi cư trú hoặc giấy xác nhận mã định danh (bản photo)
+- Bản sao khai sinh.
+- Học bạ (bản photo); khi đến nhận giấy giới thiệu thì mang bản chính.
+- Các giấy tờ khác liên quan (nếu có)
+2. Thành phần hồ sơ chuyển trường ĐI:
+- Đơn xin chuyển trường (có xác nhận của trường đến)
+- Giấy giới thiệu của trường đi
+- Giấy xác nhận nơi cư trú hoặc giấy xác nhận mã định danh (bản photo)
+- Bản sao khai sinh.
+- Học bạ (bản photo); khi đến nhận giấy giới thiệu thì mang bản chính
+- Các giấy tờ khác liên quan (nếu có) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_058,DUNG,,1.0,1.0,PROC_029,processing_time,Chuyển trường học sinh THCS mất bao nhiêu ngày làm việc?,"Tên: Chuyển trường đối với học sinh THCS
+Thời gian giải quyết:
+3–5 ngày làm việc kể từ khi nhận đủ hồ sơ hợp lệ.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_059,DUNG,,1.0,1.0,PROC_029,submission_method,Nộp hồ sơ chuyển trường THCS ở đâu?,"Tên: Chuyển trường đối với học sinh THCS
+Hình thức và nơi nộp hồ sơ:
+Trực tiếp
+Trung tâm Phục vụ hành chính công Phường Tăng Nhơn Phú, Địa chỉ: 29 Lê Văn Việt, Phường Tăng Nhơn Phú, Thành phố Hồ Chí Minh [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_060,DUNG,,1.0,1.0,PROC_035,required_documents,Hồ sơ xin xác nhận tình trạng nhà ở gồm những giấy tờ gì?,"Tên: XÁC NHẬN TÌNH TRẠNG NHÀ Ở
+Thành phần hồ sơ:
+* Trường hợp có Giấy phép xây dựng
+1. Đơn xác nhận tình trạng nhà ở;
+2. Giấy chứng nhận quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất (bản sao kèm theo Bản chính để đối chiếu);
+3. Giấy phép xây dựng và bản vẽ thiết kế (bản sao);
+4. Quyết định hoặc Thông báo cấp số nhà;
+5. CCCD (bản sao).
+6. Giấy ủy quyền (nếu đi nộp thay).
+* Trường hợp không có Giấy phép xây dựng
+1. Đơn xác nhận tình trạng nhà ở;
+2. Giấy chứng nhận quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất (bản sao kèm theo Bản chính để đối chiếu); nếu có.
+3. Thông báo cấp số nhà; (nếu có)
+4. Bản vẽ sơ đồ nhà đất; (bản sao)
+5. CCCD (bản sao).
+6. Giấy ủy quyền (nếu đi nộp thay) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_061,DUNG,,1.0,1.0,PROC_035,processing_time,Thời gian giải quyết xác nhận tình trạng nhà ở mất bao lâu?,"Tên: XÁC NHẬN TÌNH TRẠNG NHÀ Ở
+Thời gian giải quyết:
+05 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_062,DUNG,,1.0,1.0,PROC_036,required_documents,Hồ sơ đăng ký thành lập hộ kinh doanh cá thể gồm những gì?,"Tên: Thủ tục Đăng ký thành lập hộ kinh doanh
+Thành phần hồ sơ:
+1. Giấy đề nghị đăng ký hộ kinh doanh
+2. Bản sao văn bản ủy quyền của thành viên hộ gia đình cho một thành viên làm chủ hộ kinh doanh đối với trường hợp hộ kinh doanh do các thành viên hộ gia đình đăng ký thành lập.
+Văn bản ủy quyền này phải được công chứng hoặc chứng thực theo quy định của pháp luật [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_063,DUNG,,1.0,1.0,PROC_036,fee,Lệ phí đăng ký thành lập hộ kinh doanh là bao nhiêu tiền?,"Tên: Thủ tục Đăng ký thành lập hộ kinh doanh
+Lệ phí:
+0 [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_064,DUNG,,1.0,1.0,PROC_036,processing_time,Đăng ký hộ kinh doanh mất bao nhiêu ngày làm việc?,"Tên: Thủ tục Đăng ký thành lập hộ kinh doanh
+Thời gian giải quyết:
+03 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_065,DUNG,,1.0,1.0,PROC_037,required_documents,Thủ tục thay đổi nội dung đăng ký hộ kinh doanh cần giấy tờ gì?,"Tên: Đăng ký thay đổi nội dung đăng ký hộ kinh doanh
+Thành phần hồ sơ:
+1. Giấy đề nghị đăng ký thay đổi nội dung đăng ký hộ kinh doanh;
+2. Bản sao văn bản ủy quyền của các thành viên hộ gia đình cho một thành viên làm chủ hộ kinh doanh.
+Văn bản ủy quyền này phải được công chứng hoặc chứng thực theo quy định của pháp luật (Trường hợp thay đổi chủ hộ kinh doanh do các thành viên hộ gia đình đăng ký hộ kinh doanh ủy quyền cho một trong các thành viên còn lại làm chủ hộ kinh doanh)
+3. Bản sao văn bản ủy quyền của thành viên mới cho chủ hộ kinh doanh trong trường hợp tiếp nhận thành viên mới.
+Văn bản ủy quyền này phải được công chứng hoặc chứng thực theo quy định của pháp luật (Trường hợp thay đổi thành viên hộ gia đình đăng ký hộ kinh doanh) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_066,DUNG,,1.0,1.0,"['PROC_037', 'PROC_038']",processing_time,Thời hạn giải quyết thay đổi thông tin hộ kinh doanh là bao lâu?,"Tên: Đăng ký thay đổi nội dung đăng ký hộ kinh doanh
+Thời gian giải quyết:
+03 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_067,DUNG,,1.0,1.0,PROC_038,required_documents,Thông báo tạm ngừng kinh doanh của hộ kinh doanh cần chuẩn bị hồ sơ gì?,"Tên: Tạm ngừng kinh doanh/tiếp tục kinh doanh trước thời hạn đã thông báo của hộ kinh doanh
+Thành phần hồ sơ:
+Giấy đề nghị đăng ký tạm ngừng kinh doanh/tiếp tục kinh doanh trước thời hạn đã đăng ký [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_068,DUNG,,1.0,1.0,PROC_038,processing_time,Thời gian giải quyết thông báo tạm ngừng kinh doanh là bao lâu?,"Tên: Tạm ngừng kinh doanh/tiếp tục kinh doanh trước thời hạn đã thông báo của hộ kinh doanh
+Thời gian giải quyết:
+03 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_069,DUNG,,1.0,1.0,PROC_039,required_documents,Thủ tục chấm dứt hoạt động hộ kinh doanh cần những giấy tờ gì?,"Tên: Chấm dứt hoạt động hộ kinh doanh
+Thành phần hồ sơ:
+Thông báo chấm dứt hoạt động hộ kinh doanh [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_070,DUNG,,1.0,1.0,PROC_039,processing_time,Thời gian giải quyết chấm dứt hoạt động hộ kinh doanh là bao nhiêu ngày?,"Tên: Chấm dứt hoạt động hộ kinh doanh
+Thời gian giải quyết:
+03 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_071,DUNG,,1.0,1.0,PROC_040,required_documents,Bị mất giấy chứng nhận hộ kinh doanh thì xin cấp lại cần hồ sơ gì?,"Tên: Cấp lại Giấy chứng nhận đăng ký hộ kinh doanh
+Thành phần hồ sơ:
+Giấy đề nghị cấp lại Giấy chứng nhận đăng ký hộ kinh doanh [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_072,DUNG,,1.0,1.0,PROC_040,fee,Lệ phí cấp lại giấy chứng nhận đăng ký hộ kinh doanh là bao nhiêu?,"Tên: Cấp lại Giấy chứng nhận đăng ký hộ kinh doanh
+Lệ phí:
+0 [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_073,DUNG,,1.0,1.0,PROC_041,required_documents,Hồ sơ xét cấp học bổng chính sách gồm những giấy tờ nào?,"Tên: Thủ tục xét, cấp học bổng chính sách
+Thành phần hồ sơ:
+- Đơn đề nghị miễn, giảm học phí dành cho học sinh, sinh viên đang học tại các cơ sở giáo dục nghề nghiệp, giáo dục đại học (theo Phụ lục IV của Nghị định 238/2025/NĐ-CP);
+- Giấy xác nhận và dự toán kinh phí của các cơ sở giáo dục nghề nghiệp, giáo dục đại học (theo Phụ lục V, VI của Nghị định 238/2025/NĐ-CP);
+- Bản sao chứng thực văn bằng tốt nghiệp hoặc xác nhận tốt nghiệp tạm thời hoặc xác nhận học bạ việc hoàn thành chương trình trung học cơ sở (quy định đối tượng tại điểm 1.1 mục 1 Thông báo này)/trung học phổ thông (quy định đối tượng tại điểm 1.3 mục 1 Thông báo này) của hiệu trưởng xác nhận;
+- Bản sao chứng thực của cơ quan quản lý trong các trường hợp thuộc nhóm đối tượng tại điểm 1.4 mục 1 Thông báo này;
+- Hóa đơn hoặc biên lai đóng tiền học phí;
+- Bản sao Căn cước công dân của sinh viên;
+- Bản sao Căn cước công dân của cha/mẹ, người có tên trong Đơn đề nghị chi trả tiền miễn, giảm học phí;
+- Thông tin chuyển khoản (ATM) của người học hoặc tài khoản của cha hoặc mẹ hoặc người giám hộ;
+- Giấy xác nhận nơi cư trú của công an hoặc bản chụp màn hình thể hiện thông tin nơi cư trú trên ứng dụng VNeID (in kèm hồ sơ).
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_074,DUNG,,1.0,1.0,PROC_041,processing_time,Thời hạn giải quyết cấp học bổng chính sách là bao lâu?,"Tên: Thủ tục xét, cấp học bổng chính sách
+Thời gian giải quyết:
+không quy định cụ thể (chi trả theo học kỳ) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_075,DUNG,,1.0,1.0,PROC_042,required_documents,Chứng thực chữ ký trên giấy tờ văn bản cần xuất trình giấy tờ gì?,"Tên: chứng thực chữ ký - chứng thực Hợp đồng giao dịch/Di chúc
+Thành phần hồ sơ:
+1. Người yêu cầu chứng thực chữ ký của mình phải xuất trình các giấy tờ sau đây:
+- Người yêu cầu chứng thực xuất trình bản chính hoặc bản sao có chứng thực Giấy chứng minh nhân dân/Thẻ căn cước công dân/Thẻ căn cước/Giấy chứng nhận căn cước hoặc Hộ chiếu, giấy tờ xuất nhập cảnh/giấy tờ có giá trị đi lại quốc tế còn giá trị sử dụng hoặc xuất trình Căn cước điện tử.
+- Giấy tờ, văn bản mà mình sẽ ký.
+2. Tại thời điểm chứng thực, người yêu cầu chứng thực minh mẫn, nhận thức và làm chủ được hành vi của mình và yêu cầu người yêu cầu chứng thực ký trước mặt người tiếp nhận hồ sơ.
+3. Thủ tục chứng thực chữ ký trong giấy ủy quyền đối với trường hợp ủy quyền không có thù lao, không có nghĩa vụ bồi thường của bên được ủy quyền và không liên quan đến việc chuyển quyền sở hữu tài sản, quyền sử dụng bất động sản.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_076,DUNG,,1.0,1.0,PROC_042,fee,Mức thu lệ phí chứng thực chữ ký là bao nhiêu một trường hợp?,"Tên: chứng thực chữ ký - chứng thực Hợp đồng giao dịch/Di chúc
+Lệ phí:
+10.000 đồng/trường hợp (đối với chứng thực chữ ký) 50.000 đồng/trường hợp (đối với hợp đồng giao dịch/Di chúc) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_077,DUNG,,1.0,1.0,PROC_042,processing_time,Chứng thực hợp đồng giao dịch di chúc giải quyết trong bao lâu?,"Tên: chứng thực chữ ký - chứng thực Hợp đồng giao dịch/Di chúc
+Thời gian giải quyết:
+Trong ngày tiếp nhận yêu cầu hoặc trong ngày làm việc tiếp theo, nếu tiếp nhận yêu cầu sau 15 giờ hoặc có thể kéo dài hơn theo thỏa thuận bằng văn bản với người yêu cầu chứng thực.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_078,DUNG,,1.0,1.0,PROC_004,required_documents,thu tuc dang ky ket hon can nhung giay to gi?,"Tên: Thủ tục đăng ký kết hôn
+Thành phần hồ sơ:
+Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu) của bên nam và bên nữ 01 bản photo (Xuất trình bản chính).
+Trường hợp bên nam hoặc bên nữ thường trú tại địa phương (nếu đã ly hôn thì kèm bản photo của quyết định ly hôn, nếu có chồng/vợ đã chết thì cung cấp đăng ký khai tử của chồng/vợ) không cần xác nhận tình trạng hôn nhân để đăng ký kết hôn.
+Giấy tờ chứng minh thông tin cư trú: thông báo đăng ký tạm trú (do công an phường cấp).
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_079,DUNG,,1.0,1.0,PROC_002,processing_time,thoi gian giai quyet khai sinh mat bao lau?,"Tên: Thủ tục đăng ký khai sinh
+Thời gian giải quyết:
+1 ngày [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_080,DUNG,,1.0,1.0,PROC_001,required_documents,thu tuc xin cap giay xac nhan tinh trang hon nhan can nhung giay to gi?,"Tên: Thủ tục xác nhận tình trạng hôn nhân
+Thành phần hồ sơ:
+- Xuất trình giấy tờ chứng minh thông tin cư trú ( bản photo hộ khẩu bản chính nếu có, hoặc giấy xác nhận thông tin cư trú CT07 có mốc thời gian do Công an phường cấp)
+- Chứng minh nhân dân (hoặc căn cước công dân, hộ chiếu):
+01 bản photo của người yêu cầu.
+Trường hợp chưa đăng ký kết hôn với ai và có hộ khẩu thường trú tại nhiều nơi: người yêu cầu phải về những nơi thường trú trước đây để xác nhận tình trạng hôn nhân giai đoạn nữ từ đủ 18 tuổi, nam từ đủ 20 tuổi.
+Nếu người yêu cầu không thể chứng minh tình trạng hôn nhân của mình thì UBND phường, xã nơi thường trú sẽ hỗ trợ xác minh.
+Sau thời hạn 20 ngày kể từ ngày gửi văn bản yêu cầu xác minh mà không nhận được văn bản trả lời, thì UBND phường, xã nơi thường trú cho phép người yêu cầu có văn bản cam đoan về tình trạng hôn nhân của mình và tiếp tục giải quyết hồ sơ theo quy định.
+Trường hợp đã ly hôn thì kèm Quyết định ly hôn.
+Trường hợp vợ hoặc chồng đã chết thì kèm trích lục khai tử [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_081,DUNG,,1.0,1.0,PROC_003,fee,dang ky khai tu co mat phi khong?,"Tên: Thủ tục đăng ký khai tử
+Lệ phí:
+Bản chính: Không thu phí Bản sao: 8.000đ/bản [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_082,DUNG,,1.0,1.0,PROC_033,required_documents,xin cap so nha o dau va can giay to gi?,"Tên: HỒ SƠ CẤP SỐ NHÀ
+Thành phần hồ sơ:
+* Đối với nhà chưa hoàn công:
+1-        Đơn xin cấp số nhà;
+2-        Giấy chứng nhận Quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất;
+3-        Giấy phép Xây dựng (nếu có) và bản vẽ thiết kế;
+4-        Biên bản lần cuối của Thanh tra xây dựng;
+5-        Hình ảnh hiện trạng căn nhà;
+6-        Căn cước công dân;
+7-        Giấy uỷ quyền (Nếu đi nộp thay)./.
+* Đối với nhà đã hoàn công:
+1- Đơn xin cấp số nhà;
+2- Giấy chứng nhận Quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất;
+3- Hình ảnh hiện trạng căn nhà;
+4- Căn cước công dân;
+5- Giấy uỷ quyền (Nếu đi nộp thay) [EC_001]
+Tên: HỒ SƠ CẤP SỐ NHÀ
+Hình thức và nơi nộp hồ sơ:
+Trực tuyến
+Bộ phận Tiếp nhận và Trả kết quả của cơ quan có thẩm quyền.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_083,DUNG,,1.0,1.0,"['PROC_027', 'PROC_025']",fee,le phi xin cap giay phep xay dung nha o rieng le la bao nhieu?,"Tên: CẤP GIẤY PHÉP XÂY DỰNG
+Lệ phí:
+0 [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_084,DUNG,,1.0,1.0,PROC_029,required_documents,thu tuc chuyen truong hoc sinh thcs can ho so gi?,"Tên: Chuyển trường đối với học sinh THCS
+Thành phần hồ sơ:
+1. Thành phần hồ sơ chuyển trường ĐẾN:
+- Đơn xin chuyển trường (có xác nhận của trường đi)
+- Giấy giới thiệu của phường đi
+- Giấy giới thiệu của trường đi
+- Giấy xác nhận nơi cư trú hoặc giấy xác nhận mã định danh (bản photo)
+- Bản sao khai sinh.
+- Học bạ (bản photo); khi đến nhận giấy giới thiệu thì mang bản chính.
+- Các giấy tờ khác liên quan (nếu có)
+2. Thành phần hồ sơ chuyển trường ĐI:
+- Đơn xin chuyển trường (có xác nhận của trường đến)
+- Giấy giới thiệu của trường đi
+- Giấy xác nhận nơi cư trú hoặc giấy xác nhận mã định danh (bản photo)
+- Bản sao khai sinh.
+- Học bạ (bản photo); khi đến nhận giấy giới thiệu thì mang bản chính
+- Các giấy tờ khác liên quan (nếu có) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_085,DUNG,,1.0,1.0,PROC_040,processing_time,thoi gian giai quyet cap lai giay chung nhan ho kinh doanh?,"Tên: Cấp lại Giấy chứng nhận đăng ký hộ kinh doanh
+Thời gian giải quyết:
+03 ngày làm việc [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_086,THIEU,đủ 7/11 mục của trường,1.0,0.636,PROC_031,required_documents,dang ky bien dong dat dai lan dau can giay to gi?,"Tên thủ tục: ĐĂNG KÝ ĐẤT ĐAI, TÀI SẢN GẮN LIỀN VỚI ĐẤT LẦN ĐẦU
+- Hình thức nộp: Trực tuyến
+- Thành phần hồ sơ:
+1. Đối với người đang sử dụng đất, chủ sở hữu tài sản gắn liền với đất là tổ chức trong nước, tổ chức tôn giáo, tổ chức tôn giáo trực thuộc, tổ chức nước ngoài có chức năng ngoại giao, tổ chức kinh tế có vốn đầu tư nước ngoài (sau đây gọi chung là tổ chức), người gốc Việt Nam định cư ở nước ngoài nhận thừa kế quyền sử dụng đất theo quy định tại điểm h khoản 1 Điều 28 Luật Đất đai thì hồ sơ nộp gồm:
+a) Đơn đăng ký đất đai, tài sản gắn liền với đất theo Mẫu số 15 ban hành kèm theo Nghị định này;
+b) Một trong các loại giấy tờ quy định tại Điều 137, khoản 4, khoản 5 Điều 148, khoản 4, khoản 5 Điều 149 Luật Đất đai (nếu có);
+c) Giấy tờ về việc nhận thừa kế quyền sử dụng đất theo quy định của pháp luật về dân sự đối với người gốc Việt Nam định cư ở nước ngoài;
+d) Sơ đồ hoặc bản trích lục bản đồ địa chính hoặc mảnh trích đo bản đồ địa chính thửa đất (nếu có); mảnh trích đo bản đồ địa chính thửa đất (nếu có) đối với người gốc Việt Nam định cư ở nước ngoài;
+- Lệ phí: THEO QUY ĐỊNH
+- Thời gian giải quyết: THEO QUY ĐỊNH
+- Địa chỉ cơ quan tiếp nhận hồ sơ: Bộ phận Tiếp nhận và Trả kết quả của cơ quan có thẩm quyền.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_087,DUNG,,1.0,1.0,PROC_034,submission_method,xac nhan vi tri nha dat tai quan huyen nop theo hinh thuc nao?,"Tên: XÁC NHẬN VỊ TRÍ NHÀ - ĐẤT
+Hình thức và nơi nộp hồ sơ:
+Trực tuyến
+Bộ phận Tiếp nhận và Trả kết quả của cơ quan có thẩm quyền.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_088,DUNG,,1.0,1.0,"PROC_009, PROC_023",submission_method,nop ho so de nghi xac dinh muc do khuyet tat o dau?,"Tên: Xác định, xác định lại mức độ khuyết tật và cấp giấy xác nhận khuyết tật
+Hình thức và nơi nộp hồ sơ:
+Cả hai
+Trung tâm Phục vụ Hành chính công phường Tăng Nhơn Phú, 29 Lê Văn Việt, phường Tăng Nhơn Phú, TP.HCM [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_089,DUNG,,1.0,1.0,PROC_042,processing_time,chung thuc chu ky tren giay to co lay ngay trong ngay duoc khong?,"Tên: chứng thực chữ ký - chứng thực Hợp đồng giao dịch/Di chúc
+Thời gian giải quyết:
+Trong ngày tiếp nhận yêu cầu hoặc trong ngày làm việc tiếp theo, nếu tiếp nhận yêu cầu sau 15 giờ hoặc có thể kéo dài hơn theo thỏa thuận bằng văn bản với người yêu cầu chứng thực.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_090,DUNG,,1.0,0.938,PROC_006,required_documents,thủ tục đk kết hôn với người nước ngoài cần j?,"Tên thủ tục: Đăng ký kết hôn có yếu tố nước ngoài
+- Hình thức nộp: Cả hai
+- Thành phần hồ sơ:
+1. Tờ khai theo quy định (có mẫu sẵn)
+2. Giấy tờ tùy thân (CMND, CCCD, Hộ chiếu, thẻ ID ....).
+Phải dịch thuật sang tiếng Việt Nam nếu các giấy tờ trên do cơ quan nước ngoài cấp.
+3. Giấy tờ chứng minh nơi cư trú của người đăng ký kết hôn (Hộ khẩu, sổ tạm trú, Đơn xin xác nhận tạm trú, thẻ ID, bằng lái xe chứng minh nơi cư trú bên nước ngoài...) tại phường Tăng Nhơn Phú.
+Phải dịch thuật sang tiếng Việt Nam nếu các giấy tờ trên do cơ quan nước ngoài cấp.
+4. Giấy xác nhận của tổ chức y tế có thẩm quyền xác nhận các bên không mắc bệnh tâm thần (Khám ở Bệnh viện Tâm thần.
+Địa chỉ: 766 Võ Văn Kiệt, (Phường 1, Quận 5) nay là phường Chợ Quán, TP.HCM)
+5. Giấy tờ xác nhận tình trạng hôn nhân của vợ và chồng
++ Nếu có ly hôn phải nộp thêm bản quyết định ly hôn của Tòa án cấp
++ Tuyên thệ độc thân hoặc văn bản chứng minh độc thân của vợ hoặc chồng bên nước ngoài cấp.
+Khi về sử dụng tại Việt Nam phải được hợp pháp hóa lãnh sự văn bản đó và dịch thuật sang tiếng Việt Nam và được công chứng.
+6. Bản sao trích lục hộ tịch về việc đã ghi vào sổ ly hôn hoặc hủy việc kết hôn (nếu có)
+- Nếu là công dân nước ngoài (đã bỏ quốc tịch Việt Nam) thì không cẩn làm thủ tục ghi chú ly hôn
+- Nếu là công dân Việt Nam khi ly hôn ở nước ngoài thì phải làm thủ tục ghi chú ly hôn tại nơi đăng ký ly hôn hoặc nơi trước khi xuất cảnh
+Lệ phí: Bản chính: Không thu phí Bản sao: 8.000đ/bản sao
+Thời gian giải quyết: 5 ngày làm việc
+Địa chỉ cơ quan tiếp nhận hồ sơ: Trung tâm Phục vụ hành chính công phường Tăng Nhơn Phú
+Bạn muốn hỏi thêm về thông tin thủ tục nào không?
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_091,DUNG,,1.0,1.0,PROC_036,fee,lệ pí đk thành lập hộ kinh doanh là bn?,"Tên: Thủ tục Đăng ký thành lập hộ kinh doanh
+Lệ phí:
+0 [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_092,DUNG,,1.0,0.9,"['PROC_027', 'PROC_025']",required_documents,hồ sơ xin cấp gpxd nhà ở riêng lẻ gồm những j?,"Tên: CẤP GIẤY PHÉP XÂY DỰNG
+Thành phần hồ sơ:
+1. Thành phần hồ sơ cấp giấy phép xây dựng, giấp phép sửa chữa cải tạo nhà ở riêng lẻ (tất cả hồ sơ đều phải sao y điện tử trừ bản vẽ thiết kế xây dựng và đơn đề nghị cấp phép xây dựng) – Thời gian giải quyết 20 ngày đối với công trình và 15 ngày đối với nhà ở riêng lẻ.
+- Đơn đề nghị cấp giấy phép xây dựng, sửa chữa, cải tạo công trình theo Mẫu số 1 Phụ lục số II Nghị định số 175/2024/NĐ-CP ngày 30/12/2024 của Chính phủ.
+- Một trong những giấy tờ hợp pháp về đất đai chứng minh sự phù hợp mục đích sử dụng đất và sở hữu công trình để cấp phép xây dựng theo quy định tại Điều 53 của Nghị định số 175/2024/NĐ-CP. Trường hợp giấy chứng nhận cũ không có tọa độ theo tài liệu 02/CT-UB phải có bản vẽ hiện trạng có duyệt kiểm định kèm theo.
+- Bản vẽ thiết kế xây dựng.
+- Cam kết đảm bảo an toàn cho các công trình liền kề (có chứng thực chữ ký).
+- Cam kết tháo dỡ toàn bộ nhà cũ trước khi xây dựng công trình theo giấy phép xây dựng (có chứng thực chữ ký) – áp dụng đối với thửa đất có nhà hiện hữu.
+- Hồ sơ năng lực của đơn vị tư vấn thiết kế.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_093,DUNG,,1.0,1.0,PROC_002,processing_time,thời zan giải quyết khai sih cho bé mất mấy ngày?,"Tên: Thủ tục đăng ký khai sinh
+Thời gian giải quyết:
+1 ngày [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_094,DUNG,,1.0,1.0,PROC_033,processing_time,xin cấp số nhà mất bn ngày làm việc?,"Tên: HỒ SƠ CẤP SỐ NHÀ
+Thời gian giải quyết:
+theo quy định [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_095,DUNG,,1.0,1.0,PROC_042,fee,chứng thực cccd và chữ ký ở ubnd xã phường mất bn tiền?,"Tên: chứng thực chữ ký - chứng thực Hợp đồng giao dịch/Di chúc
+Lệ phí:
+10.000 đồng/trường hợp (đối với chứng thực chữ ký) 50.000 đồng/trường hợp (đối với hợp đồng giao dịch/Di chúc) [EC_001]
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_096,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Thủ tục xin visa đi Mỹ diện du lịch cần những giấy tờ gì?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+GS_097,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Làm thế nào để đăng ký kinh doanh dịch vụ hàng không vũ trụ?,"Thủ tục hoặc thông tin bạn hỏi hiện không thuộc thẩm quyền giải quyết của bộ phận một cửa cấp xã/phường hoặc chưa có trong cơ sở dữ liệu.
+
+Đây là thông tin tư vấn tự động. Vui lòng liên hệ cơ quan nhà nước để được hỗ trợ chính xác nhất."
+GS_098,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Tôi muốn đổi giấy phép lái xe ô tô hạng B2 ở đâu?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+GS_099,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Giá xăng Ron 95 hôm nay tăng hay giảm bao nhiêu tiền một lít?,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."
+GS_100,TU_CHOI_DUNG,,,,CLARIFY/NONE,,Cho tôi hỏi về quy định thủ tục hành chính của nhà nước,"Bạn muốn hỏi hoặc thực hiện thủ tục hành chính nào? Vui lòng cung cấp thêm thông tin cụ thể (ví dụ: đăng ký kết hôn, làm lại thẻ căn cước, cấp hộ chiếu, đăng ký khai sinh...) để tôi có thể hỗ trợ bạn chính xác nhất."

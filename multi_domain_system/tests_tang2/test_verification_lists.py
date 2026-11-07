@@ -73,3 +73,13 @@ def test_trailing_number_in_sentence_is_still_checked():
     results = verify_answer(answer, evidence)
 
     assert results[0].status == "unsupported"
+
+
+def test_fee_with_attached_currency_is_compared_in_full():
+    evidence = _list_evidence("Lệ phí bản sao là 8.000đ/bản")
+
+    wrong = verify_answer("Lệ phí bản sao là 8.500đ/bản", evidence)
+    right = verify_answer("Lệ phí bản sao là 8.000đ/bản", evidence)
+
+    assert wrong[0].status == "unsupported"
+    assert right[0].status == "supported"

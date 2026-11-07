@@ -43,6 +43,7 @@ from backend.api.sessions import router as sessions_router
 from backend.api.socket import router as socket_router
 from backend.api.chat import router as chat_router
 from backend.api.ingestion import router as ingestion_router
+from backend.api.admin import router as admin_router
 from backend.body_limit import DomainWriteGuardMiddleware
 from backend.services.context_service import drain_memory_updates
 
@@ -219,6 +220,7 @@ app.include_router(sessions_router)
 app.include_router(socket_router)
 app.include_router(chat_router)
 app.include_router(ingestion_router)
+app.include_router(admin_router)
 
 @app.get("/health")
 async def health():

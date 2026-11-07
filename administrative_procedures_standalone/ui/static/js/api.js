@@ -8,26 +8,93 @@ class APIClient {
         this.onCloseCallback = null;
         this.reconnectTimer = null;
         this.isExplicitDisconnect = false;
-        this.adminKey = null;
         this.accessRecoveryUsed = false;
     }
 
-    getAdminHeaders() {
-        if (!this.adminKey) {
-            const key = window.prompt("Nhập khóa quản trị (INGESTION_ADMIN_KEY):");
-            if (!key || !key.trim()) {
-                throw new Error("Cần khóa quản trị để thực hiện thao tác này.");
-            }
-            // Chỉ giữ trong bộ nhớ của trang, không lưu xuống trình duyệt.
-            this.adminKey = key.trim();
-        }
-        return { 'X-Admin-Key': this.adminKey };
+    async ensureAdmin() {
+        const res = await fetch('/api/admin/me');
+        if (res.ok) return;
+        await this.promptAdminLogin();
     }
 
-    clearRejectedAdminKey(res) {
-        if (res.status === 401 || res.status === 403) {
-            this.adminKey = null;
-        }
+    promptAdminLogin() {
+        return new Promise((resolve, reject) => {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+            const form = document.createElement('form');
+            form.style.cssText = 'width:100%;max-width:360px;background:var(--bg-surface);color:var(--text-main);border:1px solid var(--border-color);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;';
+
+            const title = document.createElement('h3');
+            title.textContent = 'Đăng nhập quản trị';
+            title.style.cssText = 'font-size:18px;font-weight:700;';
+
+            const makeInput = (type, placeholder, autocomplete) => {
+                const input = document.createElement('input');
+                input.type = type;
+                input.placeholder = placeholder;
+                input.autocomplete = autocomplete;
+                input.required = true;
+                input.style.cssText = 'padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-surface);color:var(--text-main);font-size:14px;';
+                return input;
+            };
+            const username = makeInput('text', 'Tên đăng nhập', 'username');
+            const password = makeInput('password', 'Mật khẩu', 'current-password');
+
+            const error = document.createElement('p');
+            error.style.cssText = 'color:#dc2626;font-size:13px;min-height:18px;';
+
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;';
+
+            const cancel = document.createElement('button');
+            cancel.type = 'button';
+            cancel.textContent = 'Hủy';
+            cancel.style.cssText = 'padding:8px 14px;border-radius:8px;border:1px solid var(--border-color);background:transparent;color:var(--text-main);cursor:pointer;';
+
+            const submit = document.createElement('button');
+            submit.type = 'submit';
+            submit.textContent = 'Đăng nhập';
+            submit.style.cssText = 'padding:8px 14px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;';
+
+            actions.append(cancel, submit);
+            form.append(title, username, password, error, actions);
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            username.focus();
+
+            cancel.addEventListener('click', () => {
+                overlay.remove();
+                reject(new Error('Cần đăng nhập quản trị để thực hiện thao tác này.'));
+            });
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                submit.disabled = true;
+                error.textContent = '';
+                try {
+                    const res = await fetch('/api/admin/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username.value, password: password.value })
+                    });
+                    if (res.ok) {
+                        overlay.remove();
+                        resolve();
+                        return;
+                    }
+                    const data = await res.json().catch(() => ({}));
+                    error.textContent = typeof data.detail === 'string' ? data.detail : 'Không thể đăng nhập.';
+                } catch (err) {
+                    error.textContent = 'Không kết nối được máy chủ.';
+                }
+                submit.disabled = false;
+            });
+        });
+    }
+
+    async adminLogout() {
+        await fetch('/api/admin/logout', { method: 'POST' });
     }
 
     async recoverSessionAccess() {
@@ -79,12 +146,12 @@ class APIClient {
 
     async createDomain(domainData) {
         try {
+            await this.ensureAdmin();
             const res = await fetch('/api/domains/create', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...this.getAdminHeaders() },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(domainData)
             });
-            this.clearRejectedAdminKey(res);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.detail || "Không thể tạo domain mới");
@@ -98,12 +165,11 @@ class APIClient {
 
     async ingestDomainData(domainId, formData) {
         try {
+            await this.ensureAdmin();
             const res = await fetch(`/api/domains/${domainId}/ingest`, {
                 method: 'POST',
-                headers: this.getAdminHeaders(),
                 body: formData
             });
-            this.clearRejectedAdminKey(res);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.detail || "Không thể nạp dữ liệu vào domain");
@@ -117,11 +183,10 @@ class APIClient {
 
     async deleteDomain(domainId) {
         try {
+            await this.ensureAdmin();
             const res = await fetch(`/api/domains/${encodeURIComponent(domainId)}`, {
-                method: 'DELETE',
-                headers: this.getAdminHeaders()
+                method: 'DELETE'
             });
-            this.clearRejectedAdminKey(res);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.detail || "Không thể xóa domain");
